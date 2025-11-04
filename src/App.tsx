@@ -13,11 +13,10 @@ import NotFound from "./pages/OtherPage/NotFound";
 // import BarChart from "./pages/Charts/BarChart";
 // import Calendar from "./pages/Calendar";
 // import BasicTables from "./pages/Tables/BasicTables";
-import FormElements from "./pages/Forms/FormElements";
 // import Blank from "./pages/Blank";
 import AppLayout from "./layout/AppLayout";
 import { ScrollToTop } from "./components/common/ScrollToTop";
-import Home from "./pages/Dashboard/Home";
+import Home from "./pages-backup/Dashboard/Home";
 import IPCView from "./pages/SystemConfigurations/InvoicePaymentClerks/IPCView";
 import { IPCForm } from "./pages/SystemConfigurations/InvoicePaymentClerks/IPCForm";
 import SupplierView from "./pages/SystemConfigurations/Suppliers/SupplierView";
@@ -25,6 +24,7 @@ import { SupplierForm } from "./pages/SystemConfigurations/Suppliers/SupplierFor
 import UserView from "./pages/SystemConfigurations/Users/UserView";
 import { UserForm } from "./pages/SystemConfigurations/Users/UserForm";
 import { PlanningForm } from "./pages/SystemConfigurations/Planning/PlanningForm";
+import FormElements from "./pages/Forms/FormElements";
 
 export default function App() {
     return (

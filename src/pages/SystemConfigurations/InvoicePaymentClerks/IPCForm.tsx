@@ -13,8 +13,9 @@ import PhoneInput from "@/components/form/group-input/PhoneInput";
 import Select from "@/components/form/Select";
 import Switch from "@/components/form/switch/Switch";
 import { Separator } from "@/components/ui/separator";
-import { useParams } from "react-router";
+import { useNavigate, useParams } from "react-router";
 import { upsertIpc } from "@/database/ipc";
+import { handleValidationErrors } from "@/helper/validationError";
 
 const formSchema = z.object({
     firstname: z.string().min(1, "First name is required"),
@@ -23,7 +24,7 @@ const formSchema = z.object({
     twoFactor: z.boolean(),
     twofaType: z.string().min(1, "2FA type is required"),
     salutation: z.string().min(1, "Salutation is required"),
-    phone: z.string().min(1, "Phone is required"),
+    phone: z.string(),
     mobile: z
         .string()
         .min(1, "Mobile number is required")
@@ -62,6 +63,7 @@ const salutationOptions = [
 
 export function IPCForm() {
     const { id } = useParams();
+    const navigate = useNavigate();
     const form = useForm<z.infer<typeof formSchema>>({
         resolver: zodResolver(formSchema),
         defaultValues: {
@@ -84,30 +86,21 @@ export function IPCForm() {
     });
 
     async function onSubmit(data: z.infer<typeof formSchema>) {
-        // toast("You submitted the following values:", {
-        //     description: (
-        //         <pre className="bg-code text-code-foreground mt-2 w-[320px] overflow-x-auto rounded-md p-4 text-black">
-        //             <code>{JSON.stringify(data, null, 2)}</code>
-        //         </pre>
-        //     ),
-        //     position: "bottom-right",
-        //     classNames: {
-        //         content: "flex flex-col gap-2",
-        //     },
-        //     style: {
-        //         "--border-radius": "calc(var(--radius)  + 4px)",
-        //     } as React.CSSProperties,
-        // });
-        try {
-            // await new Promise((resolve) => setTimeout(resolve, 1000));
-            await upsertIpc(data);
-            toast.success("IPC form submitted successfully!");
-            // form.reset();
-        } catch (error) {
-            console.error("Error submitting IPC form:", error);
-            toast.error("Failed to submit the form. Please try again.");
-        }
-        
+        toast.promise(
+            upsertIpc(data),
+            {
+                loading: "Submitting IPC form...",
+                success: () => {
+                    setTimeout(() => {
+                        navigate("/invoice-payment-clerk");
+                    }, 2000);
+                    return "IPC form submitted successfully!";
+                },
+                error: (error: unknown) => {
+                    return handleValidationErrors(error, form.setError);
+                },
+            },
+        );
     }
 
     return (
