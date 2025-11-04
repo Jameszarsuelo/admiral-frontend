@@ -14,13 +14,14 @@ import Select from "@/components/form/Select";
 import Switch from "@/components/form/switch/Switch";
 import { Separator } from "@/components/ui/separator";
 import { useParams } from "react-router";
+import { upsertIpc } from "@/database/ipc";
 
 const formSchema = z.object({
     firstname: z.string().min(1, "First name is required"),
     lastname: z.string().min(1, "Last name is required"),
     email: z.string().email("Invalid email address"),
     twoFactor: z.boolean(),
-    TwofaType: z.string().min(1, "2FA type is required"),
+    twofaType: z.string().min(1, "2FA type is required"),
     salutation: z.string().min(1, "Salutation is required"),
     phone: z.string().min(1, "Phone is required"),
     mobile: z
@@ -40,15 +41,16 @@ const formSchema = z.object({
 });
 
 const countries = [
-    { code: "US", label: "+1" },
-    { code: "GB", label: "+44" },
-    { code: "CA", label: "+1" },
-    { code: "AU", label: "+61" },
+    // { code: "US", label: "+1" },
+    // { code: "GB", label: "+44" },
+    // { code: "CA", label: "+1" },
+    // { code: "AU", label: "+61" },
+    { code: "UK", label: "+44" },
     { code: "PH", label: "+63" },
 ];
 const twofaTypeOptions = [
-    { value: "sms", label: "SMS" },
-    { value: "email", label: "Email" },
+    { value: 0, label: "SMS" },
+    { value: 1, label: "Email" },
 ];
 
 const salutationOptions = [
@@ -67,10 +69,10 @@ export function IPCForm() {
             lastname: "",
             email: "",
             twoFactor: false,
-            TwofaType: "",
+            twofaType: "",
             salutation: "",
             phone: "",
-            mobile: "",
+            mobile: "+44",
             address1: "",
             address2: "",
             address3: "",
@@ -81,22 +83,31 @@ export function IPCForm() {
         },
     });
 
-    function onSubmit(data: z.infer<typeof formSchema>) {
-        toast("You submitted the following values:", {
-            description: (
-                <pre className="bg-code text-code-foreground mt-2 w-[320px] overflow-x-auto rounded-md p-4 text-black">
-                    <code>{JSON.stringify(data, null, 2)}</code>
-                </pre>
-            ),
-            position: "bottom-right",
-            classNames: {
-                content: "flex flex-col gap-2",
-            },
-            style: {
-                "--border-radius": "calc(var(--radius)  + 4px)",
-            } as React.CSSProperties,
-        });
-        console.log("Submitted data:", data);
+    async function onSubmit(data: z.infer<typeof formSchema>) {
+        // toast("You submitted the following values:", {
+        //     description: (
+        //         <pre className="bg-code text-code-foreground mt-2 w-[320px] overflow-x-auto rounded-md p-4 text-black">
+        //             <code>{JSON.stringify(data, null, 2)}</code>
+        //         </pre>
+        //     ),
+        //     position: "bottom-right",
+        //     classNames: {
+        //         content: "flex flex-col gap-2",
+        //     },
+        //     style: {
+        //         "--border-radius": "calc(var(--radius)  + 4px)",
+        //     } as React.CSSProperties,
+        // });
+        try {
+            // await new Promise((resolve) => setTimeout(resolve, 1000));
+            await upsertIpc(data);
+            toast.success("IPC form submitted successfully!");
+            // form.reset();
+        } catch (error) {
+            console.error("Error submitting IPC form:", error);
+            toast.error("Failed to submit the form. Please try again.");
+        }
+        
     }
 
     return (
@@ -234,7 +245,7 @@ export function IPCForm() {
                                                 value={field.value}
                                                 countries={countries}
                                                 selectPosition="start"
-                                                placeholder="+1 (555) 000-0000"
+                                                placeholder="+44 7123 456789"
                                                 onChange={(
                                                     phoneNumber: string,
                                                 ) => {
@@ -301,13 +312,13 @@ export function IPCForm() {
 
                             <div>
                                 <Controller
-                                    name="TwofaType"
+                                    name="twofaType"
                                     control={form.control}
                                     render={({ field, fieldState }) => (
                                         <Field
                                             data-invalid={fieldState.invalid}
                                         >
-                                            <Label htmlFor="TwofaType">
+                                            <Label htmlFor="twofaType">
                                                 2FA Type
                                             </Label>
                                             <Select
@@ -527,35 +538,6 @@ export function IPCForm() {
                                     )}
                                 />
                             </div>
-                            {/* <div>
-                        <Label htmlFor="inputTwo">Input with Placeholder</Label>
-                        <Input
-                            type="text"
-                            id="inputTwo"
-                            placeholder="info@gmail.com"
-                        />
-                    </div>
-                    <div>
-                        <Label>Select Input</Label>
-                        <Select
-                            options={options}
-                            placeholder="Select an option"
-                            onChange={handleSelectChange}
-                            className="dark:bg-dark-900"
-                        />
-                    </div>
-                    
-                    <div>
-                        <DatePicker
-                            id="date-picker"
-                            label="Date Picker Input"
-                            placeholder="Select a date"
-                            onChange={(dates, currentDateString) => {
-                                // Handle your logic
-                                console.log({ dates, currentDateString });
-                            }}
-                        />
-                    </div> */}
                         </div>
                     </FieldGroup>
                 </form>
