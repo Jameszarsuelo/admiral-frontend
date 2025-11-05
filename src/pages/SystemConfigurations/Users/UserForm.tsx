@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { useEffect } from 'react'
 import { Controller, useForm, SubmitHandler } from "react-hook-form";
 import { useNavigate, useParams } from "react-router";
 
@@ -15,7 +15,7 @@ import Switch from "@/components/form/switch/Switch";
 import { Separator } from "@/components/ui/separator";
 import { zodResolver } from '@hookform/resolvers/zod';
 import { handleValidationErrors } from '@/helper/validationError';
-import { upsertUser } from '@/database/user';
+import { fetchUser, upsertUser } from '@/database/user';
 import { IUserForm } from '@/types/user';
 import { UserFormSchema } from '@/schema/UserFormSchema';
 
@@ -46,8 +46,9 @@ const userTypes = [
 ];
 
 const UserForm = () => {
+    const { id } = useParams();
     const navigate = useNavigate();
-    const { handleSubmit, control, formState, setError } = useForm<IUserForm>({
+    const { handleSubmit, control, formState, setError, reset } = useForm<IUserForm>({
         defaultValues: {
             salutation: "",
             firstname: "",
@@ -69,16 +70,24 @@ const UserForm = () => {
         resolver: zodResolver(UserFormSchema)
     });
 
+    useEffect(()=>{
+        if(id){
+            fetchUser(id).then((data)=>{
+                reset(data);
+            })
+        }
+    }, [id])
+
     const onSubmit = async (userData: IUserForm) => {
         try {
             toast.promise(
                 upsertUser(userData), {
-                loading: "Submitting User form...",
+                loading: id ? "Updating User..." : "Creating User...",
                 success: () => {
                     setTimeout(() => {
                         navigate("/users")
                     }, 2000);
-                    return "User form submitted successfully!";
+                    return id ? "User updated successfully" : "User created successfully!";
                 },
                 error: (error: unknown) => {
                     return handleValidationErrors(error, setError)

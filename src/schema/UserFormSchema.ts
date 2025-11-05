@@ -1,6 +1,16 @@
 import z from "zod";
 
+const UserTypeInfo = z.object({
+    id: z.number(),
+    type: z.string(),
+    created_at: z.string().optional(),
+    updated_at: z.string().optional(),
+    deleted_at: z.string().optional(),
+});
+
+
 export const UserFormSchema = z.object({
+    id: z.number().optional(),
     salutation: z.string().nonempty("Salutation is required"),
     firstname: z.string().nonempty("First name is required"),
     lastname: z.string().nonempty("Last name is required"),
@@ -23,4 +33,16 @@ export const UserFormSchema = z.object({
     county: z.string().nonempty("County is required"),
     country: z.string().nonempty("Country is required"),
     postcode: z.string().nonempty("Postcode is required"),
+    created_by: z.number().optional(),
+    updated_by: z.number().optional(),
+    deleted_by: z.number().optional(),
+    created_at: z.number().optional(),
+    updated_at: z.number().optional(),
+    deleted_at: z.number().optional(),
 })
+
+export const UserListSchema = UserFormSchema.omit({
+    user_type_id: true
+}).extend({
+    user_type_id: UserTypeInfo
+});
