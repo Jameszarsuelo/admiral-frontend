@@ -1,111 +1,129 @@
 import { BrowserRouter as Router, Routes, Route } from "react-router";
-// import SignIn from "./pages/AuthPages/SignIn";
-// import SignUp from "./pages/AuthPages/SignUp";
-import NotFound from "./pages/OtherPage/NotFound";
-// import UserProfiles from "./pages/UserProfiles";
-// import Videos from "./pages/UiElements/Videos";
-// import Images from "./pages/UiElements/Images";
-// import Alerts from "./pages/UiElements/Alerts";
-// import Badges from "./pages/UiElements/Badges";
-// import Avatars from "./pages/UiElements/Avatars";
-// import Buttons from "./pages/UiElements/Buttons";
-// import LineChart from "./pages/Charts/LineChart";
-// import BarChart from "./pages/Charts/BarChart";
-// import Calendar from "./pages/Calendar";
-// import BasicTables from "./pages/Tables/BasicTables";
-// import Blank from "./pages/Blank";
+import { lazy, Suspense } from "react";
 import AppLayout from "./layout/AppLayout";
 import { ScrollToTop } from "./components/common/ScrollToTop";
-import Home from "./pages-backup/Dashboard/Home";
-import IPCView from "./pages/SystemConfigurations/InvoicePaymentClerks/IPCView";
-import { IPCForm } from "./pages/SystemConfigurations/InvoicePaymentClerks/IPCForm";
-import SupplierView from "./pages/SystemConfigurations/Suppliers/SupplierView";
-import { SupplierForm } from "./pages/SystemConfigurations/Suppliers/SupplierForm";
-import UserView from "./pages/SystemConfigurations/Users/UserView";
-import { UserForm } from "./pages/SystemConfigurations/Users/UserForm";
-import { PlanningForm } from "./pages/SystemConfigurations/Planning/PlanningForm";
-import FormElements from "./pages/Forms/FormElements";
+import Spinner from "./components/ui/spinner/Spinner";
+
+// Lazy load pages
+const Home = lazy(() => import("./pages-backup/Dashboard/Home"));
+const IPCView = lazy(
+    () => import("./pages/SystemConfigurations/InvoicePaymentClerks/IPCView"),
+);
+const IPCForm = lazy(() =>
+    import("./pages/SystemConfigurations/InvoicePaymentClerks/IPCForm").then(
+        (module) => ({ default: module.IPCForm }),
+    ),
+);
+const SupplierView = lazy(
+    () => import("./pages/SystemConfigurations/Suppliers/SupplierView"),
+);
+const SupplierForm = lazy(() =>
+    import("./pages/SystemConfigurations/Suppliers/SupplierForm").then(
+        (module) => ({ default: module.SupplierForm }),
+    ),
+);
+const UserView = lazy(
+    () => import("./pages/SystemConfigurations/Users/UserView"),
+);
+const UserForm = lazy(() =>
+    import("./pages/SystemConfigurations/Users/UserForm").then((module) => ({
+        default: module.UserForm,
+    })),
+);
+const PlanningForm = lazy(() =>
+    import("./pages/SystemConfigurations/Planning/PlanningForm").then(
+        (module) => ({ default: module.PlanningForm }),
+    ),
+);
+const FormElements = lazy(() => import("./pages/Forms/FormElements"));
+const NotFound = lazy(() => import("./pages/OtherPage/NotFound"));
+
+// Loading fallback component
+const PageLoader = () => (
+    <div className="flex h-screen items-center justify-center">
+        <Spinner size="lg" />
+    </div>
+);
 
 export default function App() {
     return (
         <>
             <Router>
                 <ScrollToTop />
-                <Routes>
-                    {/* Dashboard Layout */}
-                    <Route element={<AppLayout />}>
-                        <Route index path="/" element={<Home />} />
+                <Suspense fallback={<PageLoader />}>
+                    <Routes>
+                        {/* Dashboard Layout */}
+                        <Route element={<AppLayout />}>
+                            <Route index path="/" element={<Home />} />
 
-                        {/* Configurations */}
-                        <Route
-                            index
-                            path="/invoice-payment-clerk"
-                            element={<IPCView />}
-                        />
-                        <Route
-                            path="/invoice-payment-clerk/:method/:id?"
-                            element={<IPCForm />}
-                        />
+                            {/* Configurations */}
+                            <Route
+                                index
+                                path="/invoice-payment-clerk"
+                                element={<IPCView />}
+                            />
+                            <Route
+                                path="/invoice-payment-clerk/:method/:id?"
+                                element={<IPCForm />}
+                            />
 
-                        <Route
-                            path="/suppliers"
-                            element={<SupplierView />}
-                        />
+                            <Route
+                                path="/suppliers"
+                                element={<SupplierView />}
+                            />
 
-                        <Route
-                            path="/suppliers/:method/:id?"
-                            element={<SupplierForm />}
-                        />
+                            <Route
+                                path="/suppliers/:method/:id?"
+                                element={<SupplierForm />}
+                            />
 
-                        <Route
-                            path="/users"
-                            element={<UserView />}
-                        />
+                            <Route path="/users" element={<UserView />} />
 
-                        <Route
-                            path="/users/:method/:id?"
-                            element={<UserForm />}
-                        />
+                            <Route
+                                path="/users/:method/:id?"
+                                element={<UserForm />}
+                            />
 
-                        <Route
-                            path="/planning"
-                            element={<PlanningForm />}
-                        />
+                            <Route
+                                path="/planning"
+                                element={<PlanningForm />}
+                            />
 
-                        {/* Others Page */}
-                        {/* <Route path="/profile" element={<UserProfiles />} /> */}
-                        {/* <Route path="/calendar" element={<Calendar />} />
-                        <Route path="/blank" element={<Blank />} /> */}
+                            {/* Others Page */}
+                            {/* <Route path="/profile" element={<UserProfiles />} /> */}
+                            {/* <Route path="/calendar" element={<Calendar />} />
+                            <Route path="/blank" element={<Blank />} /> */}
 
-                        {/* Forms */}
-                        <Route
-                            path="/form-elements"
-                            element={<FormElements />}
-                        />
+                            {/* Forms */}
+                            <Route
+                                path="/form-elements"
+                                element={<FormElements />}
+                            />
 
-                        {/* Tables */}
-                        {/* <Route path="/basic-tables" element={<BasicTables />} /> */}
+                            {/* Tables */}
+                            {/* <Route path="/basic-tables" element={<BasicTables />} /> */}
 
-                        {/* Ui Elements */}
-                        {/* <Route path="/alerts" element={<Alerts />} />
-                        <Route path="/avatars" element={<Avatars />} />
-                        <Route path="/badge" element={<Badges />} />
-                        <Route path="/buttons" element={<Buttons />} />
-                        <Route path="/images" element={<Images />} />
-                        <Route path="/videos" element={<Videos />} /> */}
+                            {/* Ui Elements */}
+                            {/* <Route path="/alerts" element={<Alerts />} />
+                            <Route path="/avatars" element={<Avatars />} />
+                            <Route path="/badge" element={<Badges />} />
+                            <Route path="/buttons" element={<Buttons />} />
+                            <Route path="/images" element={<Images />} />
+                            <Route path="/videos" element={<Videos />} /> */}
 
-                        {/* Charts */}
-                        {/* <Route path="/line-chart" element={<LineChart />} />
-                        <Route path="/bar-chart" element={<BarChart />} /> */}
-                    </Route>
+                            {/* Charts */}
+                            {/* <Route path="/line-chart" element={<LineChart />} />
+                            <Route path="/bar-chart" element={<BarChart />} /> */}
+                        </Route>
 
-                    {/* Auth Layout */}
-                    {/* <Route path="/signin" element={<SignIn />} />
-                    <Route path="/signup" element={<SignUp />} /> */}
+                        {/* Auth Layout */}
+                        {/* <Route path="/signin" element={<SignIn />} />
+                        <Route path="/signup" element={<SignUp />} /> */}
 
-                    {/* Fallback Route */}
-                    <Route path="*" element={<NotFound />} />
-                </Routes>
+                        {/* Fallback Route */}
+                        <Route path="*" element={<NotFound />} />
+                    </Routes>
+                </Suspense>
             </Router>
         </>
     );

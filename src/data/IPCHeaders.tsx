@@ -1,20 +1,14 @@
-import { Button } from "@/components/ui/button";
 // import { Checkbox } from "@/components/ui/checkbox";
-import {
-    DropdownMenu,
-    DropdownMenuContent,
-    DropdownMenuItem,
-    DropdownMenuLabel,
-    DropdownMenuSeparator,
-    DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import { Payment } from "@/types/payment";
+import Button from "@/components/ui/button/Button";
+
+import { Button as CustomButton } from "@/components/ui/button";
+import { IPCResponse } from "@/types/ipc";
 import { ColumnDef } from "@tanstack/react-table";
-import { ArrowUpDown, MoreHorizontal } from "lucide-react";
+import { ArrowUpDown } from "lucide-react";
 
 export const getIPCHeaders = (
     navigate: (path: string) => void,
-): ColumnDef<Payment>[] => [
+): ColumnDef<IPCResponse>[] => [
     // {
     //     id: "select",
     //     header: ({ table }) => (
@@ -40,11 +34,29 @@ export const getIPCHeaders = (
     //     enableHiding: false,
     // },
     {
-        accessorKey: "status",
-        header: () => <div className="ml-4">Status</div>,
+        accessorKey: "salutation",
+        header: () => <div className="ml-4">Salutation</div>,
         cell: ({ row }) => (
             <div className="capitalize dark:text-white ml-4">
-                {row.getValue("status")}
+                {row.original.user_info.salutation}.
+            </div>
+        ),
+    },
+    {
+        accessorKey: "firstname",
+        header: () => <div className="ml-4">Firstname</div>,
+        cell: ({ row }) => (
+            <div className="capitalize dark:text-white ml-4">
+                {row.getValue("firstname")}
+            </div>
+        ),
+    },
+    {
+        accessorKey: "lastname",
+        header: () => <div className="ml-4">Lastname</div>,
+        cell: ({ row }) => (
+            <div className="capitalize dark:text-white ml-4">
+                {row.getValue("lastname")}
             </div>
         ),
     },
@@ -52,7 +64,7 @@ export const getIPCHeaders = (
         accessorKey: "email",
         header: ({ column }) => {
             return (
-                <Button
+                <CustomButton
                     variant="ghost"
                     onClick={() =>
                         column.toggleSorting(column.getIsSorted() === "asc")
@@ -60,66 +72,83 @@ export const getIPCHeaders = (
                 >
                     Email
                     <ArrowUpDown />
-                </Button>
+                </CustomButton>
             );
         },
         cell: ({ row }) => (
-            <div className="lowercase dark:text-white">{row.getValue("email")}</div>
+            <div className=" dark:text-white ml-4">{row.getValue("email")}</div>
         ),
     },
     {
-        accessorKey: "amount",
-        header: () => <div>Amount</div>,
-        cell: ({ row }) => {
-            const amount = parseFloat(row.getValue("amount"));
-            // Format the amount as a dollar amount
-            const formatted = new Intl.NumberFormat("en-US", {
-                style: "currency",
-                currency: "USD",
-            }).format(amount);
-            return <div className="font-medium dark:text-white">{formatted}</div>;
-        },
+        accessorKey: "mobile",
+        header: () => <div className="ml-4">Mobile</div>,
+        cell: ({ row }) => (
+            <div className="capitalize dark:text-white ml-4">
+                {row.original.user_info.mobile}
+            </div>
+        ),
     },
+    {
+        accessorKey: "address",
+        header: () => <div className="ml-4">Address</div>,
+        cell: ({ row }) => (
+            <div className="capitalize dark:text-white ml-4">
+                {row.original.user_info.city}, {" "}
+                {row.original.user_info.country},{" "}
+                {row.original.user_info.postcode}
+            </div>
+        ),
+    },
+    // {
+    //     accessorKey: "email",
+    //     header: ({ column }) => {
+    //         return (
+    //             <Button
+    //                 variant="ghost"
+    //                 onClick={() =>
+    //                     column.toggleSorting(column.getIsSorted() === "asc")
+    //                 }
+    //             >
+    //                 Email
+    //                 <ArrowUpDown />
+    //             </Button>
+    //         );
+    //     },
+    //     cell: ({ row }) => (
+    //         <div className="lowercase dark:text-white">{row.getValue("email")}</div>
+    //     ),
+    // },
+    // {
+    //     accessorKey: "amount",
+    //     header: () => <div>Amount</div>,
+    //     cell: ({ row }) => {
+    //         const amount = parseFloat(row.getValue("amount"));
+    //         // Format the amount as a dollar amount
+    //         const formatted = new Intl.NumberFormat("en-US", {
+    //             style: "currency",
+    //             currency: "USD",
+    //         }).format(amount);
+    //         return <div className="font-medium dark:text-white">{formatted}</div>;
+    //     },
+    // },
     {
         id: "actions",
         header: () => <div>Actions</div>,
         cell: ({ row }) => {
-            const payment = row.original;
+            const ipc = row.original;
 
-            const handleEdit = (id: string) => {
+            const handleEdit = (id: number) => {
                 navigate(`/invoice-payment-clerk/edit/${id}`);
             };
 
             return (
-                <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                        <Button variant="ghost" className="h-8 w-8 p-0 dark:text-white">
-                            <span className="sr-only">Open menu</span>
-                            <MoreHorizontal />
-                        </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end">
-                        <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                        <DropdownMenuItem
-                            onClick={() =>
-                                navigator.clipboard.writeText(payment.id)
-                            }
-                        >
-                            Copy payment ID
-                        </DropdownMenuItem>
-                        <DropdownMenuSeparator />
-                        <DropdownMenuItem
-                            onClick={() => {
-                                handleEdit(payment.id);
-                            }}
-                        >
-                            Edit
-                        </DropdownMenuItem>
-                        <DropdownMenuItem>
-                            View payment details
-                        </DropdownMenuItem>
-                    </DropdownMenuContent>
-                </DropdownMenu>
+                <Button
+                    onClick={() => handleEdit(ipc.id)}
+                    variant="primary"
+                    size="sm"
+                >
+                    Edit
+                </Button>
             );
         },
     },

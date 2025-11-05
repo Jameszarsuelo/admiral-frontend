@@ -1,13 +1,38 @@
-import { IPC } from "@/types/ipc";
+import { IPC, IPCResponse } from "@/types/ipc";
 import api from "./api";
 import { AxiosError } from "axios";
 
 export async function upsertIpc(ipcData: IPC): Promise<IPC> {
     try {
-        const response = await api.post(`/ipc`, ipcData);
+        const response = ipcData.id 
+            ? await api.put(`/ipc/${ipcData.id}`, ipcData)
+            : await api.post(`/ipc`, ipcData);
         return response.data;
     } catch (error) {
-        // Extract validation errors from axios error response
+        if (error instanceof AxiosError && error.response?.data) {
+            throw error.response.data;
+        }
+        throw error;
+    }
+}
+
+export async function fetchIpcList(): Promise<IPCResponse[]> {
+    try {
+        const response = await api.get(`/ipc`);
+        return response.data;
+    } catch (error) {
+       if (error instanceof AxiosError && error.response?.data) {
+            throw error.response.data;
+        }
+        throw error;
+    }
+}
+
+export async function fetchIpcById(id: string): Promise<IPCResponse> {
+    try {
+        const response = await api.get(`/ipc/${id}`);
+        return response.data;
+    } catch (error) {
         if (error instanceof AxiosError && error.response?.data) {
             throw error.response.data;
         }

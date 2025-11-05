@@ -1,76 +1,30 @@
-import { Payment } from "@/types/payment";
 import { DataTable } from "@/components/ui/DataTable";
 import { useNavigate } from "react-router";
 import PageBreadcrumb from "@/components/common/PageBreadCrumb";
-import { Button } from "@/components/ui/button";
 import { getIPCHeaders } from "@/data/IPCHeaders";
-
-const data: Payment[] = [
-    {
-        id: "m5gr84i9",
-        amount: 316,
-        status: "success",
-        email: "ken99@example.com",
-    },
-    {
-        id: "3u1reuv4",
-        amount: 242,
-        status: "success",
-        email: "Abe45@example.com",
-    },
-    {
-        id: "derv1ws0",
-        amount: 837,
-        status: "processing",
-        email: "Monserrat44@example.com",
-    },
-    {
-        id: "5kma53ae",
-        amount: 874,
-        status: "success",
-        email: "Silas22@example.com",
-    },
-    {
-        id: "bhqecj4p",
-        amount: 721,
-        status: "failed",
-        email: "carmella@example.com",
-    },
-    {
-        id: "qf7jzv3t",
-        amount: 429,
-        status: "success",
-        email: "carmella@example.com",
-    },
-    {
-        id: "x1vscz9o",
-        amount: 654,
-        status: "processing",
-        email: "carmella@example.com",
-    },
-    {
-        id: "p9wz6n2l",
-        amount: 538,
-        status: "failed",
-        email: "carmella@example.com",
-    },
-    {
-        id: "t4yqk8rd",
-        amount: 193,
-        status: "success",
-        email: "carmella@example.com",
-    },
-    {
-        id: "olj3x7hb",
-        amount: 765,
-        status: "processing",
-        email: "carmella@example.com",
-    },
-];
+import { fetchIpcList } from "@/database/ipc";
+import { useQuery } from "@tanstack/react-query";
+import Spinner from "@/components/ui/spinner/Spinner";
+import Button from "@/components/ui/button/Button";
 
 export default function IPCView() {
     const navigate = useNavigate();
     const columns = getIPCHeaders(navigate);
+
+    const {
+        data: ipcData,
+        isLoading,
+        // error,
+    } = useQuery({
+        queryKey: ["ipc-data"],
+        queryFn: async () => {
+            return await fetchIpcList();
+        },
+        refetchInterval: 1000 * 60 * 5, // 5 minutes
+        refetchIntervalInBackground: true,
+        staleTime: 500,
+        gcTime: 20000,
+    });
 
     return (
         <>
@@ -88,7 +42,12 @@ export default function IPCView() {
                             </p>
                         </div>
                         <div className="flex shrink-0 items-center gap-2">
-                            <Button size="sm" onClick={() => navigate("/invoice-payment-clerk/new")}>
+                            <Button
+                                size="sm"
+                                onClick={() =>
+                                    navigate("/invoice-payment-clerk/new")
+                                }
+                            >
                                 Add New IPC
                             </Button>
                         </div>
@@ -96,7 +55,13 @@ export default function IPCView() {
 
                     <div className="max-w-full overflow-x-auto custom-scrollbar">
                         <div className="min-w-[1000px] xl:min-w-full px-2">
-                            <DataTable columns={columns} data={data} />
+                            {!isLoading && ipcData ? (
+                                <DataTable columns={columns} data={ipcData} />
+                            ) : (
+                                <div className="flex items-center justify-center py-12">
+                                    <Spinner size="lg" />
+                                </div>
+                            )}
                         </div>
                     </div>
                 </div>
