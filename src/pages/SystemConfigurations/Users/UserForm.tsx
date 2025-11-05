@@ -1,43 +1,24 @@
-import { zodResolver } from "@hookform/resolvers/zod";
-import { toast } from "sonner";
-import * as z from "zod";
+import React from 'react'
+import { Controller, useForm, SubmitHandler } from "react-hook-form";
+import { useNavigate, useParams } from "react-router";
 
+import { toast } from "sonner";
 import PageBreadcrumb from "@/components/common/PageBreadCrumb";
 import ComponentCard from "@/components/common/ComponentCard";
 import Label from "@/components/form/Label";
 import Input from "@/components/form/input/InputField";
 import { Field, FieldGroup } from "@/components/ui/field";
-import { Controller, useForm } from "react-hook-form";
 import Button from "@/components/ui/button/Button";
 import PhoneInput from "@/components/form/group-input/PhoneInput";
 import Select from "@/components/form/Select";
 import Switch from "@/components/form/switch/Switch";
 import { Separator } from "@/components/ui/separator";
-import { useParams } from "react-router";
+import { zodResolver } from '@hookform/resolvers/zod';
+import { handleValidationErrors } from '@/helper/validationError';
+import { upsertUser } from '@/database/user';
+import { IUserForm } from '@/types/user';
+import { UserFormSchema } from '@/schema/UserFormSchema';
 
-const formSchema = z.object({
-    firstname: z.string().min(1, "First name is required"),
-    lastname: z.string().min(1, "Last name is required"),
-    email: z.string().email("Invalid email address"),
-    twoFactor: z.boolean(),
-    TwofaType: z.string().min(1, "2FA type is required"),
-    salutation: z.string().min(1, "Salutation is required"),
-    phone: z.string().min(1, "Phone is required"),
-    mobile: z
-        .string()
-        .min(1, "Mobile number is required")
-        .regex(
-            /^\+?\d+$/,
-            "Mobile number must contain only numbers and an optional + at the start",
-        ),
-    address1: z.string().min(1, "Address line 1 is required"),
-    address2: z.string().optional(),
-    address3: z.string().optional(),
-    city: z.string().min(1, "City is required"),
-    county: z.string().min(1, "County is required"),
-    country: z.string().min(1, "Country is required"),
-    postcode: z.string().min(1, "Postcode is required"),
-});
 
 const countries = [
     { code: "US", label: "+1" },
@@ -46,9 +27,10 @@ const countries = [
     { code: "AU", label: "+61" },
     { code: "PH", label: "+63" },
 ];
+
 const twofaTypeOptions = [
-    { value: "sms", label: "SMS" },
-    { value: "email", label: "Email" },
+    { value: 0, label: "SMS" },
+    { value: 1, label: "Email" },
 ];
 
 const salutationOptions = [
@@ -58,58 +40,68 @@ const salutationOptions = [
     { value: "dr", label: "Dr." },
 ];
 
-export function UserForm() {
-    const { id } = useParams();
-    const form = useForm<z.infer<typeof formSchema>>({
-        resolver: zodResolver(formSchema),
+const userTypes = [
+    { value: "1", label: "Admin" },
+    { value: "2", label: "Supervisor" },
+];
+
+const UserForm = () => {
+    const navigate = useNavigate();
+    const { handleSubmit, control, formState, setError } = useForm<IUserForm>({
         defaultValues: {
+            salutation: "",
             firstname: "",
             lastname: "",
             email: "",
-            twoFactor: false,
-            TwofaType: "",
-            salutation: "",
             phone: "",
             mobile: "",
+            twoFactor: false,
+            twofaType: "",
+            user_type_id: "",
             address1: "",
             address2: "",
             address3: "",
             city: "",
             county: "",
             country: "",
-            postcode: "",
+            postcode: ""
         },
+        resolver: zodResolver(UserFormSchema)
     });
 
-    function onSubmit(data: z.infer<typeof formSchema>) {
-        toast("You submitted the following values:", {
-            description: (
-                <pre className="bg-code text-code-foreground mt-2 w-[320px] overflow-x-auto rounded-md p-4 text-black">
-                    <code>{JSON.stringify(data, null, 2)}</code>
-                </pre>
-            ),
-            position: "bottom-right",
-            classNames: {
-                content: "flex flex-col gap-2",
-            },
-            style: {
-                "--border-radius": "calc(var(--radius)  + 4px)",
-            } as React.CSSProperties,
-        });
-        console.log("Submitted data:", data);
+    const onSubmit = async (userData: IUserForm) => {
+        try {
+            toast.promise(
+                upsertUser(userData), {
+                loading: "Submitting User form...",
+                success: () => {
+                    setTimeout(() => {
+                        navigate("/users")
+                    }, 2000);
+                    return "User form submitted successfully!";
+                },
+                error: (error: unknown) => {
+                    return handleValidationErrors(error, setError)
+                }
+            }
+            )
+        } catch (error) {
+            console.log("Error upon Submitting", error);
+        }
     }
+
 
     return (
         <>
             <PageBreadcrumb pageTitle="Users" />
-            <ComponentCard title={id ? "Edit User" : "Add User"}>
-                <form id="form-user" onSubmit={form.handleSubmit(onSubmit)}>
+            <ComponentCard title={"Add User"}>
+                <form id="form-user" onSubmit={handleSubmit(onSubmit)}>
                     <FieldGroup>
                         <div className="grid grid-cols-2 gap-6 ">
                             <div>
                                 <Controller
                                     name="salutation"
-                                    control={form.control}
+                                    control={control}
                                     render={({ field, fieldState }) => (
                                         <Field
                                             data-invalid={fieldState.invalid}
@@ -127,11 +119,12 @@ export function UserForm() {
                                                 onBlur={field.onBlur}
                                                 className="dark:bg-dark-900"
                                             />
-                                            {fieldState.error && (
-                                                <p className="mt-1 text-sm text-error-500">
-                                                    {fieldState.error.message}
-                                                </p>
-                                            )}
+                                            {
+                                                formState.errors.salutation && (
+                                                    <p className="mt-1 text-sm text-error-500">
+                                                        {formState.errors.salutation.message}
+                                                    </p>)
+                                            }
                                         </Field>
                                     )}
                                 />
@@ -140,7 +133,7 @@ export function UserForm() {
                             <div>
                                 <Controller
                                     name="firstname"
-                                    control={form.control}
+                                    control={control}
                                     render={({ field, fieldState }) => (
                                         <Field
                                             data-invalid={fieldState.invalid}
@@ -168,7 +161,7 @@ export function UserForm() {
                             <div>
                                 <Controller
                                     name="lastname"
-                                    control={form.control}
+                                    control={control}
                                     render={({ field, fieldState }) => (
                                         <Field
                                             data-invalid={fieldState.invalid}
@@ -196,7 +189,7 @@ export function UserForm() {
                             <div>
                                 <Controller
                                     name="email"
-                                    control={form.control}
+                                    control={control}
                                     render={({ field, fieldState }) => (
                                         <Field
                                             data-invalid={fieldState.invalid}
@@ -222,7 +215,7 @@ export function UserForm() {
                             <div>
                                 <Controller
                                     name="mobile"
-                                    control={form.control}
+                                    control={control}
                                     render={({ field, fieldState }) => (
                                         <Field
                                             data-invalid={fieldState.invalid}
@@ -255,7 +248,7 @@ export function UserForm() {
                             <div>
                                 <Controller
                                     name="phone"
-                                    control={form.control}
+                                    control={control}
                                     render={({ field, fieldState }) => (
                                         <Field
                                             data-invalid={fieldState.invalid}
@@ -281,7 +274,7 @@ export function UserForm() {
                             <div>
                                 <Controller
                                     name="twoFactor"
-                                    control={form.control}
+                                    control={control}
                                     render={({ field, fieldState }) => (
                                         <Field
                                             data-invalid={fieldState.invalid}
@@ -301,19 +294,50 @@ export function UserForm() {
 
                             <div>
                                 <Controller
-                                    name="TwofaType"
-                                    control={form.control}
+                                    name="twofaType"
+                                    control={control}
                                     render={({ field, fieldState }) => (
                                         <Field
                                             data-invalid={fieldState.invalid}
                                         >
-                                            <Label htmlFor="TwofaType">
+                                            <Label htmlFor="twofaType">
                                                 2FA Type
                                             </Label>
                                             <Select
                                                 value={field.value}
                                                 options={twofaTypeOptions}
                                                 placeholder="Select 2FA Type"
+                                                onChange={(value: string) =>
+                                                    field.onChange(value)
+                                                }
+                                                onBlur={field.onBlur}
+                                                className="dark:bg-dark-900"
+                                            />
+                                            {fieldState.error && (
+                                                <p className="mt-1 text-sm text-error-500">
+                                                    {fieldState.error.message}
+                                                </p>
+                                            )}
+                                        </Field>
+                                    )}
+                                />
+                            </div>
+
+                            <div>
+                                <Controller
+                                    name="user_type_id"
+                                    control={control}
+                                    render={({ field, fieldState }) => (
+                                        <Field
+                                            data-invalid={fieldState.invalid}
+                                        >
+                                            <Label htmlFor="user_type_id">
+                                                User Type
+                                            </Label>
+                                            <Select
+                                                value={field.value}
+                                                options={userTypes}
+                                                placeholder="Select User Type"
                                                 onChange={(value: string) =>
                                                     field.onChange(value)
                                                 }
@@ -337,7 +361,7 @@ export function UserForm() {
                             <div>
                                 <Controller
                                     name="address1"
-                                    control={form.control}
+                                    control={control}
                                     render={({ field, fieldState }) => (
                                         <Field
                                             data-invalid={fieldState.invalid}
@@ -365,7 +389,7 @@ export function UserForm() {
                             <div>
                                 <Controller
                                     name="address2"
-                                    control={form.control}
+                                    control={control}
                                     render={({ field, fieldState }) => (
                                         <Field
                                             data-invalid={fieldState.invalid}
@@ -393,7 +417,7 @@ export function UserForm() {
                             <div>
                                 <Controller
                                     name="address3"
-                                    control={form.control}
+                                    control={control}
                                     render={({ field, fieldState }) => (
                                         <Field
                                             data-invalid={fieldState.invalid}
@@ -421,7 +445,7 @@ export function UserForm() {
                             <div>
                                 <Controller
                                     name="city"
-                                    control={form.control}
+                                    control={control}
                                     render={({ field, fieldState }) => (
                                         <Field
                                             data-invalid={fieldState.invalid}
@@ -447,7 +471,7 @@ export function UserForm() {
                             <div>
                                 <Controller
                                     name="county"
-                                    control={form.control}
+                                    control={control}
                                     render={({ field, fieldState }) => (
                                         <Field
                                             data-invalid={fieldState.invalid}
@@ -475,7 +499,7 @@ export function UserForm() {
                             <div>
                                 <Controller
                                     name="country"
-                                    control={form.control}
+                                    control={control}
                                     render={({ field, fieldState }) => (
                                         <Field
                                             data-invalid={fieldState.invalid}
@@ -503,7 +527,7 @@ export function UserForm() {
                             <div>
                                 <Controller
                                     name="postcode"
-                                    control={form.control}
+                                    control={control}
                                     render={({ field, fieldState }) => (
                                         <Field
                                             data-invalid={fieldState.invalid}
@@ -532,7 +556,7 @@ export function UserForm() {
                 </form>
 
                 <div className="mt-6 flex justify-end gap-3">
-                    <Button variant="outline" onClick={() => form.reset()}>
+                    <Button variant="outline">
                         Reset
                     </Button>
                     <Button type="submit" form="form-user">
@@ -541,5 +565,8 @@ export function UserForm() {
                 </div>
             </ComponentCard>
         </>
-    );
+    )
 }
+
+export default UserForm;
+export { UserForm };
