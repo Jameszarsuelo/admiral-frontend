@@ -1,6 +1,5 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { toast } from "sonner";
-import * as z from "zod";
 
 import PageBreadcrumb from "@/components/common/PageBreadCrumb";
 import ComponentCard from "@/components/common/ComponentCard";
@@ -14,41 +13,15 @@ import Select from "@/components/form/Select";
 import Switch from "@/components/form/switch/Switch";
 import { Separator } from "@/components/ui/separator";
 import { useNavigate, useParams } from "react-router";
-import { upsertIpc, fetchIpcById } from "@/database/ipc";
 import { handleValidationErrors } from "@/helper/validationError";
 import { useEffect, useState } from "react";
 import Spinner from "@/components/ui/spinner/Spinner";
-
-const formSchema = z.object({
-    id: z.number().optional(),
-    firstname: z.string().min(1, "First name is required"),
-    lastname: z.string().min(1, "Last name is required"),
-    email: z.string().email("Invalid email address"),
-    two_fa_enabled: z.boolean(),
-    two_fa_type: z.number(),
-    salutation: z.string().min(1, "Salutation is required"),
-    phone: z.string(),
-    mobile: z
-        .string()
-        .min(1, "Mobile number is required")
-        .regex(
-            /^\+?\d+$/,
-            "Mobile number must contain only numbers and an optional + at the start",
-        ),
-    address1: z.string().min(1, "Address line 1 is required"),
-    address2: z.string().optional(),
-    address3: z.string().optional(),
-    city: z.string().min(1, "City is required"),
-    county: z.string().min(1, "County is required"),
-    country: z.string().min(1, "Country is required"),
-    postcode: z.string().min(1, "Postcode is required"),
-});
+import { fetchIpcById, upsertIpc } from "@/database/ipc_api";
+import { IUserForm } from "@/types/user";
+import { UserFormSchema } from "@/schema/UserFormSchema";
+import { IIPCSchema } from "@/types/ipc";
 
 const countries = [
-    // { code: "US", label: "+1" },
-    // { code: "GB", label: "+44" },
-    // { code: "CA", label: "+1" },
-    // { code: "AU", label: "+61" },
     { code: "UK", label: "+44" },
     { code: "PH", label: "+63" },
 ];
@@ -69,25 +42,27 @@ export function IPCForm() {
     const navigate = useNavigate();
     const [isLoading, setIsLoading] = useState(false);
 
-    const form = useForm<z.infer<typeof formSchema>>({
-        resolver: zodResolver(formSchema),
+    const { handleSubmit, control, setError, reset } = useForm<IUserForm>({
         defaultValues: {
+            salutation: "",
             firstname: "",
             lastname: "",
             email: "",
-            two_fa_enabled: false,
-            two_fa_type: 0,
-            salutation: "",
             phone: "",
             mobile: "+44",
-            address1: "",
-            address2: "",
-            address3: "",
+            two_fa_enabled: false,
+            two_fa_type: 0,
+            user_type_id: 0,
+            user_profile_id: 0,
+            address_line_1: "",
+            address_line_2: "",
+            address_line_3: "",
             city: "",
             county: "",
             country: "",
             postcode: "",
         },
+        resolver: zodResolver(UserFormSchema),
     });
 
     useEffect(() => {
@@ -95,36 +70,39 @@ export function IPCForm() {
             setIsLoading(true);
             fetchIpcById(id)
                 .then((data) => {
-                    form.reset({
+                    const userData = (data as IIPCSchema).user;
+
+                    reset({
                         id: data.id,
-                        firstname: data.user.firstname,
-                        lastname: data.user.lastname,
-                        email: data.user.email,
-                        two_fa_enabled: Boolean(data.user.two_fa_enabled),
-                        two_fa_type: data.user.two_fa_type,
-                        salutation: data.user.user_info.salutation,
-                        phone: data.user.user_info.phone || "",
-                        mobile: data.user.user_info.mobile,
-                        address1: data.user.user_info.address_line_1 || "",
-                        address2: data.user.user_info.address_line_2 || "",
-                        address3: data.user.user_info.address_line_3 || "",
-                        city: data.user.user_info.city,
-                        county: data.user.user_info.county,
-                        country: data.user.user_info.country,
-                        postcode: data.user.user_info.postcode,
+                        firstname: userData.firstname,
+                        lastname: userData.lastname,
+                        email: userData.email,
+                        two_fa_enabled: Boolean(userData.two_fa_enabled),
+                        two_fa_type: userData.two_fa_type,
+                        user_type_id: userData.user_type_id,
+                        user_profile_id: userData.user_profile_id,
+                        salutation: userData.user_info.salutation,
+                        phone: userData.user_info.phone || "",
+                        mobile: userData.user_info.mobile,
+                        address_line_1: userData.user_info.address_line_1 || "",
+                        address_line_2: userData.user_info.address_line_2 || "",
+                        address_line_3: userData.user_info.address_line_3 || "",
+                        city: userData.user_info.city,
+                        county: userData.user_info.county,
+                        country: userData.user_info.country,
+                        postcode: userData.user_info.postcode,
                     });
                 })
                 .catch((error) => {
-                    toast.error("Failed to load IPC data");
-                    console.error(error);
+                    return handleValidationErrors(error, setError);
                 })
                 .finally(() => {
                     setIsLoading(false);
                 });
         }
-    }, [id, form]);
+    }, [id, reset, setError]);
 
-    async function onSubmit(data: z.infer<typeof formSchema>) {
+    async function onSubmit(data: IUserForm) {
         toast.promise(upsertIpc(data), {
             loading: id ? "Updating IPC..." : "Creating IPC...",
             success: () => {
@@ -136,7 +114,7 @@ export function IPCForm() {
                     : "IPC created successfully!";
             },
             error: (error: unknown) => {
-                return handleValidationErrors(error, form.setError);
+                return handleValidationErrors(error, setError);
             },
         });
     }
@@ -150,13 +128,13 @@ export function IPCForm() {
                         <Spinner size="lg" />
                     </div>
                 ) : (
-                    <form id="form-ipc" onSubmit={form.handleSubmit(onSubmit)}>
+                    <form id="form-ipc" onSubmit={handleSubmit(onSubmit)}>
                         <FieldGroup>
                             <div className="grid grid-cols-2 gap-6 ">
                                 <div>
                                     <Controller
                                         name="salutation"
-                                        control={form.control}
+                                        control={control}
                                         render={({ field, fieldState }) => (
                                             <Field
                                                 data-invalid={
@@ -192,7 +170,7 @@ export function IPCForm() {
                                 <div>
                                     <Controller
                                         name="firstname"
-                                        control={form.control}
+                                        control={control}
                                         render={({ field, fieldState }) => (
                                             <Field
                                                 data-invalid={
@@ -225,7 +203,7 @@ export function IPCForm() {
                                 <div>
                                     <Controller
                                         name="lastname"
-                                        control={form.control}
+                                        control={control}
                                         render={({ field, fieldState }) => (
                                             <Field
                                                 data-invalid={
@@ -258,7 +236,7 @@ export function IPCForm() {
                                 <div>
                                     <Controller
                                         name="email"
-                                        control={form.control}
+                                        control={control}
                                         render={({ field, fieldState }) => (
                                             <Field
                                                 data-invalid={
@@ -291,7 +269,7 @@ export function IPCForm() {
                                 <div>
                                     <Controller
                                         name="mobile"
-                                        control={form.control}
+                                        control={control}
                                         render={({ field, fieldState }) => (
                                             <Field
                                                 data-invalid={
@@ -331,7 +309,7 @@ export function IPCForm() {
                                 <div>
                                     <Controller
                                         name="phone"
-                                        control={form.control}
+                                        control={control}
                                         render={({ field, fieldState }) => (
                                             <Field
                                                 data-invalid={
@@ -364,7 +342,7 @@ export function IPCForm() {
                                 <div>
                                     <Controller
                                         name="two_fa_enabled"
-                                        control={form.control}
+                                        control={control}
                                         render={({ field, fieldState }) => (
                                             <Field
                                                 data-invalid={
@@ -389,7 +367,7 @@ export function IPCForm() {
                                 <div>
                                     <Controller
                                         name="two_fa_type"
-                                        control={form.control}
+                                        control={control}
                                         render={({ field, fieldState }) => (
                                             <Field
                                                 data-invalid={
@@ -432,22 +410,22 @@ export function IPCForm() {
 
                                 <div>
                                     <Controller
-                                        name="address1"
-                                        control={form.control}
+                                        name="address_line_1"
+                                        control={control}
                                         render={({ field, fieldState }) => (
                                             <Field
                                                 data-invalid={
                                                     fieldState.invalid
                                                 }
                                             >
-                                                <Label htmlFor="address1">
+                                                <Label htmlFor="address_line_1">
                                                     Address Line 1
                                                 </Label>
                                                 <Input
                                                     {...field}
                                                     type="text"
-                                                    id="address1"
-                                                    name="address1"
+                                                    id="address_line_1"
+                                                    name="address_line_1"
                                                     placeholder="Enter address line 1"
                                                 />
                                                 {fieldState.error && (
@@ -465,22 +443,22 @@ export function IPCForm() {
 
                                 <div>
                                     <Controller
-                                        name="address2"
-                                        control={form.control}
+                                        name="address_line_2"
+                                        control={control}
                                         render={({ field, fieldState }) => (
                                             <Field
                                                 data-invalid={
                                                     fieldState.invalid
                                                 }
                                             >
-                                                <Label htmlFor="address2">
+                                                <Label htmlFor="address_line_2">
                                                     Address Line 2
                                                 </Label>
                                                 <Input
                                                     {...field}
                                                     type="text"
-                                                    id="address2"
-                                                    name="address2"
+                                                    id="address_line_2"
+                                                    name="address_line_2"
                                                     placeholder="Enter address line 2 (optional)"
                                                 />
                                                 {fieldState.error && (
@@ -498,22 +476,22 @@ export function IPCForm() {
 
                                 <div>
                                     <Controller
-                                        name="address3"
-                                        control={form.control}
+                                        name="address_line_3"
+                                        control={control}
                                         render={({ field, fieldState }) => (
                                             <Field
                                                 data-invalid={
                                                     fieldState.invalid
                                                 }
                                             >
-                                                <Label htmlFor="address3">
+                                                <Label htmlFor="address_line_3">
                                                     Address Line 3
                                                 </Label>
                                                 <Input
                                                     {...field}
                                                     type="text"
-                                                    id="address3"
-                                                    name="address3"
+                                                    id="address_line_3"
+                                                    name="address_line_3"
                                                     placeholder="Enter address line 3 (optional)"
                                                 />
                                                 {fieldState.error && (
@@ -532,7 +510,7 @@ export function IPCForm() {
                                 <div>
                                     <Controller
                                         name="city"
-                                        control={form.control}
+                                        control={control}
                                         render={({ field, fieldState }) => (
                                             <Field
                                                 data-invalid={
@@ -565,7 +543,7 @@ export function IPCForm() {
                                 <div>
                                     <Controller
                                         name="county"
-                                        control={form.control}
+                                        control={control}
                                         render={({ field, fieldState }) => (
                                             <Field
                                                 data-invalid={
@@ -598,7 +576,7 @@ export function IPCForm() {
                                 <div>
                                     <Controller
                                         name="country"
-                                        control={form.control}
+                                        control={control}
                                         render={({ field, fieldState }) => (
                                             <Field
                                                 data-invalid={
@@ -631,7 +609,7 @@ export function IPCForm() {
                                 <div>
                                     <Controller
                                         name="postcode"
-                                        control={form.control}
+                                        control={control}
                                         render={({ field, fieldState }) => (
                                             <Field
                                                 data-invalid={
@@ -671,10 +649,7 @@ export function IPCForm() {
                             Cancel
                         </Button>
                         {!id && (
-                            <Button
-                                variant="outline"
-                                onClick={() => form.reset()}
-                            >
+                            <Button variant="outline" onClick={() => reset()}>
                                 Reset
                             </Button>
                         )}

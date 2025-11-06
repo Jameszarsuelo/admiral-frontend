@@ -1,14 +1,14 @@
 import Button from "@/components/ui/button/Button";
 import { Button as CustomButton } from "@/components/ui/button";
-import { SupplierResponse } from "@/types/supplier";
 import { ColumnDef } from "@tanstack/react-table";
 import { ArrowUpDown } from "lucide-react";
+import { ISupplierSchema } from "@/types/suppliers";
 
 export const getSupplierHeaders = (
     navigate: (path: string) => void,
     handleDeleteClick: (id: number) => void,
     refetch: () => void,
-): ColumnDef<SupplierResponse>[] => [
+): ColumnDef<ISupplierSchema>[] => [
     {
         accessorKey: "salutation",
         accessorFn: (row) => row.user.user_info.salutation,

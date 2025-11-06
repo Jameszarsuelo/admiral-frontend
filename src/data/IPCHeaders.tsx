@@ -1,14 +1,14 @@
 import Button from "@/components/ui/button/Button";
 import { Button as CustomButton } from "@/components/ui/button";
-import { IPCResponse } from "@/types/ipc";
 import { ColumnDef } from "@tanstack/react-table";
 import { ArrowUpDown } from "lucide-react";
+import { IIPCSchema } from "@/types/ipc";
 
 export const getIPCHeaders = (
     navigate: (path: string) => void,
     handleDeleteClick: (id: number) => void,
     refetch: () => void,
-): ColumnDef<IPCResponse>[] => [
+): ColumnDef<IIPCSchema>[] => [
     {
         accessorKey: "salutation",
         accessorFn: (row) => row.user.user_info.salutation,

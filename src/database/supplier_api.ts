@@ -1,9 +1,8 @@
 import api from "./api";
 import { AxiosError } from "axios";
-import { IUser } from "@/types/user";
-import { SupplierResponse } from "@/types/supplier";
+import { ISupplierFormSchema, ISupplierSchema } from "@/types/suppliers";
 
-export async function upsertSupplier(supplierData: IUser): Promise<IUser> {
+export async function upsertSupplier(supplierData: ISupplierFormSchema): Promise<ISupplierFormSchema> {
     try {
         const response = supplierData.id
             ? await api.put(`/supplier/${supplierData.id}`, supplierData)
@@ -17,7 +16,7 @@ export async function upsertSupplier(supplierData: IUser): Promise<IUser> {
     }
 }
 
-export async function fetchSupplierList(): Promise<SupplierResponse[]> {
+export async function fetchSupplierList(): Promise<ISupplierSchema[]> {
     try {
         const response = await api.get(`/supplier`);
         return response.data;
@@ -29,7 +28,7 @@ export async function fetchSupplierList(): Promise<SupplierResponse[]> {
     }
 }
 
-export async function fetchSupplierById(id: string): Promise<SupplierResponse> {
+export async function fetchSupplierById(id: string): Promise<ISupplierSchema> {
     try {
         const response = await api.get(`/supplier/${id}`);
         return response.data;

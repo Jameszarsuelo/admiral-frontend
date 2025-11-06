@@ -2,12 +2,12 @@ import { DataTable } from "@/components/ui/DataTable";
 import { useNavigate } from "react-router";
 import PageBreadcrumb from "@/components/common/PageBreadCrumb";
 import { getIPCHeaders } from "@/data/IPCHeaders";
-import { deleteIpc, fetchIpcList } from "@/database/ipc";
 import { useQuery } from "@tanstack/react-query";
 import Spinner from "@/components/ui/spinner/Spinner";
 import Button from "@/components/ui/button/Button";
 import { useState } from "react";
 import { Modal } from "@/components/ui/modal";
+import { deleteIpc, fetchIpcList } from "@/database/ipc_api";
 
 export default function IPCView() {
     const navigate = useNavigate();

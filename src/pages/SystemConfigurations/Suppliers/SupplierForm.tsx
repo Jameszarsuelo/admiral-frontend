@@ -1,13 +1,12 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { toast } from "sonner";
-import * as z from "zod";
 
 import PageBreadcrumb from "@/components/common/PageBreadCrumb";
 import ComponentCard from "@/components/common/ComponentCard";
 import Label from "@/components/form/Label";
 import Input from "@/components/form/input/InputField";
 import { Field, FieldGroup } from "@/components/ui/field";
-import { Controller, Resolver, useForm } from "react-hook-form";
+import { Controller, useForm } from "react-hook-form";
 import Button from "@/components/ui/button/Button";
 import PhoneInput from "@/components/form/group-input/PhoneInput";
 import Select from "@/components/form/Select";
@@ -18,48 +17,8 @@ import { fetchSupplierById, upsertSupplier } from "@/database/supplier_api";
 import { handleValidationErrors } from "@/helper/validationError";
 import { useEffect, useState } from "react";
 import Spinner from "@/components/ui/spinner/Spinner";
-
-const formSchema = z.object({
-    id: z.number().optional(),
-    firstname: z.string().min(1, "First name is required"),
-    lastname: z.string().min(1, "Last name is required"),
-    email: z.string().email("Invalid email address"),
-    two_fa_enabled: z.boolean(),
-    two_fa_type: z.number(),
-    salutation: z.string().min(1, "Salutation is required"),
-    phone: z.string(),
-    mobile: z
-        .string()
-        .min(1, "Mobile number is required")
-        .regex(
-            /^\+?\d+$/,
-            "Mobile number must contain only numbers and an optional + at the start",
-        ),
-    address1: z.string().min(1, "Address line 1 is required"),
-    address2: z.string().optional(),
-    address3: z.string().optional(),
-    city: z.string().min(1, "City is required"),
-    county: z.string().min(1, "County is required"),
-    country: z.string().min(1, "Country is required"),
-    postcode: z.string().min(1, "Postcode is required"),
-    vatNumber: z.string().optional(),
-    invoiceQueryEmail: z.string().email("Invalid email address"),
-    maxPaymentDays: z.preprocess(
-        (val) => (val === "" || val === undefined ? 0 : Number(val)),
-        z.number().min(0, "Cannot be negative")
-    ),
-    targetPaymentDays: z.preprocess(
-        (val) => (val === "" || val === undefined ? 0 : Number(val)),
-        z.number().min(0, "Cannot be negative")
-    ),
-    priority: z.preprocess(
-        (val) => (val === "" || val === undefined ? 5 : Number(val)),
-        z.number().min(0).max(10, "Priority must be between 0 and 10")
-    ),
-    preferredPaymentDay: z.string().optional(),
-});
-
-type SupplierFormValues = z.infer<typeof formSchema>;
+import { SupplierFormSchema } from "@/schema/SupplierFormSchema";
+import { ISupplierFormSchema, ISupplierSchema } from "@/types/suppliers";
 
 const countries = [
     { code: "UK", label: "+44" },
@@ -82,74 +41,81 @@ export function SupplierForm() {
     const navigate = useNavigate();
     const [isLoading, setIsLoading] = useState(false);
 
-    const form = useForm<SupplierFormValues>({
-        resolver: zodResolver(formSchema) as Resolver<SupplierFormValues>,
-        defaultValues: {
-            firstname: "",
-            lastname: "",
-            email: "",
-            two_fa_enabled: false,
-            two_fa_type: 0,
-            salutation: "",
-            phone: "",
-            mobile: "+44",
-            address1: "",
-            address2: "",
-            address3: "",
-            city: "",
-            county: "",
-            country: "",
-            postcode: "",
-            vatNumber: "",
-            invoiceQueryEmail: "",
-            maxPaymentDays: 0,
-            priority: 5,
-            targetPaymentDays: 7,
-            preferredPaymentDay: "",
-        },
-    });
+    const { handleSubmit, control, setError, reset } =
+        useForm<ISupplierFormSchema>({
+            defaultValues: {
+                salutation: "",
+                firstname: "",
+                lastname: "",
+                email: "",
+                phone: "",
+                mobile: "+44",
+                two_fa_enabled: false,
+                two_fa_type: 0,
+                user_type_id: 0,
+                user_profile_id: 0,
+                address_line_1: "",
+                address_line_2: "",
+                address_line_3: "",
+                city: "",
+                county: "",
+                country: "",
+                postcode: "",
+                vat_number: "",
+                invoice_query_email: "",
+                max_payment_days: 30,
+                priority: 5,
+                target_payment_days: 7,
+                preferred_payment_day: "",
+            },
+            resolver: zodResolver(SupplierFormSchema),
+        });
 
     useEffect(() => {
         if (id) {
             setIsLoading(true);
             fetchSupplierById(id)
                 .then((data) => {
-                    form.reset({
+                    const supplierData = (data as ISupplierSchema).user;
+
+                    reset({
                         id: data.id,
-                        firstname: data.user.firstname,
-                        lastname: data.user.lastname,
-                        email: data.user.email,
-                        two_fa_enabled: Boolean(data.user.two_fa_enabled),
-                        two_fa_type: data.user.two_fa_type,
-                        salutation: data.user.user_info.salutation,
-                        phone: data.user.user_info.phone || "",
-                        mobile: data.user.user_info.mobile,
-                        address1: data.user.user_info.address_line_1 || "",
-                        address2: data.user.user_info.address_line_2 || "",
-                        address3: data.user.user_info.address_line_3 || "",
-                        city: data.user.user_info.city,
-                        county: data.user.user_info.county,
-                        country: data.user.user_info.country,
-                        postcode: data.user.user_info.postcode,
-                        vatNumber: data.vat_number || "",
-                        invoiceQueryEmail: data.invoice_query_email || "",
-                        maxPaymentDays: data.max_payment_days,
+                        salutation: supplierData.user_info.salutation,
+                        firstname: supplierData.firstname,
+                        lastname: supplierData.lastname,
+                        email: supplierData.email,
+                        two_fa_enabled: Boolean(supplierData.two_fa_enabled),
+                        two_fa_type: supplierData.two_fa_type,
+                        user_type_id: supplierData.user_type_id,
+                        user_profile_id: supplierData.user_profile_id,
+                        phone: supplierData.user_info.phone ?? "",
+                        mobile: supplierData.user_info.mobile,
+                        address_line_1: supplierData.user_info.address_line_1 || "",
+                        address_line_2: supplierData.user_info.address_line_2 || "",
+                        address_line_3: supplierData.user_info.address_line_3 || "",
+                        city: supplierData.user_info.city,
+                        county: supplierData.user_info.county,
+                        country: supplierData.user_info.country,
+                        postcode: supplierData.user_info.postcode,
+                        vat_number: data.vat_number,
+                        invoice_query_email: data.invoice_query_email,
+                        max_payment_days: data.max_payment_days,
+                        target_payment_days: data.target_payment_days,
+                        preferred_payment_day: data.preferred_payment_day || "",
                         priority: data.priority,
-                        targetPaymentDays: data.target_payment_days,
-                        preferredPaymentDay: data.preferred_payment_day || "",
                     });
                 })
                 .catch((error) => {
-                    toast.error("Failed to load IPC data");
-                    console.error(error);
+                    toast.error("Failed to load Supplier data");
+                    return handleValidationErrors(error, setError);
                 })
                 .finally(() => {
                     setIsLoading(false);
                 });
         }
-    }, [id, form]);
+    }, [id, reset, setError]);
 
-    function onSubmit(data: SupplierFormValues) {
+    function onSubmit(data: ISupplierFormSchema) {
         toast.promise(upsertSupplier(data), {
             loading: id ? "Updating Supplier..." : "Creating Supplier...",
             success: () => {
@@ -161,10 +127,10 @@ export function SupplierForm() {
                     : "Supplier created successfully!";
             },
             error: (error: unknown) => {
-                return handleValidationErrors(error, form.setError);
+                return handleValidationErrors(error, setError);
             },
         });
-        // console.log("Submitted data:", data);
+        console.log("Submitted data:", data);
     }
 
     return (
@@ -176,16 +142,13 @@ export function SupplierForm() {
                         <Spinner size="lg" />
                     </div>
                 ) : (
-                    <form
-                        id="form-supplier"
-                        onSubmit={form.handleSubmit(onSubmit)}
-                    >
+                    <form id="form-supplier" onSubmit={handleSubmit(onSubmit)}>
                         <FieldGroup>
                             <div className="grid grid-cols-2 gap-6 ">
                                 <div>
                                     <Controller
                                         name="salutation"
-                                        control={form.control}
+                                        control={control}
                                         render={({ field, fieldState }) => (
                                             <Field
                                                 data-invalid={
@@ -221,7 +184,7 @@ export function SupplierForm() {
                                 <div>
                                     <Controller
                                         name="firstname"
-                                        control={form.control}
+                                        control={control}
                                         render={({ field, fieldState }) => (
                                             <Field
                                                 data-invalid={
@@ -254,7 +217,7 @@ export function SupplierForm() {
                                 <div>
                                     <Controller
                                         name="lastname"
-                                        control={form.control}
+                                        control={control}
                                         render={({ field, fieldState }) => (
                                             <Field
                                                 data-invalid={
@@ -287,7 +250,7 @@ export function SupplierForm() {
                                 <div>
                                     <Controller
                                         name="email"
-                                        control={form.control}
+                                        control={control}
                                         render={({ field, fieldState }) => (
                                             <Field
                                                 data-invalid={
@@ -320,7 +283,7 @@ export function SupplierForm() {
                                 <div>
                                     <Controller
                                         name="mobile"
-                                        control={form.control}
+                                        control={control}
                                         render={({ field, fieldState }) => (
                                             <Field
                                                 data-invalid={
@@ -360,7 +323,7 @@ export function SupplierForm() {
                                 <div>
                                     <Controller
                                         name="phone"
-                                        control={form.control}
+                                        control={control}
                                         render={({ field, fieldState }) => (
                                             <Field
                                                 data-invalid={
@@ -393,7 +356,7 @@ export function SupplierForm() {
                                 <div>
                                     <Controller
                                         name="two_fa_enabled"
-                                        control={form.control}
+                                        control={control}
                                         render={({ field, fieldState }) => (
                                             <Field
                                                 data-invalid={
@@ -418,7 +381,7 @@ export function SupplierForm() {
                                 <div>
                                     <Controller
                                         name="two_fa_type"
-                                        control={form.control}
+                                        control={control}
                                         render={({ field, fieldState }) => (
                                             <Field
                                                 data-invalid={
@@ -461,22 +424,22 @@ export function SupplierForm() {
 
                                 <div>
                                     <Controller
-                                        name="address1"
-                                        control={form.control}
+                                        name="address_line_1"
+                                        control={control}
                                         render={({ field, fieldState }) => (
                                             <Field
                                                 data-invalid={
                                                     fieldState.invalid
                                                 }
                                             >
-                                                <Label htmlFor="address1">
+                                                <Label htmlFor="address_line_1">
                                                     Address Line 1
                                                 </Label>
                                                 <Input
                                                     {...field}
                                                     type="text"
-                                                    id="address1"
-                                                    name="address1"
+                                                    id="address_line_1"
+                                                    name="address_line_1"
                                                     placeholder="Enter address line 1"
                                                 />
                                                 {fieldState.error && (
@@ -494,22 +457,22 @@ export function SupplierForm() {
 
                                 <div>
                                     <Controller
-                                        name="address2"
-                                        control={form.control}
+                                        name="address_line_2"
+                                        control={control}
                                         render={({ field, fieldState }) => (
                                             <Field
                                                 data-invalid={
                                                     fieldState.invalid
                                                 }
                                             >
-                                                <Label htmlFor="address2">
+                                                <Label htmlFor="address_line_2">
                                                     Address Line 2
                                                 </Label>
                                                 <Input
                                                     {...field}
                                                     type="text"
-                                                    id="address2"
-                                                    name="address2"
+                                                    id="address_line_2"
+                                                    name="address_line_2"
                                                     placeholder="Enter address line 2 (optional)"
                                                 />
                                                 {fieldState.error && (
@@ -527,22 +490,22 @@ export function SupplierForm() {
 
                                 <div>
                                     <Controller
-                                        name="address3"
-                                        control={form.control}
+                                        name="address_line_3"
+                                        control={control}
                                         render={({ field, fieldState }) => (
                                             <Field
                                                 data-invalid={
                                                     fieldState.invalid
                                                 }
                                             >
-                                                <Label htmlFor="address3">
+                                                <Label htmlFor="address_line_3">
                                                     Address Line 3
                                                 </Label>
                                                 <Input
                                                     {...field}
                                                     type="text"
-                                                    id="address3"
-                                                    name="address3"
+                                                    id="address_line_3"
+                                                    name="address_line_3"
                                                     placeholder="Enter address line 3 (optional)"
                                                 />
                                                 {fieldState.error && (
@@ -561,7 +524,7 @@ export function SupplierForm() {
                                 <div>
                                     <Controller
                                         name="city"
-                                        control={form.control}
+                                        control={control}
                                         render={({ field, fieldState }) => (
                                             <Field
                                                 data-invalid={
@@ -594,7 +557,7 @@ export function SupplierForm() {
                                 <div>
                                     <Controller
                                         name="county"
-                                        control={form.control}
+                                        control={control}
                                         render={({ field, fieldState }) => (
                                             <Field
                                                 data-invalid={
@@ -627,7 +590,7 @@ export function SupplierForm() {
                                 <div>
                                     <Controller
                                         name="country"
-                                        control={form.control}
+                                        control={control}
                                         render={({ field, fieldState }) => (
                                             <Field
                                                 data-invalid={
@@ -660,7 +623,7 @@ export function SupplierForm() {
                                 <div>
                                     <Controller
                                         name="postcode"
-                                        control={form.control}
+                                        control={control}
                                         render={({ field, fieldState }) => (
                                             <Field
                                                 data-invalid={
@@ -696,22 +659,22 @@ export function SupplierForm() {
 
                                 <div>
                                     <Controller
-                                        name="vatNumber"
-                                        control={form.control}
+                                        name="vat_number"
+                                        control={control}
                                         render={({ field, fieldState }) => (
                                             <Field
                                                 data-invalid={
                                                     fieldState.invalid
                                                 }
                                             >
-                                                <Label htmlFor="vatNumber">
+                                                <Label htmlFor="vat_number">
                                                     VAT number
                                                 </Label>
                                                 <Input
                                                     {...field}
                                                     type="text"
-                                                    id="vatNumber"
-                                                    name="vatNumber"
+                                                    id="vat_number"
+                                                    name="vat_number"
                                                     placeholder="Enter VAT number"
                                                 />
                                                 {fieldState.error && (
@@ -729,22 +692,22 @@ export function SupplierForm() {
 
                                 <div>
                                     <Controller
-                                        name="invoiceQueryEmail"
-                                        control={form.control}
+                                        name="invoice_query_email"
+                                        control={control}
                                         render={({ field, fieldState }) => (
                                             <Field
                                                 data-invalid={
                                                     fieldState.invalid
                                                 }
                                             >
-                                                <Label htmlFor="invoiceQueryEmail">
+                                                <Label htmlFor="invoice_query_email">
                                                     Invoice Query Email
                                                 </Label>
                                                 <Input
                                                     {...field}
                                                     type="text"
-                                                    id="invoiceQueryEmail"
-                                                    name="invoiceQueryEmail"
+                                                    id="invoice_query_email"
+                                                    name="invoice_query_email"
                                                     placeholder="e.g. john@test.com"
                                                 />
                                                 {fieldState.error && (
@@ -762,26 +725,38 @@ export function SupplierForm() {
 
                                 <div>
                                     <Controller
-                                        name="maxPaymentDays"
-                                        control={form.control}
+                                        name="max_payment_days"
+                                        control={control}
                                         render={({ field, fieldState }) => (
                                             <Field
                                                 data-invalid={
                                                     fieldState.invalid
                                                 }
                                             >
-                                                <Label htmlFor="maxPaymentDays">
+                                                <Label htmlFor="max_payment_days">
                                                     Max Payment Days
                                                 </Label>
                                                 <Input
                                                     {...field}
                                                     type="number"
-                                                    id="maxPaymentDays"
-                                                    name="maxPaymentDays"
+                                                    id="max_payment_days"
+                                                    name="max_payment_days"
                                                     placeholder="30"
                                                     value={
-                                                        field.value as number
+                                                        field.value ?? ""
                                                     }
+                                                    onChange={(e) =>
+                                                        field.onChange(
+                                                            e.target.value ===
+                                                                ""
+                                                                ? undefined
+                                                                : Number(
+                                                                      e.target
+                                                                          .value,
+                                                                  ),
+                                                        )
+                                                    }
+                                                    onBlur={field.onBlur}
                                                 />
                                                 {fieldState.error && (
                                                     <p className="mt-1 text-sm text-error-500">
@@ -798,26 +773,38 @@ export function SupplierForm() {
 
                                 <div>
                                     <Controller
-                                        name="targetPaymentDays"
-                                        control={form.control}
+                                        name="target_payment_days"
+                                        control={control}
                                         render={({ field, fieldState }) => (
                                             <Field
                                                 data-invalid={
                                                     fieldState.invalid
                                                 }
                                             >
-                                                <Label htmlFor="targetPaymentDays">
+                                                <Label htmlFor="target_payment_days">
                                                     Target Payment Days
                                                 </Label>
                                                 <Input
                                                     {...field}
                                                     type="number"
-                                                    id="targetPaymentDays"
-                                                    name="targetPaymentDays"
+                                                    id="target_payment_days"
+                                                    name="target_payment_days"
                                                     placeholder="30"
                                                     value={
-                                                        field.value as number
+                                                        field.value ?? ""
                                                     }
+                                                    onChange={(e) =>
+                                                        field.onChange(
+                                                            e.target.value ===
+                                                                ""
+                                                                ? undefined
+                                                                : Number(
+                                                                      e.target
+                                                                          .value,
+                                                                  ),
+                                                        )
+                                                    }
+                                                    onBlur={field.onBlur}
                                                 />
                                                 {fieldState.error && (
                                                     <p className="mt-1 text-sm text-error-500">
@@ -834,22 +821,22 @@ export function SupplierForm() {
 
                                 <div>
                                     <Controller
-                                        name="preferredPaymentDay"
-                                        control={form.control}
+                                        name="preferred_payment_day"
+                                        control={control}
                                         render={({ field, fieldState }) => (
                                             <Field
                                                 data-invalid={
                                                     fieldState.invalid
                                                 }
                                             >
-                                                <Label htmlFor="preferredPaymentDay">
+                                                <Label htmlFor="preferred_payment_day">
                                                     Preferred Payment Day
                                                 </Label>
                                                 <Input
                                                     {...field}
                                                     type="text"
-                                                    id="preferredPaymentDay"
-                                                    name="preferredPaymentDay"
+                                                    id="preferred_payment_day"
+                                                    name="preferred_payment_day"
                                                 />
                                                 {fieldState.error && (
                                                     <p className="mt-1 text-sm text-error-500">
@@ -867,7 +854,7 @@ export function SupplierForm() {
                                 <div>
                                     <Controller
                                         name="priority"
-                                        control={form.control}
+                                        control={control}
                                         render={({ field, fieldState }) => (
                                             <Field
                                                 data-invalid={
@@ -884,10 +871,18 @@ export function SupplierForm() {
                                                     placeholder="Default: 5, Min: 1, Max: 10"
                                                     min={1}
                                                     max={10}
-                                                    value={
-                                                        field.value as number
+                                                    value={field.value ?? ""}
+                                                    onChange={(e) =>
+                                                        field.onChange(
+                                                            e.target.value ===
+                                                                ""
+                                                                ? undefined
+                                                                : Number(
+                                                                      e.target
+                                                                          .value,
+                                                                  ),
+                                                        )
                                                     }
-                                                    onChange={field.onChange}
                                                     onBlur={field.onBlur}
                                                 />
                                                 {fieldState.error && (
@@ -913,10 +908,7 @@ export function SupplierForm() {
                             Cancel
                         </Button>
                         {!id && (
-                            <Button
-                                variant="outline"
-                                onClick={() => form.reset()}
-                            >
+                            <Button variant="outline" onClick={() => reset()}>
                                 Reset
                             </Button>
                         )}
