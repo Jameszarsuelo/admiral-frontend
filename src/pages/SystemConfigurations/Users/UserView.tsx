@@ -4,43 +4,31 @@ import { useNavigate } from "react-router";
 import PageBreadcrumb from "@/components/common/PageBreadCrumb";
 import { Button } from "@/components/ui/button";
 import { getUserHeaders } from "@/data/UserHeaders";
-
-const data: Payment[] = [
-    {
-        id: "m5gr84i9",
-        amount: 316,
-        status: "success",
-        email: "ken99@example.com",
-    },
-    {
-        id: "3u1reuv4",
-        amount: 242,
-        status: "success",
-        email: "Abe45@example.com",
-    },
-    {
-        id: "derv1ws0",
-        amount: 837,
-        status: "processing",
-        email: "Monserrat44@example.com",
-    },
-    {
-        id: "5kma53ae",
-        amount: 874,
-        status: "success",
-        email: "Silas22@example.com",
-    },
-    {
-        id: "bhqecj4p",
-        amount: 721,
-        status: "failed",
-        email: "carmella@example.com",
-    },
-];
+import { useQuery } from "@tanstack/react-query";
+import { fetchUserList } from "@/database/user";
+import Spinner from "@/components/ui/spinner/Spinner";
 
 export default function UserView() {
     const navigate = useNavigate();
     const columns = getUserHeaders(navigate);
+
+    const {
+        data: userData,
+        isLoading,
+        // error,
+        refetch,
+    } = useQuery({
+        queryKey: ["user-data"],
+        queryFn: async () => {
+            return await fetchUserList();
+        },
+        refetchInterval: 1000 * 60 * 5, // 5 minutes
+        refetchIntervalInBackground: true,
+        staleTime: 500,
+        gcTime: 20000,
+    });
+
+    console.log(userData);
 
     return (
         <>
@@ -66,7 +54,13 @@ export default function UserView() {
 
                     <div className="max-w-full overflow-x-auto custom-scrollbar">
                         <div className="min-w-[1000px] xl:min-w-full px-2">
-                            <DataTable columns={columns} data={data} />
+                            {!isLoading && userData ? (
+                                <DataTable columns={columns} data={userData} />
+                            ) : (
+                                <div className="flex items-center justify-center py-12">
+                                    <Spinner size="lg" />
+                                </div>
+                            )}
                         </div>
                     </div>
                 </div>

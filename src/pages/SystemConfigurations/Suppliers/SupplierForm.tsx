@@ -14,7 +14,7 @@ import Select from "@/components/form/Select";
 import Switch from "@/components/form/switch/Switch";
 import { Separator } from "@/components/ui/separator";
 import { useNavigate, useParams } from "react-router";
-import { fetchSupplierById, upsertSupplier } from "@/database/supplier";
+import { fetchSupplierById, upsertSupplier } from "@/database/supplier_api";
 import { handleValidationErrors } from "@/helper/validationError";
 import { useEffect, useState } from "react";
 import Spinner from "@/components/ui/spinner/Spinner";

@@ -3,7 +3,7 @@ import { useNavigate } from "react-router";
 import PageBreadcrumb from "@/components/common/PageBreadCrumb";
 import Button from "@/components/ui/button/Button";
 import { useQuery } from "@tanstack/react-query";
-import { deleteSupplier, fetchSupplierList } from "@/database/supplier";
+import { deleteSupplier, fetchSupplierList } from "@/database/supplier_api";
 import { getSupplierHeaders } from "@/data/SupplierHeaders";
 import { useState } from "react";
 import { Modal } from "@/components/ui/modal";

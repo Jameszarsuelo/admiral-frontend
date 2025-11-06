@@ -42,8 +42,8 @@ const salutationOptions = [
 ];
 
 const userTypes = [
-    { value: "1", label: "Admin" },
-    { value: "2", label: "Supervisor" },
+    { value: 1, label: "Admin" },
+    { value: 2, label: "Supervisor" },
 ];
 
 const UserForm = () => {
@@ -57,9 +57,10 @@ const UserForm = () => {
             email: "",
             phone: "",
             mobile: "",
-            twoFactor: false,
-            twofaType: "",
-            user_type_id: "",
+            two_fa_enabled: false,
+            two_fa_type: 0,
+            user_type_id: 0,
+            user_profile_id: 0,
             address1: "",
             address2: "",
             address3: "",
@@ -81,44 +82,31 @@ const UserForm = () => {
                     ...data,       // main user data
                     ...(userInfo || {}),   // override or add fields from user_info
                 };
-                reset({
-                    id: user_data.id,
-                    firstname: user_data.firstname || "",
-                    lastname: user_data.lastname || "",
-                    email: user_data.email || "",
-                    salutation: user_data.salutation || "",
-                    phone: user_data.phone || "",
-                    mobile: user_data.mobile || "",
-                    address1: user_data.address_line_1 || "",
-                    address2: user_data.address_line_2 || "",
-                    city: user_data.city || "",
-                    county: user_data.county || "",
-                    country: user_data.country || "",
-                    postcode: user_data.postcode || "",
-                });
+                reset(user_data);
             })
         }
     }, [id])
 
     const onSubmit = async (userData: IUserForm) => {
-        try {
-            toast.promise(
-                upsertUser(userData), {
-                loading: id ? "Updating User..." : "Creating User...",
-                success: () => {
-                    setTimeout(() => {
-                        navigate("/users")
-                    }, 2000);
-                    return id ? "User updated successfully" : "User created successfully!";
-                },
-                error: (error: unknown) => {
-                    return handleValidationErrors(error, setError)
-                }
-            }
-            )
-        } catch (error) {
-            console.log("Error upon Submitting", error);
-        }
+        console.log(userData);
+        // try {
+        //     toast.promise(
+        //         upsertUser(userData), {
+        //         loading: id ? "Updating User..." : "Creating User...",
+        //         success: () => {
+        //             setTimeout(() => {
+        //                 navigate("/users")
+        //             }, 2000);
+        //             return id ? "User updated successfully" : "User created successfully!";
+        //         },
+        //         error: (error: unknown) => {
+        //             return handleValidationErrors(error, setError)
+        //         }
+        //     }
+        //     )
+        // } catch (error) {
+        //     console.log("Error upon Submitting", error);
+        // }
     }
 
 
@@ -304,7 +292,7 @@ const UserForm = () => {
 
                             <div>
                                 <Controller
-                                    name="twoFactor"
+                                    name="two_fa_enabled"
                                     control={control}
                                     render={({ field, fieldState }) => (
                                         <Field
@@ -325,17 +313,17 @@ const UserForm = () => {
 
                             <div>
                                 <Controller
-                                    name="twofaType"
+                                    name="two_fa_type"
                                     control={control}
                                     render={({ field, fieldState }) => (
                                         <Field
                                             data-invalid={fieldState.invalid}
                                         >
-                                            <Label htmlFor="twofaType">
+                                            <Label htmlFor="two_fa_type">
                                                 2FA Type
                                             </Label>
                                             <Select
-                                                value={field.value}
+                                                value={String(field.value ?? "")}
                                                 options={twofaTypeOptions}
                                                 placeholder="Select 2FA Type"
                                                 onChange={(value: string) =>
@@ -366,11 +354,41 @@ const UserForm = () => {
                                                 User Type
                                             </Label>
                                             <Select
-                                                value={field.value}
+                                                value={String(field.value ?? "")}
                                                 options={userTypes}
                                                 placeholder="Select User Type"
                                                 onChange={(value: string) =>
                                                     field.onChange(value)
+                                                }
+                                                onBlur={field.onBlur}
+                                                className="dark:bg-dark-900"
+                                            />
+                                            {fieldState.error && (
+                                                <p className="mt-1 text-sm text-error-500">
+                                                    {fieldState.error.message}
+                                                </p>
+                                            )}
+                                        </Field>
+                                    )}
+                                />
+                            </div>
+                            <div>
+                                <Controller
+                                    name="user_profile_id"
+                                    control={control}
+                                    render={({ field, fieldState }) => (
+                                        <Field
+                                            data-invalid={fieldState.invalid}
+                                        >
+                                            <Label htmlFor="user_profile_id">
+                                                User Profile
+                                            </Label>
+                                            <Select
+                                                value={String(field.value ?? "")}
+                                                options={userTypes}
+                                                placeholder="Select Profile Type"
+                                                onChange={(value: string) =>
+                                                    field.onChange(Number(value))
                                                 }
                                                 onBlur={field.onBlur}
                                                 className="dark:bg-dark-900"

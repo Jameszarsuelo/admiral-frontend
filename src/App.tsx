@@ -89,6 +89,11 @@ export default function App() {
                                 element={<PlanningForm />}
                             />
 
+                            <Route
+                                path="/planning/:id?"
+                                element={<PlanningForm />}
+                            />
+
 
                             {/* Others Page */}
                             {/* <Route path="/profile" element={<UserProfiles />} /> */}
