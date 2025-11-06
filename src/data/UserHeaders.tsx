@@ -1,5 +1,5 @@
-import { Button } from "@/components/ui/button";
-// import { Checkbox } from "@/components/ui/checkbox";
+import Button from "@/components/ui/button/Button";
+import { Button as CustomButton } from "@/components/ui/button";
 import {
     DropdownMenu,
     DropdownMenuContent,
@@ -12,8 +12,11 @@ import { IUserList } from "@/types/user";
 import { ColumnDef } from "@tanstack/react-table";
 import { ArrowUpDown, MoreHorizontal } from "lucide-react";
 
+
 export const getUserHeaders = (
     navigate: (path: string) => void,
+    handleDeleteClick: (id: number) => void,
+    refetch: () => void,
 ): ColumnDef<IUserList>[] => [
     {
         accessorKey: "salutation",
@@ -21,90 +24,103 @@ export const getUserHeaders = (
         header: () => <div className="ml-4">Salutation</div>,
         cell: ({ row }) => (
             <div className="capitalize dark:text-white ml-4">
-                {row.getValue("salutation")}
+                {row.getValue("salutation")}.
             </div>
         ),
     },
-    // {
-    //     accessorKey: "email",
-    //     header: ({ column }) => {
-    //         return (
-    //             <Button
-    //                 variant="ghost"
-    //                 onClick={() =>
-    //                     column.toggleSorting(column.getIsSorted() === "asc")
-    //                 }
-    //             >
-    //                 Email
-    //                 <ArrowUpDown />
-    //             </Button>
-    //         );
-    //     },
-    //     cell: ({ row }) => (
-    //         <div className="lowercase dark:text-white">
-    //             {row.getValue("email")}
-    //         </div>
-    //     ),
-    // },
-    // {
-    //     accessorKey: "amount",
-    //     header: () => <div>Amount</div>,
-    //     cell: ({ row }) => {
-    //         const amount = parseFloat(row.getValue("amount"));
-    //         // Format the amount as a dollar amount
-    //         const formatted = new Intl.NumberFormat("en-US", {
-    //             style: "currency",
-    //             currency: "USD",
-    //         }).format(amount);
-    //         return (
-    //             <div className="font-medium dark:text-white">{formatted}</div>
-    //         );
-    //     },
-    // },
-    // {
-    //     id: "actions",
-    //     header: () => <div>Actions</div>,
-    //     cell: ({ row }) => {
-    //         const payment = row.original;
+    {
+        accessorKey: "firstname",
+        accessorFn: (row) => row.firstname,
+        header: () => <div className="ml-4">Firstname</div>,
+        cell: ({ row }) => (
+            <div className="capitalize dark:text-white ml-4">
+                {row.getValue("firstname")}
+            </div>
+        ),
+    },
+    {
+        accessorKey: "lastname",
+        accessorFn: (row) => row.lastname,
+        header: () => <div className="ml-4">Lastname</div>,
+        cell: ({ row }) => (
+            <div className="capitalize dark:text-white ml-4">
+                {row.getValue("lastname")}
+            </div>
+        ),
+    },
+    {
+        accessorKey: "email",
+        accessorFn: (row) => row.email,
+        header: ({ column }) => {
+            return (
+                <CustomButton
+                    variant="ghost"
+                    onClick={() =>
+                        column.toggleSorting(column.getIsSorted() === "asc")
+                    }
+                >
+                    Email
+                    <ArrowUpDown />
+                </CustomButton>
+            );
+        },
+        cell: ({ row }) => (
+            <div className=" dark:text-white ml-4">{row.getValue("email")}</div>
+        ),
+    },
+    {
+        accessorKey: "mobile",
+        accessorFn: (row) => row.user_info.mobile,
+        header: () => <div className="ml-4">Mobile</div>,
+        cell: ({ row }) => (
+            <div className="capitalize dark:text-white ml-4">
+                {row.getValue("mobile")}
+            </div>
+        ),
+    },
+    {
+        accessorKey: "address",
+        header: () => <div className="ml-4">Address</div>,
+        cell: ({ row }) => (
+            <div className="capitalize dark:text-white ml-4">
+                {row.original.user_info.city}, {row.original.user_info.country},{" "}
+                {row.original.user_info.postcode}
+            </div>
+        ),
+    },
+    {
+        id: "actions",
+        header: () => <div>Actions</div>,
+        cell: ({ row }) => {
+            const userData = row.original;
 
-    //         const handleEdit = (id: string) => {
-    //             navigate(`/users/edit/${id}`);
-    //         };
+            const handleEdit = (id: number) => {
+                navigate(`/users/edit/${id}`);
+            };
 
-    //         return (
-    //             <DropdownMenu>
-    //                 <DropdownMenuTrigger asChild>
-    //                     <Button
-    //                         variant="ghost"
-    //                         className="h-8 w-8 p-0 dark:text-white"
-    //                     >
-    //                         <span className="sr-only">Open menu</span>
-    //                         <MoreHorizontal />
-    //                     </Button>
-    //                 </DropdownMenuTrigger>
-    //                 <DropdownMenuContent align="end">
-    //                     <DropdownMenuLabel>Actions</DropdownMenuLabel>
-    //                     <DropdownMenuItem
-    //                         onClick={() =>
-    //                             navigator.clipboard.writeText(payment.id)
-    //                         }
-    //                     >
-    //                         Copy payment ID
-    //                     </DropdownMenuItem>
-    //                     <DropdownMenuSeparator />
-    //                     <DropdownMenuItem
-    //                         onClick={() => {
-    //                             handleEdit(payment.id);
-    //                         }}
-    //                     >
-    //                         Edit
-    //                     </DropdownMenuItem>
-    //                     <DropdownMenuItem>
-    //                         View payment details
-    //                     </DropdownMenuItem>
-    //                 </DropdownMenuContent>
-    //             </DropdownMenu>
-    //         );
-    //     },
-    // },
+            const onDelete = (id: number) => {
+                handleDeleteClick(id);
+                refetch();
+            };
+
+            return (
+                <div className="flex gap-2">
+                    <Button
+                        onClick={() => handleEdit(userData.id!)}
+                        variant="primary"
+                        size="sm"
+                    >
+                        Edit
+                    </Button>
+                    <Button
+                        onClick={() => onDelete(userData.id!)}
+                        variant="danger"
+                        size="sm"
+                    >
+                        Delete
+                    </Button>
+                </div>
+            );
+        },
+    },
 ];
