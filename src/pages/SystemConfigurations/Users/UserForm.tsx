@@ -18,6 +18,7 @@ import { handleValidationErrors } from '@/helper/validationError';
 import { fetchUser, upsertUser } from '@/database/user';
 import { IUserForm } from '@/types/user';
 import { UserFormSchema } from '@/schema/UserFormSchema';
+import test from 'node:test';
 
 
 const countries = [
@@ -70,10 +71,31 @@ const UserForm = () => {
         resolver: zodResolver(UserFormSchema)
     });
 
-    useEffect(()=>{
-        if(id){
-            fetchUser(id).then((data)=>{
-                reset(data);
+    useEffect(() => {
+        if (id) {
+            fetchUser(id).then((data) => {
+                const userInfo = (data as any).user_info;
+                // const {id, firstname, lastname, email} = data;
+                // const { salutation, phone, mobile, address1, address2, address3, city, county, country, postcode } = userInfo || {};
+                const user_data = {
+                    ...data,       // main user data
+                    ...(userInfo || {}),   // override or add fields from user_info
+                };
+                reset({
+                    id: user_data.id,
+                    firstname: user_data.firstname || "",
+                    lastname: user_data.lastname || "",
+                    email: user_data.email || "",
+                    salutation: user_data.salutation || "",
+                    phone: user_data.phone || "",
+                    mobile: user_data.mobile || "",
+                    address1: user_data.address_line_1 || "",
+                    address2: user_data.address_line_2 || "",
+                    city: user_data.city || "",
+                    county: user_data.county || "",
+                    country: user_data.country || "",
+                    postcode: user_data.postcode || "",
+                });
             })
         }
     }, [id])
