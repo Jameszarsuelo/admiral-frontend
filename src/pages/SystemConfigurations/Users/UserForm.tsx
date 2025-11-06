@@ -15,18 +15,19 @@ import Switch from "@/components/form/switch/Switch";
 import { Separator } from "@/components/ui/separator";
 import { zodResolver } from '@hookform/resolvers/zod';
 import { handleValidationErrors } from '@/helper/validationError';
-import { fetchUser, upsertUser } from '@/database/user';
+import { fetchUser, upsertUser } from '@/database/user_api';
 import { IUserForm } from '@/types/user';
 import { UserFormSchema } from '@/schema/UserFormSchema';
-import test from 'node:test';
+
 
 
 const countries = [
-    { code: "US", label: "+1" },
-    { code: "GB", label: "+44" },
-    { code: "CA", label: "+1" },
-    { code: "AU", label: "+61" },
-    { code: "PH", label: "+63" },
+    { code: "UK", label: "+43 " },
+    { code: "US", label: "+1 " },
+    { code: "GB", label: "+44 " },
+    { code: "CA", label: "+1 " },
+    { code: "AU", label: "+61 " },
+    { code: "PH", label: "+63 " },
 ];
 
 const twofaTypeOptions = [
@@ -61,9 +62,9 @@ const UserForm = () => {
             two_fa_type: 0,
             user_type_id: 0,
             user_profile_id: 0,
-            address1: "",
-            address2: "",
-            address3: "",
+            address_line_1: "",
+            address_line_2: "",
+            address_line_3: "",
             city: "",
             county: "",
             country: "",
@@ -75,45 +76,63 @@ const UserForm = () => {
     useEffect(() => {
         if (id) {
             fetchUser(id).then((data) => {
+            
                 const userInfo = (data as any).user_info;
-                // const {id, firstname, lastname, email} = data;
-                // const { salutation, phone, mobile, address1, address2, address3, city, county, country, postcode } = userInfo || {};
                 const user_data = {
                     ...data,       // main user data
                     ...(userInfo || {}),   // override or add fields from user_info
                 };
-                reset(user_data);
+                // reset(user_data);
+                reset({
+                      id: data.id,
+                        firstname: user_data.firstname,
+                        lastname: user_data.lastname,
+                        email: user_data.email,
+                        two_fa_enabled: Boolean(user_data.two_fa_enabled),
+                        two_fa_type: user_data.two_fa_type,
+                        user_type_id: user_data.user_type_id,
+                        user_profile_id: user_data.user_profile_id,
+                        salutation: user_data.user_info.salutation,
+                        phone: user_data.user_info.phone || "",
+                        mobile: user_data.user_info.mobile,
+                        address_line_1: user_data.user_info.address_line_1 || "",
+                        address_line_2: user_data.user_info.address_line_2 || "",
+                        address_line_3: user_data.user_info.address_line_3 || "",
+                        city: user_data.user_info.city,
+                        county: user_data.user_info.county,
+                        country: user_data.user_info.country,
+                        postcode: user_data.user_info.postcode,
+                })
             })
         }
     }, [id])
 
     const onSubmit = async (userData: IUserForm) => {
-        console.log(userData);
-        // try {
-        //     toast.promise(
-        //         upsertUser(userData), {
-        //         loading: id ? "Updating User..." : "Creating User...",
-        //         success: () => {
-        //             setTimeout(() => {
-        //                 navigate("/users")
-        //             }, 2000);
-        //             return id ? "User updated successfully" : "User created successfully!";
-        //         },
-        //         error: (error: unknown) => {
-        //             return handleValidationErrors(error, setError)
-        //         }
-        //     }
-        //     )
-        // } catch (error) {
-        //     console.log("Error upon Submitting", error);
-        // }
+        try {
+            toast.promise(
+                upsertUser(userData), {
+                loading: id ? "Updating User..." : "Creating User...",
+                success: () => {
+                    setTimeout(() => {
+                        navigate("/users")
+                    }, 2000);
+                    return id ? "User updated successfully" : "User created successfully!";
+                },
+                error: (error: unknown) => {
+                    return handleValidationErrors(error, setError)
+                }
+            }
+            )
+        } catch (error) {
+            console.log("Error upon Submitting", error);
+        }
     }
 
 
     return (
         <>
-            <PageBreadcrumb pageTitle="Users" />
-            <ComponentCard title={"Add User"}>
+            <PageBreadcrumb pageTitle="User" />
+            <ComponentCard title={ id ? "Edit User" : "Add User"}>
                 <form id="form-user" onSubmit={handleSubmit(onSubmit)}>
                     <FieldGroup>
                         <div className="grid grid-cols-2 gap-6 ">
@@ -355,10 +374,14 @@ const UserForm = () => {
                                             </Label>
                                             <Select
                                                 value={String(field.value ?? "")}
-                                                options={userTypes}
+                                                options={userTypes.map(option => ({
+                                                    value: String(option.value), // make sure Select always gets strings
+                                                    label: option.label,
+                                                }))
+                                                }
                                                 placeholder="Select User Type"
                                                 onChange={(value: string) =>
-                                                    field.onChange(value)
+                                                    field.onChange(Number(value))
                                                 }
                                                 onBlur={field.onBlur}
                                                 className="dark:bg-dark-900"
@@ -385,7 +408,10 @@ const UserForm = () => {
                                             </Label>
                                             <Select
                                                 value={String(field.value ?? "")}
-                                                options={userTypes}
+                                                options={userTypes.map(option => ({
+                                                    value: String(option.value), // make sure Select always gets strings
+                                                    label: option.label,
+                                                }))}
                                                 placeholder="Select Profile Type"
                                                 onChange={(value: string) =>
                                                     field.onChange(Number(value))
@@ -409,20 +435,20 @@ const UserForm = () => {
 
                             <div>
                                 <Controller
-                                    name="address1"
+                                    name="address_line_1"
                                     control={control}
                                     render={({ field, fieldState }) => (
                                         <Field
                                             data-invalid={fieldState.invalid}
                                         >
-                                            <Label htmlFor="address1">
+                                            <Label htmlFor="address_line_1">
                                                 Address Line 1
                                             </Label>
                                             <Input
                                                 {...field}
                                                 type="text"
-                                                id="address1"
-                                                name="address1"
+                                                id="address_line_1"
+                                                name="address_line_1"
                                                 placeholder="Enter address line 1"
                                             />
                                             {fieldState.error && (
@@ -437,20 +463,20 @@ const UserForm = () => {
 
                             <div>
                                 <Controller
-                                    name="address2"
+                                    name="address_line_2"
                                     control={control}
                                     render={({ field, fieldState }) => (
                                         <Field
                                             data-invalid={fieldState.invalid}
                                         >
-                                            <Label htmlFor="address2">
+                                            <Label htmlFor="address_line_2">
                                                 Address Line 2
                                             </Label>
                                             <Input
                                                 {...field}
                                                 type="text"
-                                                id="address2"
-                                                name="address2"
+                                                id="address_line_2"
+                                                name="address_line_2"
                                                 placeholder="Enter address line 2 (optional)"
                                             />
                                             {fieldState.error && (
@@ -465,20 +491,20 @@ const UserForm = () => {
 
                             <div>
                                 <Controller
-                                    name="address3"
+                                    name="address_line_3"
                                     control={control}
                                     render={({ field, fieldState }) => (
                                         <Field
                                             data-invalid={fieldState.invalid}
                                         >
-                                            <Label htmlFor="address3">
+                                            <Label htmlFor="address_line_3">
                                                 Address Line 3
                                             </Label>
                                             <Input
                                                 {...field}
                                                 type="text"
-                                                id="address3"
-                                                name="address3"
+                                                id="address_line_3"
+                                                name="address_line_3"
                                                 placeholder="Enter address line 3 (optional)"
                                             />
                                             {fieldState.error && (
@@ -605,11 +631,19 @@ const UserForm = () => {
                 </form>
 
                 <div className="mt-6 flex justify-end gap-3">
-                    <Button variant="outline">
-                        Reset
-                    </Button>
+                     <Button variant="danger" onClick={() => navigate(-1)}>
+                            Cancel
+                        </Button>
+                        {!id && (
+                            <Button
+                                variant="outline"
+                                onClick={() => reset()}
+                            >
+                                Reset
+                            </Button>
+                        )}
                     <Button type="submit" form="form-user">
-                        Submit
+                        {id ? "Update" : "Submit"}
                     </Button>
                 </div>
             </ComponentCard>
