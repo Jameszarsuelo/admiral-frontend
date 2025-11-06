@@ -1,76 +1,65 @@
-import { Payment } from "@/types/payment";
 import { DataTable } from "@/components/ui/DataTable";
 import { useNavigate } from "react-router";
 import PageBreadcrumb from "@/components/common/PageBreadCrumb";
-import { Button } from "@/components/ui/button";
+import Button from "@/components/ui/button/Button";
+import { useQuery } from "@tanstack/react-query";
+import { deleteSupplier, fetchSupplierList } from "@/database/supplier";
 import { getSupplierHeaders } from "@/data/SupplierHeaders";
-
-const data: Payment[] = [
-    {
-        id: "m5gr84i9",
-        amount: 316,
-        status: "success",
-        email: "ken99@example.com",
-    },
-    {
-        id: "3u1reuv4",
-        amount: 242,
-        status: "success",
-        email: "Abe45@example.com",
-    },
-    {
-        id: "derv1ws0",
-        amount: 837,
-        status: "processing",
-        email: "Monserrat44@example.com",
-    },
-    {
-        id: "5kma53ae",
-        amount: 874,
-        status: "success",
-        email: "Silas22@example.com",
-    },
-    {
-        id: "bhqecj4p",
-        amount: 721,
-        status: "failed",
-        email: "carmella@example.com",
-    },
-    {
-        id: "qf7jzv3t",
-        amount: 429,
-        status: "success",
-        email: "carmella@example.com",
-    },
-    {
-        id: "x1vscz9o",
-        amount: 654,
-        status: "processing",
-        email: "carmella@example.com",
-    },
-    {
-        id: "p9wz6n2l",
-        amount: 538,
-        status: "failed",
-        email: "carmella@example.com",
-    },
-    {
-        id: "t4yqk8rd",
-        amount: 193,
-        status: "success",
-        email: "carmella@example.com",
-    },
-    {
-        id: "olj3x7hb",
-        amount: 765,
-        status: "processing",
-        email: "carmella@example.com",
-    },
-];
+import { useState } from "react";
+import { Modal } from "@/components/ui/modal";
+import Spinner from "@/components/ui/spinner/Spinner";
 
 export default function SupplierView() {
     const navigate = useNavigate();
-    const columns = getSupplierHeaders(navigate);
+    const [isModalOpen, setIsModalOpen] = useState(false);
+    const [selectedId, setSelectedId] = useState<number | null>(null);
+    const [isDeleting, setIsDeleting] = useState(false);
+
+    const {
+        data: supplierData,
+        isLoading,
+        refetch,
+    } = useQuery({
+        queryKey: ["supplier-data"],
+        queryFn: async () => {
+            return await fetchSupplierList();
+        },
+        refetchInterval: 1000 * 60 * 5, // 5 minutes
+        refetchIntervalInBackground: true,
+        staleTime: 500,
+        gcTime: 20000,
+    });
+
+    const handleDeleteClick = (id: number) => {
+        setSelectedId(id);
+        setIsModalOpen(true);
+    };
+
+    const handleConfirmDelete = async () => {
+        if (selectedId === null) return;
+
+        setIsDeleting(true);
+        try {
+            // await deleteIpc(selectedId);
+            await deleteSupplier(selectedId);
+            await refetch();
+            setIsModalOpen(false);
+            setSelectedId(null);
+        } catch (error) {
+            console.error("Error deleting IPC:", error);
+        } finally {
+            setIsDeleting(false);
+        }
+    };
+
+    const handleCloseModal = () => {
+        if (!isDeleting) {
+            setIsModalOpen(false);
+            setSelectedId(null);
+        }
+    };
+
+    const columns = getSupplierHeaders(navigate, handleDeleteClick, refetch);
 
     return (
         <>
@@ -87,7 +76,10 @@ export default function SupplierView() {
                             </p>
                         </div>
                         <div className="flex shrink-0 items-center gap-2">
-                            <Button size="sm" onClick={() => navigate("/suppliers/new")}>
+                            <Button
+                                size="sm"
+                                onClick={() => navigate("/suppliers/new")}
+                            >
                                 Add New Supplier
                             </Button>
                         </div>
@@ -95,11 +87,43 @@ export default function SupplierView() {
 
                     <div className="max-w-full overflow-x-auto custom-scrollbar">
                         <div className="min-w-[1000px] xl:min-w-full px-2">
-                            <DataTable columns={columns} data={data} />
+                            {!isLoading && supplierData ? (
+                                <DataTable
+                                    columns={columns}
+                                    data={supplierData}
+                                />
+                            ) : (
+                                <div className="flex items-center justify-center py-12">
+                                    <Spinner size="lg" />
+                                </div>
+                            )}
                         </div>
                     </div>
                 </div>
             </div>
+            <Modal
+                isOpen={isModalOpen}
+                onClose={handleCloseModal}
+                className="w-lg m-4"
+            >
+                <div className="relative w-full p-4 overflow-y-auto bg-white no-scrollbar rounded-3xl dark:bg-gray-900 lg:p-11">
+                    <div className="px-2 pr-14">
+                        <h4 className="mb-2 text-2xl font-semibold text-gray-800 dark:text-white/90">
+                            Delete Confirmation
+                        </h4>
+                        <p className="mb-6 text-sm text-gray-500 dark:text-gray-400 lg:mb-7">
+                            Are you sure to delete this Supplier?
+                        </p>
+                        <Button
+                            size="sm"
+                            variant="danger"
+                            onClick={() => handleConfirmDelete()}
+                        >
+                            {isDeleting ? "Deleting..." : "Confirm Delete"}
+                        </Button>
+                    </div>
+                </div>
+            </Modal>
         </>
     );
 }

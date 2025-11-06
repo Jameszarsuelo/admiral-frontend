@@ -2,19 +2,24 @@ import { DataTable } from "@/components/ui/DataTable";
 import { useNavigate } from "react-router";
 import PageBreadcrumb from "@/components/common/PageBreadCrumb";
 import { getIPCHeaders } from "@/data/IPCHeaders";
-import { fetchIpcList } from "@/database/ipc";
+import { deleteIpc, fetchIpcList } from "@/database/ipc";
 import { useQuery } from "@tanstack/react-query";
 import Spinner from "@/components/ui/spinner/Spinner";
 import Button from "@/components/ui/button/Button";
+import { useState } from "react";
+import { Modal } from "@/components/ui/modal";
 
 export default function IPCView() {
     const navigate = useNavigate();
-    const columns = getIPCHeaders(navigate);
+    const [isModalOpen, setIsModalOpen] = useState(false);
+    const [selectedId, setSelectedId] = useState<number | null>(null);
+    const [isDeleting, setIsDeleting] = useState(false);
 
     const {
         data: ipcData,
         isLoading,
         // error,
+        refetch,
     } = useQuery({
         queryKey: ["ipc-data"],
         queryFn: async () => {
@@ -25,6 +30,36 @@ export default function IPCView() {
         staleTime: 500,
         gcTime: 20000,
     });
+
+    const handleDeleteClick = (id: number) => {
+        setSelectedId(id);
+        setIsModalOpen(true);
+    };
+
+    const handleConfirmDelete = async () => {
+        if (selectedId === null) return;
+
+        setIsDeleting(true);
+        try {
+            await deleteIpc(selectedId);
+            await refetch();
+            setIsModalOpen(false);
+            setSelectedId(null);
+        } catch (error) {
+            console.error("Error deleting IPC:", error);
+        } finally {
+            setIsDeleting(false);
+        }
+    };
+
+    const handleCloseModal = () => {
+        if (!isDeleting) {
+            setIsModalOpen(false);
+            setSelectedId(null);
+        }
+    };
+
+    const columns = getIPCHeaders(navigate, handleDeleteClick, refetch);
 
     return (
         <>
@@ -66,6 +101,25 @@ export default function IPCView() {
                     </div>
                 </div>
             </div>
+            <Modal
+                isOpen={isModalOpen}
+                onClose={handleCloseModal}
+                className="w-lg m-4"
+            >
+                <div className="relative w-full p-4 overflow-y-auto bg-white no-scrollbar rounded-3xl dark:bg-gray-900 lg:p-11">
+                    <div className="px-2 pr-14">
+                        <h4 className="mb-2 text-2xl font-semibold text-gray-800 dark:text-white/90">
+                            Delete Confirmation
+                        </h4>
+                        <p className="mb-6 text-sm text-gray-500 dark:text-gray-400 lg:mb-7">
+                            Are you sure to delete this Invoice Payment Clerk?
+                        </p>
+                        <Button size="sm" variant="danger" onClick={() => handleConfirmDelete()}>
+                            {isDeleting ? "Deleting..." : "Confirm Delete"}
+                        </Button>
+                    </div>
+                </div>
+            </Modal>
         </>
     );
 }

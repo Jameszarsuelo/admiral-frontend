@@ -1,6 +1,4 @@
-// import { Checkbox } from "@/components/ui/checkbox";
 import Button from "@/components/ui/button/Button";
-
 import { Button as CustomButton } from "@/components/ui/button";
 import { IPCResponse } from "@/types/ipc";
 import { ColumnDef } from "@tanstack/react-table";
@@ -8,42 +6,22 @@ import { ArrowUpDown } from "lucide-react";
 
 export const getIPCHeaders = (
     navigate: (path: string) => void,
+    handleDeleteClick: (id: number) => void,
+    refetch: () => void,
 ): ColumnDef<IPCResponse>[] => [
-    // {
-    //     id: "select",
-    //     header: ({ table }) => (
-    //         <Checkbox
-    //             checked={
-    //                 table.getIsAllPageRowsSelected() ||
-    //                 (table.getIsSomePageRowsSelected() && "indeterminate")
-    //             }
-    //             onCheckedChange={(value) =>
-    //                 table.toggleAllPageRowsSelected(!!value)
-    //             }
-    //             aria-label="Select all"
-    //         />
-    //     ),
-    //     cell: ({ row }) => (
-    //         <Checkbox
-    //             checked={row.getIsSelected()}
-    //             onCheckedChange={(value) => row.toggleSelected(!!value)}
-    //             aria-label="Select row"
-    //         />
-    //     ),
-    //     enableSorting: false,
-    //     enableHiding: false,
-    // },
     {
         accessorKey: "salutation",
+        accessorFn: (row) => row.user.user_info.salutation,
         header: () => <div className="ml-4">Salutation</div>,
         cell: ({ row }) => (
             <div className="capitalize dark:text-white ml-4">
-                {row.original.user_info.salutation}.
+                {row.getValue("salutation")}.
             </div>
         ),
     },
     {
         accessorKey: "firstname",
+        accessorFn: (row) => row.user.firstname,
         header: () => <div className="ml-4">Firstname</div>,
         cell: ({ row }) => (
             <div className="capitalize dark:text-white ml-4">
@@ -53,6 +31,7 @@ export const getIPCHeaders = (
     },
     {
         accessorKey: "lastname",
+        accessorFn: (row) => row.user.lastname,
         header: () => <div className="ml-4">Lastname</div>,
         cell: ({ row }) => (
             <div className="capitalize dark:text-white ml-4">
@@ -62,6 +41,7 @@ export const getIPCHeaders = (
     },
     {
         accessorKey: "email",
+        accessorFn: (row) => row.user.email,
         header: ({ column }) => {
             return (
                 <CustomButton
@@ -81,10 +61,11 @@ export const getIPCHeaders = (
     },
     {
         accessorKey: "mobile",
+        accessorFn: (row) => row.user.user_info.mobile,
         header: () => <div className="ml-4">Mobile</div>,
         cell: ({ row }) => (
             <div className="capitalize dark:text-white ml-4">
-                {row.original.user_info.mobile}
+                {row.getValue("mobile")}
             </div>
         ),
     },
@@ -93,44 +74,11 @@ export const getIPCHeaders = (
         header: () => <div className="ml-4">Address</div>,
         cell: ({ row }) => (
             <div className="capitalize dark:text-white ml-4">
-                {row.original.user_info.city}, {" "}
-                {row.original.user_info.country},{" "}
-                {row.original.user_info.postcode}
+                {row.original.user.user_info.city}, {row.original.user.user_info.country},{" "}
+                {row.original.user.user_info.postcode}
             </div>
         ),
     },
-    // {
-    //     accessorKey: "email",
-    //     header: ({ column }) => {
-    //         return (
-    //             <Button
-    //                 variant="ghost"
-    //                 onClick={() =>
-    //                     column.toggleSorting(column.getIsSorted() === "asc")
-    //                 }
-    //             >
-    //                 Email
-    //                 <ArrowUpDown />
-    //             </Button>
-    //         );
-    //     },
-    //     cell: ({ row }) => (
-    //         <div className="lowercase dark:text-white">{row.getValue("email")}</div>
-    //     ),
-    // },
-    // {
-    //     accessorKey: "amount",
-    //     header: () => <div>Amount</div>,
-    //     cell: ({ row }) => {
-    //         const amount = parseFloat(row.getValue("amount"));
-    //         // Format the amount as a dollar amount
-    //         const formatted = new Intl.NumberFormat("en-US", {
-    //             style: "currency",
-    //             currency: "USD",
-    //         }).format(amount);
-    //         return <div className="font-medium dark:text-white">{formatted}</div>;
-    //     },
-    // },
     {
         id: "actions",
         header: () => <div>Actions</div>,
@@ -141,14 +89,28 @@ export const getIPCHeaders = (
                 navigate(`/invoice-payment-clerk/edit/${id}`);
             };
 
+            const onDelete = (id: number) => {
+                handleDeleteClick(id);
+                refetch();
+            };
+
             return (
-                <Button
-                    onClick={() => handleEdit(ipc.id)}
-                    variant="primary"
-                    size="sm"
-                >
-                    Edit
-                </Button>
+                <div className="flex gap-2">
+                    <Button
+                        onClick={() => handleEdit(ipc.id!)}
+                        variant="primary"
+                        size="sm"
+                    >
+                        Edit
+                    </Button>
+                    <Button
+                        onClick={() => onDelete(ipc.id!)}
+                        variant="danger"
+                        size="sm"
+                    >
+                        Delete
+                    </Button>
+                </div>
             );
         },
     },

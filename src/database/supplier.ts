@@ -1,12 +1,13 @@
-import { IPC, IPCResponse } from "@/types/ipc";
 import api from "./api";
 import { AxiosError } from "axios";
+import { IUser } from "@/types/user";
+import { SupplierResponse } from "@/types/supplier";
 
-export async function upsertIpc(ipcData: IPC): Promise<IPC> {
+export async function upsertSupplier(supplierData: IUser): Promise<IUser> {
     try {
-        const response = ipcData.id 
-            ? await api.put(`/ipc/${ipcData.id}`, ipcData)
-            : await api.post(`/ipc`, ipcData);
+        const response = supplierData.id
+            ? await api.put(`/supplier/${supplierData.id}`, supplierData)
+            : await api.post(`/supplier`, supplierData);
         return response.data;
     } catch (error) {
         if (error instanceof AxiosError && error.response?.data) {
@@ -16,9 +17,9 @@ export async function upsertIpc(ipcData: IPC): Promise<IPC> {
     }
 }
 
-export async function fetchIpcList(): Promise<IPCResponse[]> {
+export async function fetchSupplierList(): Promise<SupplierResponse[]> {
     try {
-        const response = await api.get(`/ipc`);
+        const response = await api.get(`/supplier`);
         return response.data;
     } catch (error) {
        if (error instanceof AxiosError && error.response?.data) {
@@ -28,9 +29,9 @@ export async function fetchIpcList(): Promise<IPCResponse[]> {
     }
 }
 
-export async function fetchIpcById(id: string): Promise<IPCResponse> {
+export async function fetchSupplierById(id: string): Promise<SupplierResponse> {
     try {
-        const response = await api.get(`/ipc/${id}`);
+        const response = await api.get(`/supplier/${id}`);
         return response.data;
     } catch (error) {
         if (error instanceof AxiosError && error.response?.data) {
@@ -40,9 +41,9 @@ export async function fetchIpcById(id: string): Promise<IPCResponse> {
     }
 }
 
-export async function deleteIpc(id: number): Promise<void> {
+export async function deleteSupplier(id: number): Promise<void> {
     try {
-        await api.delete(`/ipc/${id}`);
+        await api.delete(`/supplier/${id}`);
     } catch (error) {
         if (error instanceof AxiosError && error.response?.data) {
             throw error.response.data;

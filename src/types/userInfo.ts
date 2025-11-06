@@ -5,8 +5,8 @@ export interface UserInfo {
     phone: string | null;
     mobile: string;
     address_line_1: string | null;
-    address_line_2: string | null;
-    address_line_3: string | null;
+    address_line_2?: string | null;
+    address_line_3?: string | null;
     city: string;
     county: string;
     country: string;

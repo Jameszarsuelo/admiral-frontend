@@ -24,8 +24,8 @@ const formSchema = z.object({
     firstname: z.string().min(1, "First name is required"),
     lastname: z.string().min(1, "Last name is required"),
     email: z.string().email("Invalid email address"),
-    twoFactor: z.boolean(),
-    twofaType: z.string().min(1, "2FA type is required"),
+    two_fa_enabled: z.boolean(),
+    two_fa_type: z.number(),
     salutation: z.string().min(1, "Salutation is required"),
     phone: z.string(),
     mobile: z
@@ -75,8 +75,8 @@ export function IPCForm() {
             firstname: "",
             lastname: "",
             email: "",
-            twoFactor: false,
-            twofaType: "",
+            two_fa_enabled: false,
+            two_fa_type: 0,
             salutation: "",
             phone: "",
             mobile: "+44",
@@ -97,21 +97,21 @@ export function IPCForm() {
                 .then((data) => {
                     form.reset({
                         id: data.id,
-                        firstname: data.firstname || "",
-                        lastname: data.lastname || "",
-                        email: data.email || "",
-                        twoFactor: data["2fa_enabled"] === 1,
-                        twofaType: data["2fa_type"]?.toString() || "",
-                        salutation: data.user_info?.salutation || "",
-                        phone: data.user_info?.phone || "",
-                        mobile: data.user_info?.mobile || "+44",
-                        address1: data.user_info?.address_line_1 || "",
-                        address2: data.user_info?.address_line_2 || "",
-                        address3: data.user_info?.address_line_3 || "",
-                        city: data.user_info?.city || "",
-                        county: data.user_info?.county || "",
-                        country: data.user_info?.country || "",
-                        postcode: data.user_info?.postcode || "",
+                        firstname: data.user.firstname,
+                        lastname: data.user.lastname,
+                        email: data.user.email,
+                        two_fa_enabled: Boolean(data.user.two_fa_enabled),
+                        two_fa_type: data.user.two_fa_type,
+                        salutation: data.user.user_info.salutation,
+                        phone: data.user.user_info.phone || "",
+                        mobile: data.user.user_info.mobile,
+                        address1: data.user.user_info.address_line_1 || "",
+                        address2: data.user.user_info.address_line_2 || "",
+                        address3: data.user.user_info.address_line_3 || "",
+                        city: data.user.user_info.city,
+                        county: data.user.user_info.county,
+                        country: data.user.user_info.country,
+                        postcode: data.user.user_info.postcode,
                     });
                 })
                 .catch((error) => {
@@ -363,7 +363,7 @@ export function IPCForm() {
 
                                 <div>
                                     <Controller
-                                        name="twoFactor"
+                                        name="two_fa_enabled"
                                         control={form.control}
                                         render={({ field, fieldState }) => (
                                             <Field
@@ -388,7 +388,7 @@ export function IPCForm() {
 
                                 <div>
                                     <Controller
-                                        name="twofaType"
+                                        name="two_fa_type"
                                         control={form.control}
                                         render={({ field, fieldState }) => (
                                             <Field
@@ -396,15 +396,19 @@ export function IPCForm() {
                                                     fieldState.invalid
                                                 }
                                             >
-                                                <Label htmlFor="twofaType">
+                                                <Label htmlFor="two_fa_type">
                                                     2FA Type
                                                 </Label>
                                                 <Select
-                                                    value={field.value}
+                                                    value={String(
+                                                        field.value ?? "",
+                                                    )}
                                                     options={twofaTypeOptions}
                                                     placeholder="Select 2FA Type"
                                                     onChange={(value: string) =>
-                                                        field.onChange(value)
+                                                        field.onChange(
+                                                            Number(value),
+                                                        )
                                                     }
                                                     onBlur={field.onBlur}
                                                     className="dark:bg-dark-900"
