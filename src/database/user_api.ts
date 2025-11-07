@@ -5,7 +5,7 @@ import { AxiosError } from "axios";
 export async function upsertUser(userData: IUserForm): Promise<IUserForm> {
     try {
         const response = userData.id ?
-            await api.put(`/user/${userData.id}`, userData) : await api.post(`/user`, userData);
+            await api.put(`/users/${userData.id}`, userData) : await api.post(`/users`, userData);
         return response.data;
     } catch (error) {
         // Extract validation errors from axios error response
@@ -19,7 +19,7 @@ export async function upsertUser(userData: IUserForm): Promise<IUserForm> {
 
 export async function fetchUser(id: string): Promise<IUserForm> {
     try {
-        const response = await api.get(`/user/${id}`);
+        const response = await api.get(`/users/${id}`);
         console.log(response);
         return response.data;
     } catch (error) {
@@ -133,7 +133,7 @@ export async function fetchUserList(): Promise<IUserList[]> {
     // }
     // ]
     try {
-        const response = await api.get(`/user`);
+        const response = await api.get(`/users`);
         return response.data;
     } catch (error) {
        if (error instanceof AxiosError && error.response?.data) {
@@ -146,7 +146,7 @@ export async function fetchUserList(): Promise<IUserList[]> {
 
 export async function deleteUser(id: number): Promise<void> {
     try {
-        await api.delete(`/user/${id}`);
+        await api.delete(`/users/${id}`);
     } catch (error) {
         if (error instanceof AxiosError && error.response?.data) {
             throw error.response.data;

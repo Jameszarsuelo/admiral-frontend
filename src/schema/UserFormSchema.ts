@@ -77,18 +77,28 @@ export const UserFormSchema = z.object({
     deleted_at: z.string().optional(),
 });
 
-export const UserListSchema = UserFormSchema.omit({
-    salutation:true,   
-    address_line_1: true,  
-    address_line_2: true,   
-    address_line_3: true,   
-    phone: true,   
-    mobile: true,   
-    city: true,   
-    county: true,   
-    country: true,   
-    postcode: true,   
-}).extend({
+// export const UserListSchema = UserFormSchema.omit({
+//     salutation:true,   
+//     address_line_1: true,  
+//     address_line_2: true,   
+//     address_line_3: true,   
+//     phone: true,   
+//     mobile: true,   
+//     city: true,   
+//     county: true,   
+//     country: true,   
+//     postcode: true,   
+// }).extend({
+//     sso_provider: z.string().optional().nullable(),
+//     sso_sub: z.string().optional().nullable(),
+//     email_verified_at: z.string().optional().nullable(),
+//     is_active: z.number().optional(),
+//     user_info: UserInfo,
+//     user_type: UserType,
+//     user_profile: UserProfile,
+// });
+
+export const UserListSchema = UserFormSchema.extend({
     sso_provider: z.string().optional().nullable(),
     sso_sub: z.string().optional().nullable(),
     email_verified_at: z.string().optional().nullable(),

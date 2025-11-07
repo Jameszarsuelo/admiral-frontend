@@ -1,16 +1,8 @@
 import Button from "@/components/ui/button/Button";
 import { Button as CustomButton } from "@/components/ui/button";
-import {
-    DropdownMenu,
-    DropdownMenuContent,
-    DropdownMenuItem,
-    DropdownMenuLabel,
-    DropdownMenuSeparator,
-    DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
 import { IUserList } from "@/types/user";
 import { ColumnDef } from "@tanstack/react-table";
-import { ArrowUpDown, MoreHorizontal } from "lucide-react";
+import { ArrowUpDown } from "lucide-react";
 
 
 export const getUserHeaders = (
@@ -75,6 +67,16 @@ export const getUserHeaders = (
         cell: ({ row }) => (
             <div className="capitalize dark:text-white ml-4">
                 {row.getValue("mobile")}
+            </div>
+        ),
+    },
+    {
+        accessorKey: "type",
+        accessorFn: (row) => row.user_type.type,
+        header: () => <div className="ml-4">User Type</div>,
+        cell: ({ row }) => (
+            <div className="capitalize dark:text-white ml-4">
+                {row.getValue("type")}
             </div>
         ),
     },

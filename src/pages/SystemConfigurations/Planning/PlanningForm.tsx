@@ -17,7 +17,7 @@ import { fetchPlanning, upsertPlanning } from "@/database/planning_api";
 import { handleValidationErrors } from "@/helper/validationError";
 
 
-export function PlanningForm() {
+export default function PlanningForm() {
     const { id } = useParams();
     const navigate = useNavigate();
     const [canWorkSaturday, setCanWorkSaturday] = useState<string>("0");
@@ -41,7 +41,7 @@ export function PlanningForm() {
                 setCanWorkSunday(data.work_sunday);
             })
         }
-    }, [id])
+    }, [id, reset]);
     
 
     const handleWorkSaturday = (value: string) => {

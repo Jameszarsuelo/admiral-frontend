@@ -3,38 +3,34 @@ import { lazy, Suspense } from "react";
 import AppLayout from "./layout/AppLayout";
 import { ScrollToTop } from "./components/common/ScrollToTop";
 import Spinner from "./components/ui/spinner/Spinner";
+import ProtectedRoute from "./components/common/ProtectedRoute";
+import SignIn from "./pages/AuthPages/SignIn";
 
 // Lazy load pages
 const Home = lazy(() => import("./pages-backup/Dashboard/Home"));
 const IPCView = lazy(
     () => import("./pages/SystemConfigurations/InvoicePaymentClerks/IPCView"),
 );
-const IPCForm = lazy(() =>
-    import("./pages/SystemConfigurations/InvoicePaymentClerks/IPCForm").then(
-        (module) => ({ default: module.IPCForm }),
-    ),
+const IPCForm = lazy(
+    () => import("./pages/SystemConfigurations/InvoicePaymentClerks/IPCForm"),
 );
 const SupplierView = lazy(
     () => import("./pages/SystemConfigurations/Suppliers/SupplierView"),
 );
-const SupplierForm = lazy(() =>
-    import("./pages/SystemConfigurations/Suppliers/SupplierForm").then(
-        (module) => ({ default: module.SupplierForm }),
-    ),
+const SupplierForm = lazy(
+    () => import("./pages/SystemConfigurations/Suppliers/SupplierForm"),
 );
 const UserView = lazy(
     () => import("./pages/SystemConfigurations/Users/UserView"),
 );
-const UserForm = lazy(() =>
-    import("./pages/SystemConfigurations/Users/UserForm").then((module) => ({
-        default: module.UserForm,
-    })),
+const UserForm = lazy(
+    () => import("./pages/SystemConfigurations/Users/UserForm"),
 );
-const PlanningForm = lazy(() =>
-    import("./pages/SystemConfigurations/Planning/PlanningForm").then(
-        (module) => ({ default: module.PlanningForm }),
-    ),
+const PlanningForm = lazy(
+    () => import("./pages/SystemConfigurations/Planning/PlanningForm"),
 );
+
+const DMView = lazy(() => import("./pages/DocumentManagement/DMView"));
 const FormElements = lazy(() => import("./pages/Forms/FormElements"));
 const NotFound = lazy(() => import("./pages/OtherPage/NotFound"));
 
@@ -52,79 +48,80 @@ export default function App() {
                 <ScrollToTop />
                 <Suspense fallback={<PageLoader />}>
                     <Routes>
-                        {/* Dashboard Layout */}
-                        <Route element={<AppLayout />}>
-                            <Route index path="/" element={<Home />} />
+                        {/* Protected App Layout */}
+                        <Route element={<ProtectedRoute />}>
+                            <Route element={<AppLayout />}>
+                                <Route index path="/" element={<Home />} />
 
-                            {/* Configurations */}
-                            <Route
-                                index
-                                path="/invoice-payment-clerk"
-                                element={<IPCView />}
-                            />
-                            <Route
-                                path="/invoice-payment-clerk/:method/:id?"
-                                element={<IPCForm />}
-                            />
+                                {/* Configurations */}
+                                {/* IPC Page */}
+                                <Route
+                                    index
+                                    path="/invoice-payment-clerk"
+                                    element={<IPCView />}
+                                />
+                                <Route
+                                    path="/invoice-payment-clerk/:method/:id?"
+                                    element={<IPCForm />}
+                                />
 
-                            <Route
-                                path="/suppliers"
-                                element={<SupplierView />}
-                            />
+                                {/* Supplier Page */}
+                                <Route
+                                    path="/suppliers"
+                                    element={<SupplierView />}
+                                />
+                                <Route
+                                    path="/suppliers/:method/:id?"
+                                    element={<SupplierForm />}
+                                />
 
-                            <Route
-                                path="/suppliers/:method/:id?"
-                                element={<SupplierForm />}
-                            />
+                                {/* User Page */}
+                                <Route path="/users" element={<UserView />} />
+                                <Route
+                                    path="/users/:method/:id?"
+                                    element={<UserForm />}
+                                />
 
-                            <Route path="/users" element={<UserView />} />
+                                {/* Planning Page */}
+                                <Route
+                                    path="/planning"
+                                    element={<PlanningForm />}
+                                />
+                                <Route
+                                    path="/planning/:id?"
+                                    element={<PlanningForm />}
+                                />
 
-                            <Route
-                                path="/users/:method/:id?"
-                                element={<UserForm />}
-                            />
+                                {/* Others Page */}
+                                <Route
+                                    path="/document-management"
+                                    element={<DMView />}
+                                />
+                                {/* <Route path="/profile" element={<UserProfiles />} /> */}
+                                {/* <Route path="/calendar" element={<Calendar />} />
+                                <Route path="/blank" element={<Blank />} /> */}
 
-                            <Route
-                                path="/planning"
-                                element={<PlanningForm />}
-                            />
+                                {/* Forms */}
+                                <Route
+                                    path="/form-elements"
+                                    element={<FormElements />}
+                                />
 
-                            <Route
-                                path="/planning/:id?"
-                                element={<PlanningForm />}
-                            />
+                                {/* Tables */}
+                                {/* <Route path="/basic-tables" element={<BasicTables />} /> */}
 
-
-                            {/* Others Page */}
-                            {/* <Route path="/profile" element={<UserProfiles />} /> */}
-                            {/* <Route path="/calendar" element={<Calendar />} />
-                            <Route path="/blank" element={<Blank />} /> */}
-
-                            {/* Forms */}
-                            <Route
-                                path="/form-elements"
-                                element={<FormElements />}
-                            />
-
-                            {/* Tables */}
-                            {/* <Route path="/basic-tables" element={<BasicTables />} /> */}
-
-                            {/* Ui Elements */}
-                            {/* <Route path="/alerts" element={<Alerts />} />
-                            <Route path="/avatars" element={<Avatars />} />
-                            <Route path="/badge" element={<Badges />} />
-                            <Route path="/buttons" element={<Buttons />} />
-                            <Route path="/images" element={<Images />} />
-                            <Route path="/videos" element={<Videos />} /> */}
-
-                            {/* Charts */}
-                            {/* <Route path="/line-chart" element={<LineChart />} />
-                            <Route path="/bar-chart" element={<BarChart />} /> */}
+                                {/* Ui Elements */}
+                                {/* <Route path="/alerts" element={<Alerts />} />
+                                <Route path="/avatars" element={<Avatars />} />
+                                <Route path="/badge" element={<Badges />} />
+                                <Route path="/buttons" element={<Buttons />} />
+                                <Route path="/images" element={<Images />} />
+                                <Route path="/videos" element={<Videos />} /> */}
+                            </Route>
                         </Route>
 
-                        {/* Auth Layout */}
-                        {/* <Route path="/signin" element={<SignIn />} />
-                        <Route path="/signup" element={<SignUp />} /> */}
+                        {/* Auth */}
+                        <Route path="/signin" element={<SignIn />} />
 
                         {/* Fallback Route */}
                         <Route path="*" element={<NotFound />} />

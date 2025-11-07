@@ -36,7 +36,7 @@ const salutationOptions = [
     { value: "dr", label: "Dr." },
 ];
 
-export function SupplierForm() {
+export default function SupplierForm() {
     const { id } = useParams();
     const navigate = useNavigate();
     const [isLoading, setIsLoading] = useState(false);

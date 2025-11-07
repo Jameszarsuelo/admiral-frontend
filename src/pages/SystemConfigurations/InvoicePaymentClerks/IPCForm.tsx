@@ -37,7 +37,7 @@ const salutationOptions = [
     { value: "dr", label: "Dr." },
 ];
 
-export function IPCForm() {
+export default function IPCForm() {
     const { id } = useParams();
     const navigate = useNavigate();
     const [isLoading, setIsLoading] = useState(false);
