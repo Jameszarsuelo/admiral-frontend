@@ -3,7 +3,8 @@ import { createContext } from "react";
 // Minimal user shape; align with your backend response as needed
 export type AuthUser = {
   id: number;
-  name?: string | null;
+  firstname?: string | null;
+  lastname?: string | null;
   email?: string | null;
   user_type_id?: number;
   [key: string]: unknown;

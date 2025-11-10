@@ -7,6 +7,7 @@ import Input from "../form/input/InputField";
 import Button from "../ui/button/Button";
 import { useAuth } from "@/hooks/useAuth";
 import type { AxiosError } from "axios";
+import logo from "/images/auth/admiral-logo.png";
 
 export default function SignInForm() {
     const [showPassword, setShowPassword] = useState(false);
@@ -17,13 +18,12 @@ export default function SignInForm() {
     const { login } = useAuth();
     const navigate = useNavigate();
     const location = useLocation();
-    const from = (
-        (location.state as { from?: { pathname?: string } } | undefined)
-            ?.from?.pathname || "/"
-    );
+    const from =
+        (location.state as { from?: { pathname?: string } } | undefined)?.from
+            ?.pathname || "/";
 
     async function onSubmit(e: FormEvent) {
-      console.log(e);
+        console.log(e);
         e.preventDefault();
         setError(null);
         setSubmitting(true);
@@ -32,7 +32,8 @@ export default function SignInForm() {
             navigate(from, { replace: true });
         } catch (err) {
             const apiErr = err as AxiosError<{ message?: string }>;
-            const message = apiErr.response?.data?.message || "Invalid credentials";
+            const message =
+                apiErr.response?.data?.message || "Invalid credentials";
             setError(message);
         } finally {
             setSubmitting(false);
@@ -52,6 +53,15 @@ export default function SignInForm() {
             </div> */}
             <div className="flex flex-col justify-center flex-1 w-full max-w-md mx-auto">
                 <div>
+                    <div className="mb-20 text-center flex flex-col items-center">
+                        <img src={logo} alt="Admiral Logo" className="w-24 h-24 mb-4" />
+                        <h1 className="text-6xl mb-2 font-bold text-gray-900 dark:text-white">
+                            Admiral
+                        </h1>
+                        <p className="text-4xl font-normal text-gray-900 dark:text-white">
+                            Invoice Processing Tool
+                        </p>
+                    </div>
                     <div className="mb-5 sm:mb-8">
                         <h1 className="mb-2 font-semibold text-gray-800 text-title-sm dark:text-white/90 sm:text-title-md">
                             Sign In
@@ -126,7 +136,9 @@ export default function SignInForm() {
                                         type="email"
                                         placeholder="info@gmail.com"
                                         value={email}
-                                        onChange={(e) => setEmail(e.target.value)}
+                                        onChange={(e) =>
+                                            setEmail(e.target.value)
+                                        }
                                         disabled={submitting}
                                     />
                                 </div>
@@ -146,7 +158,9 @@ export default function SignInForm() {
                                             }
                                             placeholder="Enter your password"
                                             value={password}
-                                            onChange={(e) => setPassword(e.target.value)}
+                                            onChange={(e) =>
+                                                setPassword(e.target.value)
+                                            }
                                             disabled={submitting}
                                         />
                                         <span
@@ -164,7 +178,9 @@ export default function SignInForm() {
                                     </div>
                                 </div>
                                 {error && (
-                                    <p className="text-sm text-error-500">{error}</p>
+                                    <p className="text-sm text-error-500">
+                                        {error}
+                                    </p>
                                 )}
                                 <div className="flex items-center justify-between">
                                     {/* <div className="flex items-center gap-3">
@@ -184,8 +200,15 @@ export default function SignInForm() {
                                     </Link>
                                 </div>
                                 <div>
-                                    <Button type="submit" className="w-full" size="sm" disabled={submitting}>
-                                        {submitting ? "Signing in..." : "Sign in"}
+                                    <Button
+                                        type="submit"
+                                        className="w-full"
+                                        size="sm"
+                                        disabled={submitting}
+                                    >
+                                        {submitting
+                                            ? "Signing in..."
+                                            : "Sign in"}
                                     </Button>
                                 </div>
                             </div>
@@ -202,6 +225,12 @@ export default function SignInForm() {
                                 </Link>
                             </p>
                         </div> */}
+
+                        <div className="mt-5">
+                            <p className="text-sm font-normal text-center text-gray-700 dark:text-gray-400 sm:text-start">
+                                Version: 0.0.0 Not for Release
+                            </p>
+                        </div>
                     </div>
                 </div>
             </div>

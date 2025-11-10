@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Link, useLocation } from "react-router";
+import logo from "../../public/images/auth/admiral-logo.png";
 
 // Assume these icons are imported from an icon library
 import {
@@ -156,7 +157,10 @@ const AppSidebar: React.FC = () => {
                     nav.subItems.forEach((subItem) => {
                         if (isActive(subItem.path)) {
                             setOpenSubmenu({
-                                type: menuType as "main" | "configurations" | "others",
+                                type: menuType as
+                                    | "main"
+                                    | "configurations"
+                                    | "others",
                                 index,
                             });
                             submenuMatched = true;
@@ -370,20 +374,38 @@ const AppSidebar: React.FC = () => {
                 <Link to="/">
                     {isExpanded || isHovered || isMobileOpen ? (
                         <>
-                            <img
-                                className="dark:hidden"
-                                src="/images/logo/logo.svg"
-                                alt="Logo"
-                                width={150}
-                                height={40}
-                            />
-                            <img
-                                className="hidden dark:block"
-                                src="/images/logo/logo-dark.svg"
-                                alt="Logo"
-                                width={150}
-                                height={40}
-                            />
+                            <div className="dark:hidden flex items-center gap-3">
+                                <img
+                                    src={logo}
+                                    alt="Logo"
+                                    width={60}
+                                    height={60}
+                                />
+                                <div className="flex flex-col">
+                                    <h1 className="text-xl font-bold text-gray-900">
+                                        Admiral
+                                    </h1>
+                                    <p className="text-xs text-gray-500 font-medium">
+                                        Invoice Processing Tool
+                                    </p>
+                                </div>
+                            </div>
+                            <div className="hidden dark:flex items-center gap-3">
+                                <img
+                                    src={logo}
+                                    alt="Logo"
+                                    width={60}
+                                    height={60}
+                                />
+                                <div className="flex flex-col">
+                                    <h1 className="text-xl font-bold text-white">
+                                        Admiral
+                                    </h1>
+                                    <p className="text-xs text-white font-medium">
+                                        Invoice Processing Tool
+                                    </p>
+                                </div>
+                            </div>
                         </>
                     ) : (
                         <img
@@ -434,7 +456,7 @@ const AppSidebar: React.FC = () => {
                             )}
                         </div>
 
-						<div className="">
+                        <div className="">
                             <h2
                                 className={`mb-4 text-xs uppercase flex leading-[20px] text-gray-400 ${
                                     !isExpanded && !isHovered
@@ -448,10 +470,7 @@ const AppSidebar: React.FC = () => {
                                     <HorizontaLDots />
                                 )}
                             </h2>
-                            {renderMenuItems(
-                                others,
-                                "others",
-                            )}
+                            {renderMenuItems(others, "others")}
                         </div>
                     </div>
                 </nav>
