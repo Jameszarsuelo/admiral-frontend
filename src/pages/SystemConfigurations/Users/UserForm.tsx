@@ -16,8 +16,7 @@ import { Separator } from "@/components/ui/separator";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { handleValidationErrors } from "@/helper/validationError";
 import { fetchUser, upsertUser } from "@/database/user_api";
-import { IUserForm, IUserList } from "@/types/user";
-import { UserFormSchema } from "@/schema/UserFormSchema";
+import { IUserForm, IUserList, UserFormSchema } from "@/types/UserFormSchema";
 import Spinner from "@/components/ui/spinner/Spinner";
 
 const countries = [

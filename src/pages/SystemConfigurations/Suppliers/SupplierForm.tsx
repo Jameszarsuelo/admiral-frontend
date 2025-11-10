@@ -17,8 +17,7 @@ import { fetchSupplierById, upsertSupplier } from "@/database/supplier_api";
 import { handleValidationErrors } from "@/helper/validationError";
 import { useEffect, useState } from "react";
 import Spinner from "@/components/ui/spinner/Spinner";
-import { SupplierFormSchema } from "@/schema/SupplierFormSchema";
-import { ISupplierFormSchema, ISupplierSchema } from "@/types/suppliers";
+import { ISupplierFormSchema, ISupplierSchema, SupplierFormSchema } from "@/types/SupplierFormSchema";
 
 const countries = [
     { code: "UK", label: "+44" },

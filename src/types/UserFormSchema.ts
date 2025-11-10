@@ -107,3 +107,6 @@ export const UserListSchema = UserFormSchema.extend({
     user_type: UserType,
     user_profile: UserProfile,
 });
+
+export type IUserForm = z.infer<typeof UserFormSchema>
+export type IUserList = z.infer<typeof UserListSchema>

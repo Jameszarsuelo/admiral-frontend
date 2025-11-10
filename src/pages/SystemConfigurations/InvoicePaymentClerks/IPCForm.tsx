@@ -18,7 +18,7 @@ import { useEffect, useState } from "react";
 import Spinner from "@/components/ui/spinner/Spinner";
 import { fetchIpcById, upsertIpc } from "@/database/ipc_api";
 import { IUserForm } from "@/types/user";
-import { UserFormSchema } from "@/schema/UserFormSchema";
+import { UserFormSchema } from "@/types/UserFormSchema";
 import { IIPCSchema } from "@/types/ipc";
 
 const countries = [

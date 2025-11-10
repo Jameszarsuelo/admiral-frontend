@@ -9,4 +9,6 @@ export const PlanningFormSchema = z.object({
     forecast_horizon: z.string().nonempty("Forecast Horizon is required"),
     created_at: z.number().optional(),
     updated_at: z.number().optional(),
-})
+});
+
+export type IPlanningForm = z.infer<typeof PlanningFormSchema>

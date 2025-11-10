@@ -33,3 +33,6 @@ export const IPCFormSchema = z.object({
     country: z.string().nonempty("Country is required"),
     postcode: z.string().nonempty("Postcode is required"),
 });
+
+export type IIPCSchema = z.infer<typeof IPCSchema>;
+export type IIPCFormSchema = z.infer<typeof IPCFormSchema>;

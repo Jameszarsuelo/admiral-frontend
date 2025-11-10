@@ -1,5 +1,5 @@
+import { UserFormSchema, UserListSchema } from "@/types/UserFormSchema";
 import z from "zod";
-import { UserFormSchema, UserListSchema } from "./UserFormSchema";
 
 export const SupplierSchema = z.object({
     id: z.number().optional(),
@@ -47,3 +47,6 @@ export const SupplierFormSchema = UserFormSchema.omit({
     preferred_payment_day: z.string().optional(),
     priority: z.number().min(1, "Priority must be at least 1").optional(),
 });
+
+export type ISupplierSchema = z.infer<typeof SupplierSchema>;
+export type ISupplierFormSchema = z.infer<typeof SupplierFormSchema>;
