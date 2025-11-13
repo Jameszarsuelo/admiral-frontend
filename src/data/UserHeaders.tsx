@@ -1,18 +1,19 @@
 import Button from "@/components/ui/button/Button";
 import { Button as CustomButton } from "@/components/ui/button";
-import { IUserList } from "@/types/user";
 import { ColumnDef } from "@tanstack/react-table";
-import { ArrowUpDown } from "lucide-react";
+import { ArrowUpDown, BadgeCheckIcon } from "lucide-react";
+import { IUserBase } from "@/types/UserSchema";
+import { Badge } from "@/components/ui/badge";
 
 
 export const getUserHeaders = (
     navigate: (path: string) => void,
     handleDeleteClick: (id: number) => void,
     refetch: () => void,
-): ColumnDef<IUserList>[] => [
+): ColumnDef<IUserBase>[] => [
     {
         accessorKey: "salutation",
-        accessorFn: (row) => row.user_info.salutation,
+        accessorFn: (row) => row.contact?.salutation,
         header: () => <div className="ml-4">Salutation</div>,
         cell: ({ row }) => (
             <div className="capitalize dark:text-white ml-4">
@@ -22,7 +23,7 @@ export const getUserHeaders = (
     },
     {
         accessorKey: "firstname",
-        accessorFn: (row) => row.firstname,
+        accessorFn: (row) => row.contact?.firstname,
         header: () => <div className="ml-4">Firstname</div>,
         cell: ({ row }) => (
             <div className="capitalize dark:text-white ml-4">
@@ -32,7 +33,7 @@ export const getUserHeaders = (
     },
     {
         accessorKey: "lastname",
-        accessorFn: (row) => row.lastname,
+        accessorFn: (row) => row.contact?.lastname,
         header: () => <div className="ml-4">Lastname</div>,
         cell: ({ row }) => (
             <div className="capitalize dark:text-white ml-4">
@@ -62,7 +63,7 @@ export const getUserHeaders = (
     },
     {
         accessorKey: "mobile",
-        accessorFn: (row) => row.user_info.mobile,
+        accessorFn: (row) => row.contact?.mobile,
         header: () => <div className="ml-4">Mobile</div>,
         cell: ({ row }) => (
             <div className="capitalize dark:text-white ml-4">
@@ -72,12 +73,16 @@ export const getUserHeaders = (
     },
     {
         accessorKey: "type",
-        accessorFn: (row) => row.user_type.type,
+        accessorFn: (row) => row.user_type?.type,
         header: () => <div className="ml-4">User Type</div>,
         cell: ({ row }) => (
-            <div className="capitalize dark:text-white ml-4">
+            <Badge
+                variant="secondary"
+                className="ml-4 inline-flex items-center"
+            >
+                <BadgeCheckIcon className="mr-1 inline-block" />
                 {row.getValue("type")}
-            </div>
+            </Badge>
         ),
     },
     {
@@ -85,8 +90,8 @@ export const getUserHeaders = (
         header: () => <div className="ml-4">Address</div>,
         cell: ({ row }) => (
             <div className="capitalize dark:text-white ml-4">
-                {row.original.user_info.city}, {row.original.user_info.country},{" "}
-                {row.original.user_info.postcode}
+                {row.original.contact?.city}, {row.original.contact?.country},{" "}
+                {row.original.contact?.postcode}
             </div>
         ),
     },

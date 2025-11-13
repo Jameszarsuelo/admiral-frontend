@@ -97,7 +97,7 @@ const configurationItems: NavItem[] = [
             { name: "Outcomes", path: "/outcomes" },
             { name: "Planning", path: "/planning" },
             { name: "Profiles", path: "/profiles" },
-            { name: "Suppliers", path: "/suppliers" },
+            // { name: "Suppliers", path: "/suppliers" },
             { name: "Task Queues", path: "/task-queues" },
             { name: "Users", path: "/users" },
         ],

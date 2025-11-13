@@ -1,12 +1,47 @@
 import api from "./api";
 import { AxiosError } from "axios";
-import { ISupplierFormSchema, ISupplierSchema } from "@/types/suppliers";
+import { ISupplierFormSchema, ISupplierSchema } from "@/types/SupplierSchema";
 
-export async function upsertSupplier(supplierData: ISupplierFormSchema): Promise<ISupplierFormSchema> {
+export async function upsertSupplier(
+    supplierData: ISupplierFormSchema,
+): Promise<ISupplierFormSchema> {
     try {
+        const hasFile = supplierData.document?.name instanceof File;
+
+        if (!hasFile) {
+            const response = supplierData.id
+                ? await api.put(`/supplier/${supplierData.id}`, supplierData)
+                : await api.post(`/supplier`, supplierData);
+            return response.data;
+        }
+
+        const formData = new FormData();
+
+        Object.entries(supplierData).forEach(([key, value]) => {
+            if (key === "document" || value === undefined || value === null)
+                return;
+            formData.append(key, String(value));
+        });
+
+        if (supplierData.document) {
+            const doc = supplierData.document as Record<string, unknown>;
+            Object.entries(doc).forEach(([docKey, docValue]) => {
+                if (docValue === undefined || docValue === null) return;
+                if (docKey === "name" && docValue instanceof File) {
+                    formData.append("document[file]", docValue);
+                } else {
+                    formData.append(`document[${docKey}]`, String(docValue));
+                }
+            });
+        }
+
         const response = supplierData.id
-            ? await api.put(`/supplier/${supplierData.id}`, supplierData)
-            : await api.post(`/supplier`, supplierData);
+            ? await api.put(`/supplier/${supplierData.id}`, formData, {
+                  headers: { "Content-Type": "multipart/form-data" },
+              })
+            : await api.post(`/supplier`, formData, {
+                  headers: { "Content-Type": "multipart/form-data" },
+              });
         return response.data;
     } catch (error) {
         if (error instanceof AxiosError && error.response?.data) {
@@ -21,14 +56,14 @@ export async function fetchSupplierList(): Promise<ISupplierSchema[]> {
         const response = await api.get(`/supplier`);
         return response.data;
     } catch (error) {
-       if (error instanceof AxiosError && error.response?.data) {
+        if (error instanceof AxiosError && error.response?.data) {
             throw error.response.data;
         }
         throw error;
     }
 }
 
-export async function fetchSupplierById(id: string): Promise<ISupplierSchema> {
+export async function fetchSupplierById(id: string): Promise<ISupplierFormSchema> {
     try {
         const response = await api.get(`/supplier/${id}`);
         return response.data;

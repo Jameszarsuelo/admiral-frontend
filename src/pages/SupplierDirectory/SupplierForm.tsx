@@ -1,151 +1,188 @@
-import { useEffect, useState } from "react";
-import { Controller, useForm } from "react-hook-form";
-import { useNavigate, useParams } from "react-router";
-
+import { zodResolver } from "@hookform/resolvers/zod";
 import { toast } from "sonner";
+
 import PageBreadcrumb from "@/components/common/PageBreadCrumb";
 import ComponentCard from "@/components/common/ComponentCard";
 import Label from "@/components/form/Label";
 import Input from "@/components/form/input/InputField";
 import { Field, FieldGroup } from "@/components/ui/field";
+import { Controller, useForm } from "react-hook-form";
 import Button from "@/components/ui/button/Button";
-import PhoneInput from "@/components/form/group-input/PhoneInput";
+// import PhoneInput from "@/components/form/group-input/PhoneInput";
+// import Select from "@/components/form/Select";
+// import Switch from "@/components/form/switch/Switch";
+import { Separator } from "@/components/ui/separator";
+import { useNavigate, useParams } from "react-router";
+import { fetchSupplierById, upsertSupplier } from "@/database/supplier_api";
+import { handleValidationErrors } from "@/helper/validationError";
+import { useEffect, useState } from "react";
+import Spinner from "@/components/ui/spinner/Spinner";
+import {
+    ISupplierFormSchema,
+    SupplierFormSchema,
+} from "@/types/SupplierSchema";
 import Select from "@/components/form/Select";
 import Switch from "@/components/form/switch/Switch";
-import { Separator } from "@/components/ui/separator";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { handleValidationErrors } from "@/helper/validationError";
-import Spinner from "@/components/ui/spinner/Spinner";
-import { IUserCreate, UserCreateSchema } from "@/types/UserSchema";
+// moved into SupplierDocumentFields component
+import { useAuth } from "@/hooks/useAuth";
+import { fetchDocumentVisibilityList } from "@/database/document_visibility_api";
+import { fetchContactList } from "@/database/contact_api";
+import ContactFormModal from "@/components/modal/ContactFormModal";
 import { useQuery } from "@tanstack/react-query";
-import {
-    fetchUserById,
-    fetchUserRelatedTables,
-    upsertUser,
-} from "@/database/user_api";
+import { PlusIcon } from "lucide-react";
+import Combobox from "@/components/form/Combobox";
+import DocumentFields from "@/components/supplier/DocumentFields";
 
-const countries = [
-    { code: "UK", label: "+44" },
-    { code: "PH", label: "+63 " },
-];
-
+// const countries = [
+//     { code: "UK", label: "+44" },
+//     { code: "PH", label: "+63" },
+// ];
 const twofaTypeOptions = [
     { value: 0, label: "SMS" },
     { value: 1, label: "Email" },
 ];
 
-const salutationOptions = [
-    { value: "mr", label: "Mr." },
-    { value: "ms", label: "Ms." },
-    { value: "mrs", label: "Mrs." },
-    { value: "dr", label: "Dr." },
-];
+interface DocumentVisibilityOption {
+    value: number;
+    label: string;
+}
 
-const UserForm = () => {
-    const { id } = useParams();
+export default function SupplierForm() {
+    const { id, method } = useParams();
     const navigate = useNavigate();
-    const [isLoading, setIsLoading] = useState(false);
+    const { user } = useAuth();
+    const [documentVisibilityOptions, setDocumentVisibilityOptions] = useState<
+        DocumentVisibilityOption[]
+    >([]);
+    const [isContactModalOpen, setIsContactModalOpen] = useState(false);
 
-    const { handleSubmit, control, reset, setError } = useForm<IUserCreate>({
-        defaultValues: {
-            email: "",
-            two_fa_enabled: false,
-            two_fa_type: 0,
-            user_type_id: 1,
-            user_profile_id: 1,
-            contact: {
-                salutation: "",
-                firstname: "",
-                lastname: "",
-                phone: "",
-                mobile: "+44",
+    // Fetch contacts for dropdown
+    const { data: contacts = [], refetch: refetchContacts } = useQuery({
+        queryKey: ["contacts"],
+        queryFn: fetchContactList,
+    });
+
+    // Fetch current supplier data if editing
+    const { data: supplierData, isLoading } = useQuery({
+        queryKey: ["supplier", id],
+        queryFn: () => (id ? fetchSupplierById(id) : null),
+        enabled: !!id,
+    });
+
+    // Transform contacts to dropdown options
+    const contactOptions = contacts
+        .filter((contact) => Number(contact.type) === 2)
+        .filter(
+            (contact) =>
+                contact.supplier_id === null ||
+                contact.supplier_id === Number(id),
+        )
+        .map((contact) => ({
+            value: contact.id || 0,
+            label: `${contact.firstname} ${contact.lastname}`,
+        }));
+
+    const { handleSubmit, control, setError, reset } =
+        useForm<ISupplierFormSchema>({
+            defaultValues: {
+                two_fa_enabled: false,
+                two_fa_type: 0,
+                sso_provider: "",
+                sso_sub: "",
+                name: "",
+                vat_number: "",
                 address_line_1: "",
                 address_line_2: "",
                 address_line_3: "",
                 city: "",
                 county: "",
-                country: "",
+                country: "United Kingdom",
                 postcode: "",
-                organisation: "",
+                phone: "",
+                invoice_query_email: "",
+                max_payment_days: 30,
+                target_payment_days: 7,
+                preferred_payment_day: "",
+                priority: 5,
+                contact_id: undefined,
+                created_by: user?.id,
+                document: {
+                    name: "",
+                    revision: "",
+                    expiry_date: "",
+                    document_visibility_id: 1,
+                    uploaded_by: user?.id,
+                },
             },
-        },
-        resolver: zodResolver(UserCreateSchema),
-    });
-
-    const { data: userRelatedTables, isLoading: isUserRelatedLoading } =
-        useQuery({
-            queryKey: ["user-related-tables"],
-            queryFn: async () => {
-                return await fetchUserRelatedTables();
-            },
-            staleTime: Infinity,
+            resolver: zodResolver(SupplierFormSchema),
         });
 
-    const user_types = userRelatedTables?.user_types ?? [];
-    const user_profiles = userRelatedTables?.user_profiles ?? [];
-
+    // Reset form with supplier data when editing
     useEffect(() => {
-        if (id) {
-            setIsLoading(true);
-            fetchUserById(id)
-                .then((data) => {
-                    const userData = data as IUserCreate;
-                    reset(userData);
-                })
-                .catch((error) => {
-                    return handleValidationErrors(error, setError);
-                })
-                .finally(() => {
-                    setIsLoading(false);
-                });
+        if (supplierData) {
+            // Normalize null values to empty strings to prevent React warnings
+            // Convert null to empty string for text inputs, undefined for optional fields
+            const normalizedData = {
+                ...supplierData,
+                contact_id: supplierData.contact_id || undefined,
+                updated_by: user?.id,
+            };
+            reset(normalizedData as ISupplierFormSchema);
         }
-    }, [id, reset, setError]);
+    }, [supplierData, reset, user]);
+
+    function onSubmit(data: ISupplierFormSchema) {
+        toast.promise(upsertSupplier(data), {
+            loading: id ? "Updating Supplier..." : "Creating Supplier...",
+            success: () => {
+                setTimeout(() => {
+                    navigate("/supplier-directory");
+                }, 2000);
+                return id
+                    ? "Supplier updated successfully!"
+                    : "Supplier created successfully!";
+            },
+            error: (error: unknown) => {
+                return handleValidationErrors(error, setError);
+            },
+        });
+    }
 
     function onError(errors: unknown) {
         console.log("Form validation errors:", errors);
         toast.error("Please fix the errors in the form");
     }
 
-    const onSubmit = async (userData: IUserCreate) => {
-        console.log("Submitted Data:", userData);
-        try {
-            toast.promise(upsertUser(userData), {
-                loading: id ? "Updating User..." : "Creating User...",
-                success: () => {
-                    setTimeout(() => {
-                        navigate("/users");
-                    }, 2000);
-                    return id
-                        ? "User updated successfully"
-                        : "User created successfully!";
-                },
-                error: (error: unknown) => {
-                    return handleValidationErrors(error, setError);
-                },
-            });
-        } catch (error) {
-            console.log("Error upon Submitting", error);
-        }
-    };
+    useEffect(() => {
+        const fetchData = async () => {
+            const dvData = await fetchDocumentVisibilityList();
+
+            setDocumentVisibilityOptions(
+                dvData.map((dv) => ({ value: dv.id, label: dv.name })),
+            );
+        };
+
+        fetchData();
+    }, []);
 
     return (
         <>
-            <PageBreadcrumb pageTitle="User" />
-            <ComponentCard title={id ? "Edit User" : "Add User"}>
+            <PageBreadcrumb pageTitle="Supplier" />
+            <ComponentCard title={id ? "Edit Supplier" : "Add Supplier"}>
                 {isLoading ? (
                     <div className="flex items-center justify-center py-12">
                         <Spinner size="lg" />
                     </div>
                 ) : (
                     <form
-                        id="form-user"
+                        id="form-supplier"
                         onSubmit={handleSubmit(onSubmit, onError)}
                     >
                         <FieldGroup>
-                            <div className="grid grid-cols-2 gap-6 ">
-                                <div>
+                            <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
+                                <div className="space-y-6">
                                     <Controller
-                                        name="contact.salutation"
+                                        name="name"
                                         control={control}
                                         render={({ field, fieldState }) => (
                                             <Field
@@ -153,51 +190,15 @@ const UserForm = () => {
                                                     fieldState.invalid
                                                 }
                                             >
-                                                <Label htmlFor="salutation">
-                                                    Salutation
-                                                </Label>
-                                                <Select
-                                                    value={field.value}
-                                                    options={salutationOptions}
-                                                    placeholder="Select Salutation"
-                                                    onChange={(value: string) =>
-                                                        field.onChange(value)
-                                                    }
-                                                    onBlur={field.onBlur}
-                                                    className="dark:bg-dark-900"
-                                                />
-                                                {fieldState.error && (
-                                                    <p className="mt-1 text-sm text-error-500">
-                                                        {
-                                                            fieldState.error
-                                                                .message
-                                                        }
-                                                    </p>
-                                                )}
-                                            </Field>
-                                        )}
-                                    />
-                                </div>
-
-                                <div>
-                                    <Controller
-                                        name="contact.firstname"
-                                        control={control}
-                                        render={({ field, fieldState }) => (
-                                            <Field
-                                                data-invalid={
-                                                    fieldState.invalid
-                                                }
-                                            >
-                                                <Label htmlFor="input">
-                                                    First Name
+                                                <Label htmlFor="name">
+                                                    Supplier Name
                                                 </Label>
                                                 <Input
                                                     {...field}
                                                     type="text"
-                                                    id="input"
-                                                    name="firstname"
-                                                    placeholder="Enter first name"
+                                                    id="name"
+                                                    name="name"
+                                                    placeholder="Enter Supplier Name"
                                                 />
                                                 {fieldState.error && (
                                                     <p className="mt-1 text-sm text-error-500">
@@ -210,117 +211,9 @@ const UserForm = () => {
                                             </Field>
                                         )}
                                     />
-                                </div>
 
-                                <div>
                                     <Controller
-                                        name="contact.lastname"
-                                        control={control}
-                                        render={({ field, fieldState }) => (
-                                            <Field
-                                                data-invalid={
-                                                    fieldState.invalid
-                                                }
-                                            >
-                                                <Label htmlFor="lastname">
-                                                    Last Name
-                                                </Label>
-                                                <Input
-                                                    {...field}
-                                                    type="text"
-                                                    id="lastname"
-                                                    name="lastname"
-                                                    placeholder="Enter last name"
-                                                />
-                                                {fieldState.error && (
-                                                    <p className="mt-1 text-sm text-error-500">
-                                                        {
-                                                            fieldState.error
-                                                                .message
-                                                        }
-                                                    </p>
-                                                )}
-                                            </Field>
-                                        )}
-                                    />
-                                </div>
-
-                                <div>
-                                    <Controller
-                                        name="email"
-                                        control={control}
-                                        render={({ field, fieldState }) => (
-                                            <Field
-                                                data-invalid={
-                                                    fieldState.invalid
-                                                }
-                                            >
-                                                <Label htmlFor="input">
-                                                    Email
-                                                </Label>
-                                                <Input
-                                                    {...field}
-                                                    type="text"
-                                                    id="input"
-                                                    name="email"
-                                                    placeholder="e.g. john@test.com"
-                                                />
-                                                {fieldState.error && (
-                                                    <p className="mt-1 text-sm text-error-500">
-                                                        {
-                                                            fieldState.error
-                                                                .message
-                                                        }
-                                                    </p>
-                                                )}
-                                            </Field>
-                                        )}
-                                    />
-                                </div>
-
-                                <div>
-                                    <Controller
-                                        name="contact.mobile"
-                                        control={control}
-                                        render={({ field, fieldState }) => (
-                                            <Field
-                                                data-invalid={
-                                                    fieldState.invalid
-                                                }
-                                            >
-                                                <Label htmlFor="input">
-                                                    Mobile
-                                                </Label>
-                                                <PhoneInput
-                                                    value={field.value}
-                                                    countries={countries}
-                                                    selectPosition="start"
-                                                    placeholder="+1 (555) 000-0000"
-                                                    onChange={(
-                                                        phoneNumber: string,
-                                                    ) => {
-                                                        field.onChange(
-                                                            phoneNumber,
-                                                        );
-                                                    }}
-                                                    onBlur={field.onBlur}
-                                                />
-                                                {fieldState.error && (
-                                                    <p className="mt-1 text-sm text-error-500">
-                                                        {
-                                                            fieldState.error
-                                                                .message
-                                                        }
-                                                    </p>
-                                                )}
-                                            </Field>
-                                        )}
-                                    />
-                                </div>
-
-                                <div>
-                                    <Controller
-                                        name="contact.phone"
+                                        name="phone"
                                         control={control}
                                         render={({ field, fieldState }) => (
                                             <Field
@@ -329,7 +222,7 @@ const UserForm = () => {
                                                 }
                                             >
                                                 <Label htmlFor="phone">
-                                                    Phone
+                                                    Generic Phone Number
                                                 </Label>
                                                 <Input
                                                     {...field}
@@ -349,11 +242,9 @@ const UserForm = () => {
                                             </Field>
                                         )}
                                     />
-                                </div>
 
-                                <div>
                                     <Controller
-                                        name="two_fa_enabled"
+                                        name="invoice_query_email"
                                         control={control}
                                         render={({ field, fieldState }) => (
                                             <Field
@@ -361,47 +252,15 @@ const UserForm = () => {
                                                     fieldState.invalid
                                                 }
                                             >
-                                                <Label htmlFor="input">
-                                                    Multi-factor authentication
+                                                <Label htmlFor="invoice_query_email">
+                                                    Invoice Query Email
                                                 </Label>
-                                                <Switch
-                                                    checked={field.value}
-                                                    onCheckedChange={
-                                                        field.onChange
-                                                    }
-                                                    label="Enable multi-factor authentication to secure your account."
-                                                />
-                                            </Field>
-                                        )}
-                                    />
-                                </div>
-
-                                <div>
-                                    <Controller
-                                        name="two_fa_type"
-                                        control={control}
-                                        render={({ field, fieldState }) => (
-                                            <Field
-                                                data-invalid={
-                                                    fieldState.invalid
-                                                }
-                                            >
-                                                <Label htmlFor="two_fa_type">
-                                                    2FA Type
-                                                </Label>
-                                                <Select
-                                                    value={String(
-                                                        field.value ?? "",
-                                                    )}
-                                                    options={twofaTypeOptions}
-                                                    placeholder="Select 2FA Type"
-                                                    onChange={(value: string) =>
-                                                        field.onChange(
-                                                            Number(value),
-                                                        )
-                                                    }
-                                                    onBlur={field.onBlur}
-                                                    className="dark:bg-dark-900"
+                                                <Input
+                                                    {...field}
+                                                    type="text"
+                                                    id="invoice_query_email"
+                                                    name="invoice_query_email"
+                                                    placeholder="e.g. john@test.com"
                                                 />
                                                 {fieldState.error && (
                                                     <p className="mt-1 text-sm text-error-500">
@@ -414,11 +273,10 @@ const UserForm = () => {
                                             </Field>
                                         )}
                                     />
-                                </div>
-                                {!isUserRelatedLoading && (
+
                                     <div>
                                         <Controller
-                                            name="user_type_id"
+                                            name="contact_id"
                                             control={control}
                                             render={({ field, fieldState }) => (
                                                 <Field
@@ -426,25 +284,47 @@ const UserForm = () => {
                                                         fieldState.invalid
                                                     }
                                                 >
-                                                    <Label htmlFor="user_type_id">
-                                                        User Type
+                                                    <Label htmlFor="contact_id">
+                                                        Primary Contact
                                                     </Label>
-                                                    <Select
-                                                        value={String(
-                                                            field.value ?? "",
-                                                        )}
-                                                        options={user_types}
-                                                        placeholder="Select User Type"
-                                                        onChange={(
-                                                            value: string,
-                                                        ) =>
-                                                            field.onChange(
-                                                                Number(value),
-                                                            )
-                                                        }
-                                                        onBlur={field.onBlur}
-                                                        className="dark:bg-dark-900"
-                                                    />
+                                                    <div className="flex gap-2 w-full">
+                                                        <div className="flex-1">
+                                                            <Combobox
+                                                                value={
+                                                                    field.value
+                                                                }
+                                                                options={
+                                                                    contactOptions
+                                                                }
+                                                                onChange={(
+                                                                    value,
+                                                                ) =>
+                                                                    field.onChange(
+                                                                        Number(
+                                                                            value,
+                                                                        ),
+                                                                    )
+                                                                }
+                                                                placeholder="Select Primary Contact"
+                                                                searchPlaceholder="Search contact..."
+                                                                emptyText="No contact found."
+                                                            />
+                                                        </div>
+                                                        <Button
+                                                            type="button"
+                                                            variant="outline"
+                                                            size="sm"
+                                                            onClick={() =>
+                                                                setIsContactModalOpen(
+                                                                    true,
+                                                                )
+                                                            }
+                                                            className="flex items-center gap-1 whitespace-nowrap"
+                                                        >
+                                                            <PlusIcon className="w-4 h-4" />
+                                                            Add Contact
+                                                        </Button>
+                                                    </div>
                                                     {fieldState.error && (
                                                         <p className="mt-1 text-sm text-error-500">
                                                             {
@@ -457,11 +337,9 @@ const UserForm = () => {
                                             )}
                                         />
                                     </div>
-                                )}
 
-                                <div>
                                     <Controller
-                                        name="user_profile_id"
+                                        name="priority"
                                         control={control}
                                         render={({ field, fieldState }) => (
                                             <Field
@@ -469,22 +347,177 @@ const UserForm = () => {
                                                     fieldState.invalid
                                                 }
                                             >
-                                                <Label htmlFor="user_profile_id">
-                                                    User Profile
+                                                <Label htmlFor="priority">
+                                                    Supplier Priority
                                                 </Label>
-                                                <Select
-                                                    value={String(
-                                                        field.value ?? "",
-                                                    )}
-                                                    options={user_profiles}
-                                                    placeholder="Select Profile Type"
-                                                    onChange={(value: string) =>
+                                                <Input
+                                                    type="number"
+                                                    id="priority"
+                                                    name="priority"
+                                                    placeholder="Default: 5, Min: 1, Max: 10"
+                                                    min={1}
+                                                    max={10}
+                                                    value={field.value ?? ""}
+                                                    onChange={(e) =>
                                                         field.onChange(
-                                                            Number(value),
+                                                            e.target.value ===
+                                                                ""
+                                                                ? undefined
+                                                                : Number(
+                                                                      e.target
+                                                                          .value,
+                                                                  ),
                                                         )
                                                     }
                                                     onBlur={field.onBlur}
-                                                    className="dark:bg-dark-900"
+                                                />
+                                                {fieldState.error && (
+                                                    <p className="mt-1 text-sm text-error-500">
+                                                        {
+                                                            fieldState.error
+                                                                .message
+                                                        }
+                                                    </p>
+                                                )}
+                                            </Field>
+                                        )}
+                                    />
+
+                                    <Controller
+                                        name="max_payment_days"
+                                        control={control}
+                                        render={({ field, fieldState }) => (
+                                            <Field
+                                                data-invalid={
+                                                    fieldState.invalid
+                                                }
+                                            >
+                                                <Label htmlFor="max_payment_days">
+                                                    Max Payment Days
+                                                </Label>
+                                                <Input
+                                                    type="number"
+                                                    id="max_payment_days"
+                                                    name="max_payment_days"
+                                                    placeholder="30"
+                                                    value={field.value ?? ""}
+                                                    onChange={(e) =>
+                                                        field.onChange(
+                                                            e.target.value ===
+                                                                ""
+                                                                ? undefined
+                                                                : Number(
+                                                                      e.target
+                                                                          .value,
+                                                                  ),
+                                                        )
+                                                    }
+                                                    onBlur={field.onBlur}
+                                                />
+                                                {fieldState.error && (
+                                                    <p className="mt-1 text-sm text-error-500">
+                                                        {
+                                                            fieldState.error
+                                                                .message
+                                                        }
+                                                    </p>
+                                                )}
+                                            </Field>
+                                        )}
+                                    />
+
+                                    <Controller
+                                        name="target_payment_days"
+                                        control={control}
+                                        render={({ field, fieldState }) => (
+                                            <Field
+                                                data-invalid={
+                                                    fieldState.invalid
+                                                }
+                                            >
+                                                <Label htmlFor="target_payment_days">
+                                                    Target Payment Days
+                                                </Label>
+                                                <Input
+                                                    type="number"
+                                                    id="target_payment_days"
+                                                    name="target_payment_days"
+                                                    placeholder="7"
+                                                    value={field.value ?? ""}
+                                                    onChange={(e) =>
+                                                        field.onChange(
+                                                            e.target.value ===
+                                                                ""
+                                                                ? undefined
+                                                                : Number(
+                                                                      e.target
+                                                                          .value,
+                                                                  ),
+                                                        )
+                                                    }
+                                                    onBlur={field.onBlur}
+                                                />
+                                                {fieldState.error && (
+                                                    <p className="mt-1 text-sm text-error-500">
+                                                        {
+                                                            fieldState.error
+                                                                .message
+                                                        }
+                                                    </p>
+                                                )}
+                                            </Field>
+                                        )}
+                                    />
+
+                                    <Controller
+                                        name="preferred_payment_day"
+                                        control={control}
+                                        render={({ field, fieldState }) => (
+                                            <Field
+                                                data-invalid={
+                                                    fieldState.invalid
+                                                }
+                                            >
+                                                <Label htmlFor="preferred_payment_day">
+                                                    Preferred Payment Day
+                                                </Label>
+                                                <Input
+                                                    {...field}
+                                                    type="text"
+                                                    id="preferred_payment_day"
+                                                    name="preferred_payment_day"
+                                                    placeholder="e.g. Monday"
+                                                />
+                                                {fieldState.error && (
+                                                    <p className="mt-1 text-sm text-error-500">
+                                                        {
+                                                            fieldState.error
+                                                                .message
+                                                        }
+                                                    </p>
+                                                )}
+                                            </Field>
+                                        )}
+                                    />
+
+                                    <Controller
+                                        name="vat_number"
+                                        control={control}
+                                        render={({ field, fieldState }) => (
+                                            <Field
+                                                data-invalid={
+                                                    fieldState.invalid
+                                                }
+                                            >
+                                                <Label htmlFor="vat_number">
+                                                    VAT Number
+                                                </Label>
+                                                <Input
+                                                    {...field}
+                                                    type="text"
+                                                    id="vat_number"
+                                                    name="vat_number"
+                                                    placeholder="Enter VAT number"
                                                 />
                                                 {fieldState.error && (
                                                     <p className="mt-1 text-sm text-error-500">
@@ -499,39 +532,10 @@ const UserForm = () => {
                                     />
                                 </div>
 
-                                <div className="col-span-full">
-                                    <Separator className="my-4" />
-                                </div>
-
-                                <Controller
-                                    name="contact.organisation"
-                                    control={control}
-                                    render={({ field, fieldState }) => (
-                                        <Field
-                                            data-invalid={fieldState.invalid}
-                                        >
-                                            <Label htmlFor="organisation">
-                                                Organisation
-                                            </Label>
-                                            <Input
-                                                {...field}
-                                                type="text"
-                                                id="organisation"
-                                                name="organisation"
-                                                placeholder="Enter Organisation"
-                                            />
-                                            {fieldState.error && (
-                                                <p className="mt-1 text-sm text-error-500">
-                                                    {fieldState.error.message}
-                                                </p>
-                                            )}
-                                        </Field>
-                                    )}
-                                />
-
-                                <div>
+                                {/* RIGHT COLUMN: Address Info */}
+                                <div className="space-y-6">
                                     <Controller
-                                        name="contact.address_line_1"
+                                        name="address_line_1"
                                         control={control}
                                         render={({ field, fieldState }) => (
                                             <Field
@@ -560,11 +564,9 @@ const UserForm = () => {
                                             </Field>
                                         )}
                                     />
-                                </div>
 
-                                <div>
                                     <Controller
-                                        name="contact.address_line_2"
+                                        name="address_line_2"
                                         control={control}
                                         render={({ field, fieldState }) => (
                                             <Field
@@ -593,11 +595,9 @@ const UserForm = () => {
                                             </Field>
                                         )}
                                     />
-                                </div>
 
-                                <div>
                                     <Controller
-                                        name="contact.address_line_3"
+                                        name="address_line_3"
                                         control={control}
                                         render={({ field, fieldState }) => (
                                             <Field
@@ -626,11 +626,9 @@ const UserForm = () => {
                                             </Field>
                                         )}
                                     />
-                                </div>
 
-                                <div>
                                     <Controller
-                                        name="contact.city"
+                                        name="city"
                                         control={control}
                                         render={({ field, fieldState }) => (
                                             <Field
@@ -639,7 +637,7 @@ const UserForm = () => {
                                                 }
                                             >
                                                 <Label htmlFor="city">
-                                                    City
+                                                    City / Town
                                                 </Label>
                                                 <Input
                                                     {...field}
@@ -659,11 +657,9 @@ const UserForm = () => {
                                             </Field>
                                         )}
                                     />
-                                </div>
 
-                                <div>
                                     <Controller
-                                        name="contact.county"
+                                        name="county"
                                         control={control}
                                         render={({ field, fieldState }) => (
                                             <Field
@@ -692,11 +688,9 @@ const UserForm = () => {
                                             </Field>
                                         )}
                                     />
-                                </div>
 
-                                <div>
                                     <Controller
-                                        name="contact.country"
+                                        name="country"
                                         control={control}
                                         render={({ field, fieldState }) => (
                                             <Field
@@ -725,11 +719,9 @@ const UserForm = () => {
                                             </Field>
                                         )}
                                     />
-                                </div>
 
-                                <div>
                                     <Controller
-                                        name="contact.postcode"
+                                        name="postcode"
                                         control={control}
                                         render={({ field, fieldState }) => (
                                             <Field
@@ -758,7 +750,100 @@ const UserForm = () => {
                                             </Field>
                                         )}
                                     />
+
+                                    <div>
+                                        <Controller
+                                            name="two_fa_type"
+                                            control={control}
+                                            render={({ field, fieldState }) => (
+                                                <Field
+                                                    data-invalid={
+                                                        fieldState.invalid
+                                                    }
+                                                >
+                                                    <Label htmlFor="two_fa_type">
+                                                        2FA Type
+                                                    </Label>
+                                                    <Select
+                                                        value={String(
+                                                            field.value ?? "",
+                                                        )}
+                                                        options={
+                                                            twofaTypeOptions
+                                                        }
+                                                        placeholder="Select 2FA Type"
+                                                        onChange={(
+                                                            value: string,
+                                                        ) =>
+                                                            field.onChange(
+                                                                Number(value),
+                                                            )
+                                                        }
+                                                        onBlur={field.onBlur}
+                                                        className="dark:bg-dark-900"
+                                                    />
+                                                    {fieldState.error && (
+                                                        <p className="mt-1 text-sm text-error-500">
+                                                            {
+                                                                fieldState.error
+                                                                    .message
+                                                            }
+                                                        </p>
+                                                    )}
+                                                </Field>
+                                            )}
+                                        />
+                                    </div>
+
+                                    <div>
+                                        <Controller
+                                            name="two_fa_enabled"
+                                            control={control}
+                                            render={({ field, fieldState }) => (
+                                                <Field
+                                                    data-invalid={
+                                                        fieldState.invalid
+                                                    }
+                                                >
+                                                    <Label htmlFor="input">
+                                                        Multi-factor
+                                                        authentication
+                                                    </Label>
+                                                    <Switch
+                                                        checked={field.value}
+                                                        onCheckedChange={
+                                                            field.onChange
+                                                        }
+                                                        label="Enable multi-factor authentication to secure your account."
+                                                    />
+                                                </Field>
+                                            )}
+                                        />
+                                    </div>
                                 </div>
+                                {method !== "edit" && (
+                                    <>
+                                        <div className="col-span-full">
+                                            <Separator className="my-4" />
+                                        </div>
+
+                                        <div className="col-span-full">
+                                            <h3 className="mb-4 text-lg font-medium">
+                                                Supplier Documents
+                                            </h3>
+                                            <p className="mb-6 text-sm text-muted-foreground">
+                                                Upload and manage documents
+                                                related to this supplier.
+                                            </p>
+                                        </div>
+                                        <DocumentFields
+                                            control={control}
+                                            documentVisibilityOptions={
+                                                documentVisibilityOptions
+                                            }
+                                        />
+                                    </>
+                                )}
                             </div>
                         </FieldGroup>
                     </form>
@@ -775,14 +860,25 @@ const UserForm = () => {
                             </Button>
                         )}
 
-                        <Button type="submit" form="form-user">
+                        <Button type="submit" form="form-supplier">
                             {id ? "Update" : "Submit"}
                         </Button>
                     </div>
                 )}
             </ComponentCard>
+
+            <ContactFormModal
+                isOpen={isContactModalOpen}
+                onClose={() => setIsContactModalOpen(false)}
+                onContactCreated={(contact) => {
+                    console.log("Contact created:", contact);
+                    toast.success(
+                        `Contact ${contact.firstname} ${contact.lastname} has been added!`,
+                    );
+                    // Refetch contacts to update the dropdown
+                    refetchContacts();
+                }}
+            />
         </>
     );
-};
-
-export default UserForm;
+}

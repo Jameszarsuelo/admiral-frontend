@@ -11,15 +11,14 @@ import Button from "@/components/ui/button/Button";
 import PhoneInput from "@/components/form/group-input/PhoneInput";
 import Select from "@/components/form/Select";
 import Switch from "@/components/form/switch/Switch";
-import { Separator } from "@/components/ui/separator";
 import { useNavigate, useParams } from "react-router";
 import { handleValidationErrors } from "@/helper/validationError";
 import { useEffect, useState } from "react";
 import Spinner from "@/components/ui/spinner/Spinner";
 import { fetchIpcById, upsertIpc } from "@/database/ipc_api";
-import { IUserForm } from "@/types/user";
-import { UserFormSchema } from "@/types/UserFormSchema";
-import { IIPCSchema } from "@/types/ipc";
+import { IIPCForm, IPCCreateSchema } from "@/types/IPCSchema";
+import { useAuth } from "@/hooks/useAuth";
+// import { IIPCSchema } from "@/types/ipc";
 
 const countries = [
     { code: "UK", label: "+44" },
@@ -39,30 +38,33 @@ const salutationOptions = [
 
 export default function IPCForm() {
     const { id } = useParams();
+    const { user } = useAuth();
     const navigate = useNavigate();
     const [isLoading, setIsLoading] = useState(false);
 
-    const { handleSubmit, control, setError, reset } = useForm<IUserForm>({
+    const { handleSubmit, control, reset, setError } = useForm<IIPCForm>({
         defaultValues: {
-            salutation: "",
-            firstname: "",
-            lastname: "",
-            email: "",
-            phone: "",
-            mobile: "+44",
             two_fa_enabled: false,
             two_fa_type: 0,
-            user_type_id: 0,
-            user_profile_id: 0,
-            address_line_1: "",
-            address_line_2: "",
-            address_line_3: "",
-            city: "",
-            county: "",
-            country: "",
-            postcode: "",
+            contact: {
+                salutation: "",
+                firstname: "",
+                lastname: "",
+                phone: "",
+                mobile: "+44",
+                email: "",
+                organisation: "",
+                address_line_1: "",
+                address_line_2: "",
+                address_line_3: "",
+                city: "",
+                county: "",
+                country: "United Kingdom",
+                postcode: "",
+                created_by: user?.id,
+            },
         },
-        resolver: zodResolver(UserFormSchema),
+        resolver: zodResolver(IPCCreateSchema),
     });
 
     useEffect(() => {
@@ -70,27 +72,14 @@ export default function IPCForm() {
             setIsLoading(true);
             fetchIpcById(id)
                 .then((data) => {
-                    const userData = (data as IIPCSchema).user;
+                    const userData = (data as IIPCForm);
 
                     reset({
-                        id: data.id,
-                        firstname: userData.firstname,
-                        lastname: userData.lastname,
-                        email: userData.email,
-                        two_fa_enabled: Boolean(userData.two_fa_enabled),
-                        two_fa_type: userData.two_fa_type,
-                        user_type_id: userData.user_type_id,
-                        user_profile_id: userData.user_profile_id,
-                        salutation: userData.user_info.salutation,
-                        phone: userData.user_info.phone || "",
-                        mobile: userData.user_info.mobile,
-                        address_line_1: userData.user_info.address_line_1 || "",
-                        address_line_2: userData.user_info.address_line_2 || "",
-                        address_line_3: userData.user_info.address_line_3 || "",
-                        city: userData.user_info.city,
-                        county: userData.user_info.county,
-                        country: userData.user_info.country,
-                        postcode: userData.user_info.postcode,
+                        ...userData,
+                        contact: {
+                            ...userData.contact,
+                            updated_by: user?.id,
+                        },
                     });
                 })
                 .catch((error) => {
@@ -100,9 +89,14 @@ export default function IPCForm() {
                     setIsLoading(false);
                 });
         }
-    }, [id, reset, setError]);
+    }, [id, reset, setError, user?.id]);
 
-    async function onSubmit(data: IUserForm) {
+    function onError(errors: unknown) {
+        console.log("Form validation errors:", errors);
+        toast.error("Please fix the errors in the form");
+    }
+
+    async function onSubmit(data: IIPCForm) {
         toast.promise(upsertIpc(data), {
             loading: id ? "Updating IPC..." : "Creating IPC...",
             success: () => {
@@ -128,12 +122,15 @@ export default function IPCForm() {
                         <Spinner size="lg" />
                     </div>
                 ) : (
-                    <form id="form-ipc" onSubmit={handleSubmit(onSubmit)}>
+                    <form
+                        id="form-ipc"
+                        onSubmit={handleSubmit(onSubmit, onError)}
+                    >
                         <FieldGroup>
-                            <div className="grid grid-cols-2 gap-6 ">
-                                <div>
+                            <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
+                                <div className="space-y-6">
                                     <Controller
-                                        name="salutation"
+                                        name="contact.salutation"
                                         control={control}
                                         render={({ field, fieldState }) => (
                                             <Field
@@ -165,11 +162,9 @@ export default function IPCForm() {
                                             </Field>
                                         )}
                                     />
-                                </div>
 
-                                <div>
                                     <Controller
-                                        name="firstname"
+                                        name="contact.firstname"
                                         control={control}
                                         render={({ field, fieldState }) => (
                                             <Field
@@ -177,15 +172,15 @@ export default function IPCForm() {
                                                     fieldState.invalid
                                                 }
                                             >
-                                                <Label htmlFor="input">
+                                                <Label htmlFor="firstname">
                                                     First Name
                                                 </Label>
                                                 <Input
                                                     {...field}
                                                     type="text"
-                                                    id="input"
+                                                    id="firstname"
                                                     name="firstname"
-                                                    placeholder="Enter first name"
+                                                    placeholder="Enter First Name"
                                                 />
                                                 {fieldState.error && (
                                                     <p className="mt-1 text-sm text-error-500">
@@ -198,11 +193,9 @@ export default function IPCForm() {
                                             </Field>
                                         )}
                                     />
-                                </div>
 
-                                <div>
                                     <Controller
-                                        name="lastname"
+                                        name="contact.lastname"
                                         control={control}
                                         render={({ field, fieldState }) => (
                                             <Field
@@ -218,7 +211,7 @@ export default function IPCForm() {
                                                     type="text"
                                                     id="lastname"
                                                     name="lastname"
-                                                    placeholder="Enter last name"
+                                                    placeholder="Enter Last Name"
                                                 />
                                                 {fieldState.error && (
                                                     <p className="mt-1 text-sm text-error-500">
@@ -231,11 +224,82 @@ export default function IPCForm() {
                                             </Field>
                                         )}
                                     />
-                                </div>
 
-                                <div>
+                                    <div>
+                                        <Controller
+                                            name="contact.mobile"
+                                            control={control}
+                                            render={({ field, fieldState }) => (
+                                                <Field
+                                                    data-invalid={
+                                                        fieldState.invalid
+                                                    }
+                                                >
+                                                    <Label htmlFor="mobile">
+                                                        Mobile
+                                                    </Label>
+                                                    <PhoneInput
+                                                        value={field.value}
+                                                        countries={countries}
+                                                        selectPosition="start"
+                                                        placeholder="+44 7123 456789"
+                                                        onChange={(
+                                                            phoneNumber: string,
+                                                        ) => {
+                                                            field.onChange(
+                                                                phoneNumber,
+                                                            );
+                                                        }}
+                                                        onBlur={field.onBlur}
+                                                    />
+                                                    {fieldState.error && (
+                                                        <p className="mt-1 text-sm text-error-500">
+                                                            {
+                                                                fieldState.error
+                                                                    .message
+                                                            }
+                                                        </p>
+                                                    )}
+                                                </Field>
+                                            )}
+                                        />
+                                    </div>
+
+                                    <div>
+                                        <Controller
+                                            name="contact.phone"
+                                            control={control}
+                                            render={({ field, fieldState }) => (
+                                                <Field
+                                                    data-invalid={
+                                                        fieldState.invalid
+                                                    }
+                                                >
+                                                    <Label htmlFor="phone">
+                                                        Phone
+                                                    </Label>
+                                                    <Input
+                                                        {...field}
+                                                        type="text"
+                                                        id="phone"
+                                                        name="phone"
+                                                        placeholder="Enter phone number"
+                                                    />
+                                                    {fieldState.error && (
+                                                        <p className="mt-1 text-sm text-error-500">
+                                                            {
+                                                                fieldState.error
+                                                                    .message
+                                                            }
+                                                        </p>
+                                                    )}
+                                                </Field>
+                                            )}
+                                        />
+                                    </div>
+
                                     <Controller
-                                        name="email"
+                                        name="contact.email"
                                         control={control}
                                         render={({ field, fieldState }) => (
                                             <Field
@@ -243,13 +307,13 @@ export default function IPCForm() {
                                                     fieldState.invalid
                                                 }
                                             >
-                                                <Label htmlFor="input">
+                                                <Label htmlFor="email">
                                                     Email
                                                 </Label>
                                                 <Input
                                                     {...field}
                                                     type="text"
-                                                    id="input"
+                                                    id="email"
                                                     name="email"
                                                     placeholder="e.g. john@test.com"
                                                 />
@@ -264,11 +328,9 @@ export default function IPCForm() {
                                             </Field>
                                         )}
                                     />
-                                </div>
 
-                                <div>
                                     <Controller
-                                        name="mobile"
+                                        name="contact.organisation"
                                         control={control}
                                         render={({ field, fieldState }) => (
                                             <Field
@@ -276,55 +338,15 @@ export default function IPCForm() {
                                                     fieldState.invalid
                                                 }
                                             >
-                                                <Label htmlFor="input">
-                                                    Mobile
-                                                </Label>
-                                                <PhoneInput
-                                                    value={field.value}
-                                                    countries={countries}
-                                                    selectPosition="start"
-                                                    placeholder="+44 7123 456789"
-                                                    onChange={(
-                                                        phoneNumber: string,
-                                                    ) => {
-                                                        field.onChange(
-                                                            phoneNumber,
-                                                        );
-                                                    }}
-                                                    onBlur={field.onBlur}
-                                                />
-                                                {fieldState.error && (
-                                                    <p className="mt-1 text-sm text-error-500">
-                                                        {
-                                                            fieldState.error
-                                                                .message
-                                                        }
-                                                    </p>
-                                                )}
-                                            </Field>
-                                        )}
-                                    />
-                                </div>
-
-                                <div>
-                                    <Controller
-                                        name="phone"
-                                        control={control}
-                                        render={({ field, fieldState }) => (
-                                            <Field
-                                                data-invalid={
-                                                    fieldState.invalid
-                                                }
-                                            >
-                                                <Label htmlFor="phone">
-                                                    Phone
+                                                <Label htmlFor="organisation">
+                                                    Organisation
                                                 </Label>
                                                 <Input
                                                     {...field}
                                                     type="text"
-                                                    id="phone"
-                                                    name="phone"
-                                                    placeholder="Enter phone number"
+                                                    id="organisation"
+                                                    name="organisation"
+                                                    placeholder="Enter Organisation"
                                                 />
                                                 {fieldState.error && (
                                                     <p className="mt-1 text-sm text-error-500">
@@ -337,34 +359,7 @@ export default function IPCForm() {
                                             </Field>
                                         )}
                                     />
-                                </div>
 
-                                <div>
-                                    <Controller
-                                        name="two_fa_enabled"
-                                        control={control}
-                                        render={({ field, fieldState }) => (
-                                            <Field
-                                                data-invalid={
-                                                    fieldState.invalid
-                                                }
-                                            >
-                                                <Label htmlFor="input">
-                                                    Multi-factor authentication
-                                                </Label>
-                                                <Switch
-                                                    checked={field.value}
-                                                    onCheckedChange={
-                                                        field.onChange
-                                                    }
-                                                    label="Enable multi-factor authentication to secure your account."
-                                                />
-                                            </Field>
-                                        )}
-                                    />
-                                </div>
-
-                                <div>
                                     <Controller
                                         name="two_fa_type"
                                         control={control}
@@ -404,13 +399,9 @@ export default function IPCForm() {
                                     />
                                 </div>
 
-                                <div className="col-span-full">
-                                    <Separator className="my-4" />
-                                </div>
-
-                                <div>
+                                <div className="space-y-6">
                                     <Controller
-                                        name="address_line_1"
+                                        name="contact.address_line_1"
                                         control={control}
                                         render={({ field, fieldState }) => (
                                             <Field
@@ -439,11 +430,9 @@ export default function IPCForm() {
                                             </Field>
                                         )}
                                     />
-                                </div>
 
-                                <div>
                                     <Controller
-                                        name="address_line_2"
+                                        name="contact.address_line_2"
                                         control={control}
                                         render={({ field, fieldState }) => (
                                             <Field
@@ -472,11 +461,9 @@ export default function IPCForm() {
                                             </Field>
                                         )}
                                     />
-                                </div>
 
-                                <div>
                                     <Controller
-                                        name="address_line_3"
+                                        name="contact.address_line_3"
                                         control={control}
                                         render={({ field, fieldState }) => (
                                             <Field
@@ -505,11 +492,9 @@ export default function IPCForm() {
                                             </Field>
                                         )}
                                     />
-                                </div>
 
-                                <div>
                                     <Controller
-                                        name="city"
+                                        name="contact.city"
                                         control={control}
                                         render={({ field, fieldState }) => (
                                             <Field
@@ -518,7 +503,7 @@ export default function IPCForm() {
                                                 }
                                             >
                                                 <Label htmlFor="city">
-                                                    City
+                                                    City / Town
                                                 </Label>
                                                 <Input
                                                     {...field}
@@ -538,11 +523,9 @@ export default function IPCForm() {
                                             </Field>
                                         )}
                                     />
-                                </div>
 
-                                <div>
                                     <Controller
-                                        name="county"
+                                        name="contact.county"
                                         control={control}
                                         render={({ field, fieldState }) => (
                                             <Field
@@ -571,11 +554,9 @@ export default function IPCForm() {
                                             </Field>
                                         )}
                                     />
-                                </div>
 
-                                <div>
                                     <Controller
-                                        name="country"
+                                        name="contact.country"
                                         control={control}
                                         render={({ field, fieldState }) => (
                                             <Field
@@ -604,11 +585,9 @@ export default function IPCForm() {
                                             </Field>
                                         )}
                                     />
-                                </div>
 
-                                <div>
                                     <Controller
-                                        name="postcode"
+                                        name="contact.postcode"
                                         control={control}
                                         render={({ field, fieldState }) => (
                                             <Field
@@ -634,6 +613,29 @@ export default function IPCForm() {
                                                         }
                                                     </p>
                                                 )}
+                                            </Field>
+                                        )}
+                                    />
+
+                                    <Controller
+                                        name="two_fa_enabled"
+                                        control={control}
+                                        render={({ field, fieldState }) => (
+                                            <Field
+                                                data-invalid={
+                                                    fieldState.invalid
+                                                }
+                                            >
+                                                <Label htmlFor="input">
+                                                    Multi-factor authentication
+                                                </Label>
+                                                <Switch
+                                                    checked={field.value}
+                                                    onCheckedChange={
+                                                        field.onChange
+                                                    }
+                                                    label="Enable multi-factor authentication to secure your account."
+                                                />
                                             </Field>
                                         )}
                                     />

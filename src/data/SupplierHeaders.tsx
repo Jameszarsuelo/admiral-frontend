@@ -1,8 +1,6 @@
 import Button from "@/components/ui/button/Button";
-import { Button as CustomButton } from "@/components/ui/button";
 import { ColumnDef } from "@tanstack/react-table";
-import { ArrowUpDown } from "lucide-react";
-import { ISupplierSchema } from "@/types/suppliers";
+import { ISupplierSchema } from "@/types/SupplierSchema";
 
 export const getSupplierHeaders = (
     navigate: (path: string) => void,
@@ -10,72 +8,52 @@ export const getSupplierHeaders = (
     refetch: () => void,
 ): ColumnDef<ISupplierSchema>[] => [
     {
-        accessorKey: "salutation",
-        accessorFn: (row) => row.user.user_info.salutation,
-        header: () => <div className="ml-4">Salutation</div>,
+        accessorKey: "id",
+        accessorFn: (row) => row.id,
+        header: () => <div className="ml-4">ID</div>,
         cell: ({ row }) => (
             <div className="capitalize dark:text-white ml-4">
-                {row.getValue("salutation")}.
+                {row.getValue("id")}
             </div>
         ),
     },
     {
-        accessorKey: "firstname",
-        accessorFn: (row) => row.user.firstname,
-        header: () => <div className="ml-4">Firstname</div>,
+        accessorKey: "organisation",
+        accessorFn: (row) => row.contact?.organisation,
+        header: () => <div className="ml-4">Organisation</div>,
         cell: ({ row }) => (
             <div className="capitalize dark:text-white ml-4">
-                {row.getValue("firstname")}
+                {row.getValue("organisation")}
             </div>
         ),
     },
     {
-        accessorKey: "lastname",
-        accessorFn: (row) => row.user.lastname,
-        header: () => <div className="ml-4">Lastname</div>,
+        accessorKey: "primary_contact_name",
+        accessorFn: (row) => row.contact?.firstname + " " + row.contact?.lastname,
+        header: () => <div className="ml-4">Primary Contact Name</div>,
         cell: ({ row }) => (
             <div className="capitalize dark:text-white ml-4">
-                {row.getValue("lastname")}
+                {row.getValue("primary_contact_name")}
             </div>
         ),
     },
     {
-        accessorKey: "email",
-        accessorFn: (row) => row.user.email,
-        header: ({ column }) => {
-            return (
-                <CustomButton
-                    variant="ghost"
-                    onClick={() =>
-                        column.toggleSorting(column.getIsSorted() === "asc")
-                    }
-                >
-                    Email
-                    <ArrowUpDown />
-                </CustomButton>
-            );
-        },
-        cell: ({ row }) => (
-            <div className=" dark:text-white ml-4">{row.getValue("email")}</div>
-        ),
-    },
-    {
-        accessorKey: "mobile",
-        accessorFn: (row) => row.user.user_info.mobile,
-        header: () => <div className="ml-4">Mobile</div>,
+        accessorKey: "primary_contact_email",
+        accessorFn: (row) => row.contact?.email,
+        header: () => <div className="ml-4">Primary Contact Email</div>,
         cell: ({ row }) => (
             <div className="capitalize dark:text-white ml-4">
-                {row.getValue("mobile")}
+                {row.getValue("primary_contact_email")}
             </div>
         ),
     },
     {
-        accessorKey: "address",
-        header: () => <div className="ml-4">Address</div>,
+        accessorKey: "primary_contact_number",
+        accessorFn: (row) => row.contact?.mobile,
+        header: () => <div className="ml-4">Primary Contact Number</div>,
         cell: ({ row }) => (
             <div className="capitalize dark:text-white ml-4">
-                {row.original.user.user_info.city}, {row.original.user.user_info.country},{" "}
-                {row.original.user.user_info.postcode}
+                {row.getValue("primary_contact_number")}
             </div>
         ),
     },
@@ -86,7 +64,7 @@ export const getSupplierHeaders = (
             const supplier = row.original;
 
             const handleEdit = (id: number) => {
-                navigate(`/suppliers/edit/${id}`);
+                navigate(`/supplier-directory/edit/${id}`);
             };
 
             const onDelete = (id: number) => {
@@ -95,20 +73,41 @@ export const getSupplierHeaders = (
             };
 
             return (
-                <div className="flex gap-2">
+                <div className="flex gap-1">
                     <Button
                         onClick={() => handleEdit(supplier.id!)}
                         variant="primary"
-                        size="sm"
+                        size="xs"
                     >
                         Edit
                     </Button>
                     <Button
                         onClick={() => onDelete(supplier.id!)}
                         variant="danger"
-                        size="sm"
+                        size="xs"
                     >
                         Delete
+                    </Button>
+                    <Button
+                        onClick={() => onDelete(supplier.id!)}
+                        variant="success"
+                        size="xs"
+                    >
+                        Supplier Details
+                    </Button>
+                    <Button
+                        onClick={() => onDelete(supplier.id!)}
+                        variant="warning"
+                        size="xs"
+                    >
+                        View Staff
+                    </Button>
+                    <Button
+                        onClick={() => onDelete(supplier.id!)}
+                        variant="secondary"
+                        size="xs"
+                    >
+                        View Documents
                     </Button>
                 </div>
             );

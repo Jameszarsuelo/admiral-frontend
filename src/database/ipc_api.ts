@@ -1,9 +1,8 @@
-import { IIPCSchema } from "@/types/ipc";
+import { IIPCForm, IIPCSchema } from "@/types/IPCSchema";
 import api from "./api";
 import { AxiosError } from "axios";
-import { IUserForm } from "@/types/user";
 
-export async function upsertIpc(ipcData: IUserForm): Promise<IUserForm> {
+export async function upsertIpc(ipcData: IIPCForm): Promise<IIPCForm> {
     try {
         const response = ipcData.id 
             ? await api.put(`/ipc/${ipcData.id}`, ipcData)
@@ -29,7 +28,7 @@ export async function fetchIpcList(): Promise<IIPCSchema[]> {
     }
 }
 
-export async function fetchIpcById(id: string): Promise<IIPCSchema> {
+export async function fetchIpcById(id: string): Promise<IIPCForm> {
     try {
         const response = await api.get(`/ipc/${id}`);
         return response.data;

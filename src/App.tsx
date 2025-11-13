@@ -15,10 +15,10 @@ const IPCForm = lazy(
     () => import("./pages/SystemConfigurations/InvoicePaymentClerks/IPCForm"),
 );
 const SupplierView = lazy(
-    () => import("./pages/SystemConfigurations/Suppliers/SupplierView"),
+    () => import("./pages/SupplierDirectory/SupplierView"),
 );
 const SupplierForm = lazy(
-    () => import("./pages/SystemConfigurations/Suppliers/SupplierForm"),
+    () => import("./pages/SupplierDirectory/SupplierForm"),
 );
 const UserView = lazy(
     () => import("./pages/SystemConfigurations/Users/UserView"),
@@ -29,7 +29,9 @@ const UserForm = lazy(
 const PlanningForm = lazy(
     () => import("./pages/SystemConfigurations/Planning/PlanningForm"),
 );
+const ContactForm = lazy(() => import("./pages/ContactDirectory/ContactForm"));
 
+const ContactView = lazy(() => import("./pages/ContactDirectory/ContactView"));
 const DMView = lazy(() => import("./pages/DocumentManagement/DMView"));
 const FormElements = lazy(() => import("./pages/Forms/FormElements"));
 const NotFound = lazy(() => import("./pages/OtherPage/NotFound"));
@@ -53,6 +55,28 @@ export default function App() {
                             <Route element={<AppLayout />}>
                                 <Route index path="/" element={<Home />} />
 
+                                {/* Contact Directory Page */}
+                                <Route
+                                    index
+                                    path="/contact-directory"
+                                    element={<ContactView />}
+                                />
+                                <Route
+                                    path="/contact-directory/:method/:id?"
+                                    element={<ContactForm />}
+                                />
+
+                                {/* Contact Directory Page */}
+                                <Route
+                                    index
+                                    path="/supplier-directory"
+                                    element={<SupplierView />}
+                                />
+                                <Route
+                                    path="/supplier-directory/:method/:id?"
+                                    element={<SupplierForm />}
+                                />
+
                                 {/* Configurations */}
                                 {/* IPC Page */}
                                 <Route
@@ -66,14 +90,14 @@ export default function App() {
                                 />
 
                                 {/* Supplier Page */}
-                                <Route
+                                {/* <Route
                                     path="/suppliers"
                                     element={<SupplierView />}
                                 />
                                 <Route
                                     path="/suppliers/:method/:id?"
                                     element={<SupplierForm />}
-                                />
+                                /> */}
 
                                 {/* User Page */}
                                 <Route path="/users" element={<UserView />} />

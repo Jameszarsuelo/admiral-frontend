@@ -12,7 +12,7 @@ import { TimeIcon } from "@/icons";
 import Radio from "@/components/form/input/Radio";
 import { useEffect, useState } from "react";
 import { IPlanningForm } from "@/types/planning";
-import { PlanningFormSchema } from "@/types/PlanningFormSchema";
+import { PlanningFormSchema } from "@/types/PlanningSchema";
 import { fetchPlanning, upsertPlanning } from "@/database/planning_api";
 import { handleValidationErrors } from "@/helper/validationError";
 

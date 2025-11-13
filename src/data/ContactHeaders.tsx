@@ -1,17 +1,18 @@
 import Button from "@/components/ui/button/Button";
 import { Button as CustomButton } from "@/components/ui/button";
+import { IContactCreateSchema } from "@/types/ContactSchema";
 import { ColumnDef } from "@tanstack/react-table";
-import { ArrowUpDown } from "lucide-react";
-import { IIPCSchema } from "@/types/IPCSchema";
+import { ArrowUpDown, BadgeCheckIcon } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
 
-export const getIPCHeaders = (
+export const getContactHeaders = (
     navigate: (path: string) => void,
     handleDeleteClick: (id: number) => void,
     refetch: () => void,
-): ColumnDef<IIPCSchema>[] => [
+): ColumnDef<IContactCreateSchema>[] => [
     {
         accessorKey: "salutation",
-        accessorFn: (row) => row.contact.salutation,
+        accessorFn: (row) => row.salutation,
         header: () => <div className="ml-4">Salutation</div>,
         cell: ({ row }) => (
             <div className="capitalize dark:text-white ml-4">
@@ -20,28 +21,18 @@ export const getIPCHeaders = (
         ),
     },
     {
-        accessorKey: "firstname",
-        accessorFn: (row) => row.contact.firstname,
+        accessorKey: "name",
+        accessorFn: (row) => `${row.firstname} ${row.lastname}`,
         header: () => <div className="ml-4">Firstname</div>,
         cell: ({ row }) => (
             <div className="capitalize dark:text-white ml-4">
-                {row.getValue("firstname")}
-            </div>
-        ),
-    },
-    {
-        accessorKey: "lastname",
-        accessorFn: (row) => row.contact.lastname,
-        header: () => <div className="ml-4">Lastname</div>,
-        cell: ({ row }) => (
-            <div className="capitalize dark:text-white ml-4">
-                {row.getValue("lastname")}
+                {row.getValue("name")}
             </div>
         ),
     },
     {
         accessorKey: "email",
-        accessorFn: (row) => row.contact.email,
+        accessorFn: (row) => row.email,
         header: ({ column }) => {
             return (
                 <CustomButton
@@ -60,8 +51,18 @@ export const getIPCHeaders = (
         ),
     },
     {
+        accessorKey: "organisation",
+        accessorFn: (row) => row.organisation,
+        header: () => <div className="ml-4">Organisation</div>,
+        cell: ({ row }) => (
+            <div className="capitalize dark:text-white ml-4">
+                {row.getValue("organisation")}
+            </div>
+        ),
+    },
+    {
         accessorKey: "mobile",
-        accessorFn: (row) => row.contact.mobile,
+        accessorFn: (row) => row.mobile,
         header: () => <div className="ml-4">Mobile</div>,
         cell: ({ row }) => (
             <div className="capitalize dark:text-white ml-4">
@@ -70,13 +71,31 @@ export const getIPCHeaders = (
         ),
     },
     {
-        accessorKey: "address",
-        header: () => <div className="ml-4">Address</div>,
+        accessorKey: "phone",
+        accessorFn: (row) => row.phone,
+        header: () => <div className="ml-4">Landline</div>,
         cell: ({ row }) => (
             <div className="capitalize dark:text-white ml-4">
-                {row.original.contact.city}, {row.original.contact.country},{" "}
-                {row.original.contact.postcode}
+                {row.getValue("phone")}
             </div>
+        ),
+    },
+    {
+        accessorKey: "type",
+        accessorFn: (row) => row.type,
+        header: () => <div className="ml-4">Contact Type</div>,
+        cell: ({ row }) => (
+            <Badge
+                variant="secondary"
+                className="ml-4 inline-flex items-center"
+            >
+                <BadgeCheckIcon className="mr-1 inline-block" />
+                {row.getValue("type") === 1
+                    ? "Contact"
+                    : row.getValue("type") === 2
+                    ? "Supplier"
+                    : "User"}
+            </Badge>
         ),
     },
     {
@@ -86,7 +105,7 @@ export const getIPCHeaders = (
             const ipc = row.original;
 
             const handleEdit = (id: number) => {
-                navigate(`/invoice-payment-clerk/edit/${id}`);
+                navigate(`/contact-directory/edit/${id}`);
             };
 
             const onDelete = (id: number) => {
