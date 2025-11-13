@@ -11,7 +11,7 @@ import { useNavigate, useParams } from "react-router";
 import { TimeIcon } from "@/icons";
 import Radio from "@/components/form/input/Radio";
 import { useEffect, useState } from "react";
-import { IPlanningForm } from "@/types/planning";
+import { IPlanningForm } from "@/types/PlanningFormSchema";
 import { PlanningFormSchema } from "@/types/PlanningFormSchema";
 import { fetchPlanning, upsertPlanning } from "@/database/planning_api";
 import { handleValidationErrors } from "@/helper/validationError";
@@ -20,67 +20,71 @@ import { handleValidationErrors } from "@/helper/validationError";
 export default function PlanningForm() {
     const { id } = useParams();
     const navigate = useNavigate();
-    const [canWorkSaturday, setCanWorkSaturday] = useState<string>("0");
-    const [canWorkSunday, setCanWorkSunday] = useState<string>("0");
-    const { handleSubmit, control, setError, reset} = useForm<IPlanningForm>({
+
+    const { handleSubmit, control, setError, reset } = useForm<IPlanningForm>({
         defaultValues: {
             start_time: "",
             end_time: "",
-            work_saturday: "",
-            work_sunday: "",
+            work_saturday: "0",
+            work_sunday: "0",
             forecast_horizon: ""
         },
-        resolver:zodResolver(PlanningFormSchema)
+        resolver: zodResolver(PlanningFormSchema)
     });
 
-    useEffect(()=>{
-        if(id){
-            fetchPlanning(id).then((data)=>{
-                reset(data);
-                setCanWorkSaturday(data.work_saturday);
-                setCanWorkSunday(data.work_sunday);
+    useEffect(() => {
+        if (id) {
+            fetchPlanning(id).then((data) => {
+                console.log("Fetched planning data:", data);
+                // reset(data);
+                reset({
+                    start_time: data.start_time || "",
+                    end_time: data.end_time || "",
+                    work_saturday: (Number(data.work_saturday) === 1 ? "1" : "0") as "0" | "1",
+                    work_sunday: (Number(data.work_sunday) === 1 ? "1" : "0") as "0" | "1",
+                    forecast_horizon: data.forecast_horizon || "",
+                    created_at: data.created_at || "",
+                    updated_at: data.updated_at || ""
+                })
             })
         }
-    }, [id, reset]);
-    
+    }, [id]);
 
-    const handleWorkSaturday = (value: string) => {
-        setCanWorkSaturday(value);
-    };
-
-    const handleWorkSunday = (value: string) => {
-        setCanWorkSunday(value);
-    };
 
     const onSubmit = async (planningData: IPlanningForm) => {
-            try {
-                toast.promise(
-                    upsertPlanning(planningData), {
-                    loading: id ? "Updating Planning..." : "Creating Planning...",
-                    success: () => {
-                        setTimeout(() => {
-                            navigate(`/planning/${id}`)
-                        }, 2000);
-                        return id ? "Planning updated successfully" : "Planning created successfully!";
-                    },
-                    error: (error: unknown) => {
-                        return handleValidationErrors(error, setError)
-                    }
+        try {
+            // console.log(id ? true : false);
+            const payload = id ? { ...planningData, id: Number(id) } : planningData;
+            toast.promise(
+                upsertPlanning(payload), {
+                loading: id ? "Updating Planning..." : "Creating Planning...",
+                success: (data) => {
+                    console.log(data)
+                    const planningID = data.id;
+                    setTimeout(() => {
+                        navigate(`/planning/${planningID}`)
+                    }, 2000);
+                    return id ? "Planning updated successfully" : "Planning created successfully!";
+                },
+                error: (error: unknown) => {
+                    return handleValidationErrors(error, setError)
                 }
-                )
-            } catch (error) {
-                console.log("Error upon Submitting", error);
             }
+            )
+        } catch (error) {
+            console.log("Error upon Submitting", error);
         }
+    }
 
     return (
         <>
-            <PageBreadcrumb pageTitle="Supplier" />
-            <ComponentCard title={id ? "Edit Supplier" : "Add Supplier"}>
+            <PageBreadcrumb pageTitle="Planning" />
+            <ComponentCard title={id ? "Edit Planning" : "Add Planning"}>
                 <form id="form-planning" onSubmit={handleSubmit(onSubmit)}>
                     <FieldGroup>
                         <div className="grid grid-cols-4 gap-6 ">
                             <div className="col-span-4 grid grid-cols-subgrid gap-6">
+                                
                                 <Controller
                                     name="start_time"
                                     control={control}
@@ -95,8 +99,8 @@ export default function PlanningForm() {
                                                 <Input
                                                     {...field}
                                                     type="time"
-                                                    id="tm"
-                                                    name="tm"
+                                                    id="start_time_input"
+                                                    name="start_time_input"
                                                 />
                                                 {fieldState.error && (
                                                     <p className="mt-1 text-sm text-error-500">
@@ -110,11 +114,6 @@ export default function PlanningForm() {
                                                     <TimeIcon className="size-6" />
                                                 </span>
                                             </div>
-                                            {fieldState.error && (
-                                                <p className="mt-1 text-sm text-error-500">
-                                                    {fieldState.error.message}
-                                                </p>
-                                            )}
                                         </Field>
                                     )}
                                 />
@@ -132,8 +131,8 @@ export default function PlanningForm() {
                                                 <Input
                                                     {...field}
                                                     type="time"
-                                                    id="tm"
-                                                    name="tm"
+                                                    id="end_time_input"
+                                                    name="end_time_input"
                                                 />
                                                 {fieldState.error && (
                                                     <p className="mt-1 text-sm text-error-500">
@@ -153,61 +152,53 @@ export default function PlanningForm() {
                             </div>
 
                             <div className="col-span-4 grid grid-cols-subgrid gap-6 mt-5">
-                                <div className="grid">
-                                    <Label htmlFor="work_saturday_no">
-                                        Able to Work on Saturday
-                                    </Label>
-                                    <div className="flex flex-wrap items-center gap-8">
-                                        <Radio
-                                            id="work_saturday_no"
-                                            name="work_saturday"
-                                            value="0"
-                                            checked={
-                                                canWorkSaturday === "0"
-                                            }
-                                            onChange={handleWorkSaturday}
-                                            label="NO"
-                                        />
-                                        <Radio
-                                            id="work_saturday_yes"
-                                            name="work_saturday"
-                                            value="1"
-                                            checked={
-                                                canWorkSaturday === "1"
-                                            }
-                                            onChange={handleWorkSaturday}
-                                            label="YES"
-                                        />
-                                    </div>
-                                </div>
+                                <Controller
+                                    name="work_saturday"
+                                    control={control}
+                                    render={({ field }) => (
+                                        <div className="grid">
+                                            <Label>Able to Work on Saturday</Label>
+                                            <div className="flex gap-8">
+                                                <Radio
+                                                    id="work_saturday_no"
+                                                    value="0"
+                                                    checked={field.value == "0"}
+                                                    onChange={() => field.onChange("0")}
+                                                    label="NO" name={""} />
+                                                <Radio
+                                                    id="work_saturday_yes"
+                                                    value="1"
+                                                    checked={field.value == "1"}
+                                                    onChange={() => field.onChange("1")}
+                                                    label="YES" name={""} />
+                                            </div>
+                                        </div>
+                                    )}
+                                />
 
-                                <div className="grid">
-                                    <Label htmlFor="work_sunday">
-                                        Able to Work on Sunday
-                                    </Label>
-                                    <div className="flex flex-wrap items-center gap-8">
-                                        <Radio
-                                            id="work_sunday_no"
-                                            name="work_sunday"
-                                            value="0"
-                                            checked={
-                                                canWorkSunday === "0"
-                                            }
-                                            onChange={handleWorkSunday}
-                                            label="NO"
-                                        />
-                                        <Radio
-                                            id="work_sunday_yes"
-                                            name="work_sunday"
-                                            value="1"
-                                            checked={
-                                                canWorkSunday === "1"
-                                            }
-                                            onChange={handleWorkSunday}
-                                            label="YES"
-                                        />
-                                    </div>
-                                </div>
+                                <Controller
+                                    name="work_sunday"
+                                    control={control}
+                                    render={({ field }) => (
+                                        <div className="grid">
+                                            <Label>Able to Work on Sunday</Label>
+                                            <div className="flex gap-8">
+                                                <Radio
+                                                    id="work_sunday_no"
+                                                    value="0"
+                                                    checked={field.value == "0"}
+                                                    onChange={() => field.onChange("0")}
+                                                    label="NO" name={""} />
+                                                <Radio
+                                                    id="work_sunday_yes"
+                                                    value="1"
+                                                    checked={field.value == "1"}
+                                                    onChange={() => field.onChange("1")}
+                                                    label="YES" name={""} />
+                                            </div>
+                                        </div>
+                                    )}
+                                />
                             </div>
 
                             <div className="col-span-2 grid gap-6  mt-5">
