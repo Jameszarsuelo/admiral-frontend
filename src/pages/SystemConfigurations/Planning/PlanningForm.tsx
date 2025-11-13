@@ -10,11 +10,10 @@ import Button from "@/components/ui/button/Button";
 import { useNavigate, useParams } from "react-router";
 import { TimeIcon } from "@/icons";
 import Radio from "@/components/form/input/Radio";
-import { useEffect, useState } from "react";
-import { IPlanningForm } from "@/types/PlanningFormSchema";
-import { PlanningFormSchema } from "@/types/PlanningFormSchema";
+import { useEffect } from "react";
 import { fetchPlanning, upsertPlanning } from "@/database/planning_api";
 import { handleValidationErrors } from "@/helper/validationError";
+import { IPlanningForm, PlanningFormSchema } from "@/types/PlanningSchema";
 
 
 export default function PlanningForm() {
@@ -48,7 +47,7 @@ export default function PlanningForm() {
                 })
             })
         }
-    }, [id]);
+    }, [id, reset]);
 
 
     const onSubmit = async (planningData: IPlanningForm) => {
@@ -161,13 +160,13 @@ export default function PlanningForm() {
                                             <div className="flex gap-8">
                                                 <Radio
                                                     id="work_saturday_no"
-                                                    value="0"
+                                                    value={0}
                                                     checked={field.value == "0"}
                                                     onChange={() => field.onChange("0")}
                                                     label="NO" name={""} />
                                                 <Radio
                                                     id="work_saturday_yes"
-                                                    value="1"
+                                                    value={1}
                                                     checked={field.value == "1"}
                                                     onChange={() => field.onChange("1")}
                                                     label="YES" name={""} />
@@ -185,13 +184,13 @@ export default function PlanningForm() {
                                             <div className="flex gap-8">
                                                 <Radio
                                                     id="work_sunday_no"
-                                                    value="0"
+                                                    value={0}
                                                     checked={field.value == "0"}
                                                     onChange={() => field.onChange("0")}
                                                     label="NO" name={""} />
                                                 <Radio
                                                     id="work_sunday_yes"
-                                                    value="1"
+                                                    value={1}
                                                     checked={field.value == "1"}
                                                     onChange={() => field.onChange("1")}
                                                     label="YES" name={""} />
