@@ -1,6 +1,6 @@
 import api from "./api";
 import { AxiosError } from "axios";
-import { IPlanningForm } from "@/types/PlanningFormSchema";
+import { IPlanningForm } from "@/types/PlanningSchema";
 
 export async function upsertPlanning(
     planningData: IPlanningForm,

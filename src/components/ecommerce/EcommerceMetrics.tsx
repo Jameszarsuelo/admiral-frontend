@@ -1,13 +1,5 @@
 import { FC } from "react";
-import {
-  ArrowDownIcon,
-  ArrowUpIcon,
-  BoxIconLine,
-  GroupIcon,
-  DocsIcon,
-  InfoIcon,
-  ArrowRightIcon
-} from "../../icons";
+import { DocsIcon, InfoIcon, ArrowRightIcon } from "../../icons";
 import Badge from "../ui/badge/Badge";
 
 interface EcommerceMetricsProps {
