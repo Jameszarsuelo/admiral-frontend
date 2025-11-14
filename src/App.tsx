@@ -17,6 +17,8 @@ const IPCForm = lazy(
 const SupplierView = lazy(
     () => import("./pages/SupplierDirectory/SupplierView"),
 );
+const InvoiceView = lazy(() => import("./pages/InvoiceDetail/InvoiceView"));
+const InvoiceForm = lazy(() => import("./pages/InvoiceDetail/InvoiceForm"));
 const SupplierForm = lazy(
     () => import("./pages/SupplierDirectory/SupplierForm"),
 );
@@ -66,7 +68,18 @@ export default function App() {
                                     element={<ContactForm />}
                                 />
 
-                                {/* Contact Directory Page */}
+                                {/* Suuplier Directory Page */}
+                                <Route
+                                    index
+                                    path="/invoice-detail"
+                                    element={<InvoiceView />}
+                                />
+                                <Route
+                                    path="/invoice-detail/:method/:id?"
+                                    element={<InvoiceForm />}
+                                />
+
+                                {/* Suuplier Directory Page */}
                                 <Route
                                     index
                                     path="/supplier-directory"

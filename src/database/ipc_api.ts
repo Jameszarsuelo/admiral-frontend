@@ -2,7 +2,7 @@ import { IIPCForm, IIPCSchema } from "@/types/IPCSchema";
 import api from "./api";
 import { AxiosError } from "axios";
 
-export async function upsertIpc(ipcData: IIPCForm): Promise<IIPCForm> {
+export async function upsertIpc(ipcData: IIPCForm): Promise<void> {
     try {
         const response = ipcData.id 
             ? await api.put(`/ipc/${ipcData.id}`, ipcData)
