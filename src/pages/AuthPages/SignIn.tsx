@@ -4,29 +4,38 @@ import AuthLayout from "./AuthPageLayout";
 import SignInForm from "../../components/auth/SignInForm";
 import { useAuth } from "@/hooks/useAuth";
 import Spinner from "@/components/ui/spinner/Spinner";
+import { usePermissions } from "@/hooks/usePermissions";
 
 export default function SignIn() {
-  const { user, loading } = useAuth();
+    const { user, loading } = useAuth();
+    const { modules } = usePermissions();
 
-  // Show nothing while checking auth state (prevents flash)
-  if (loading) {
-    return <Spinner size="lg" className="flex h-screen items-center justify-center" />;
-  }
+    console.log(modules[0]?.path);
 
-  // If already logged in, redirect to home
-  if (user) {
-    return <Navigate to="/" replace />;
-  }
+    // Show nothing while checking auth state (prevents flash)
+    if (loading) {
+        return (
+            <Spinner
+                size="lg"
+                className="flex h-screen items-center justify-center"
+            />
+        );
+    }
 
-  return (
-    <>
-      <PageMeta
-        title="Admiral"
-        description="Admiral is a powerful platform for managing and orchestrating your containerized applications with ease."
-      />
-      <AuthLayout>
-        <SignInForm />
-      </AuthLayout>
-    </>
-  );
+    // If already logged in, redirect to home
+    if (user) {
+      return <Navigate to="/" replace />;
+    }
+
+    return (
+        <>
+            <PageMeta
+                title="Admiral IPT"
+                description="Admiral is a powerful platform for managing and orchestrating your containerized applications with ease."
+            />
+            <AuthLayout>
+                <SignInForm />
+            </AuthLayout>
+        </>
+    );
 }

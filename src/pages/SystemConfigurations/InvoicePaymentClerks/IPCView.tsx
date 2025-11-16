@@ -80,7 +80,7 @@ export default function IPCView() {
                             <Button
                                 size="sm"
                                 onClick={() =>
-                                    navigate("/invoice-payment-clerk/new")
+                                    navigate("/invoice-payment-clerk/create")
                                 }
                             >
                                 Add New IPC

@@ -2,17 +2,23 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { Link, useLocation } from "react-router";
 import logo from "../../public/images/auth/admiral-logo.png";
 
+// Assume these icons are imported from an icon library
 import {
     BoxCubeIcon,
+    // CalenderIcon,
     ChevronDownIcon,
     EnvelopeIcon,
     GridIcon,
     HorizontaLDots,
     ListIcon,
+    // PageIcon,
+    // PieChartIcon,
+    // PlugInIcon,
+    // TableIcon,
+    // UserCircleIcon,
 } from "../icons";
 import { useSidebar } from "../context/SidebarContext";
-import { usePermissions } from "@/hooks/usePermissions";
-import SidebarSkeleton from "@/components/ui/SideBarSkeleton";
+// import SidebarWidget from "./SidebarWidget";
 
 type NavItem = {
     name: string;
@@ -21,32 +27,81 @@ type NavItem = {
     subItems?: { name: string; path: string; pro?: boolean; new?: boolean }[];
 };
 
-const iconMap: Record<string, React.ReactNode> = {
-    dashboard: <GridIcon />,
-    contact_directory: <GridIcon />,
-    invoice_detail: <GridIcon />,
-    task_detail: <GridIcon />,
-    supplier_directory: <GridIcon />,
-    exceptions: <ListIcon />,
-    upload_exceptions: <ListIcon />,
-    email_templates: <EnvelopeIcon />,
-    template_a: <EnvelopeIcon />,
-    configuration: <BoxCubeIcon />,
-    ipc: <BoxCubeIcon />,
-    outcomes: <BoxCubeIcon />,
-    planning: <BoxCubeIcon />,
-    profiles: <BoxCubeIcon />,
-    task_queues: <BoxCubeIcon />,
-    users: <BoxCubeIcon />,
-    reports: <GridIcon />,
-    document_management: <GridIcon />,
-    invoice_query_management: <GridIcon />,
-};
+const navItems: NavItem[] = [
+    {
+        icon: <GridIcon />,
+        name: "Dashboard",
+        path: "/",
+    },
+    {
+        icon: <GridIcon />,
+        name: "Contact Directory",
+        path: "/contact-directory",
+    },
+    {
+        icon: <GridIcon />,
+        name: "Invoice Detail",
+        path: "/invoice-detail",
+    },
+    {
+        icon: <GridIcon />,
+        name: "Task Detail",
+        path: "/task-detail",
+    },
+    {
+        icon: <GridIcon />,
+        name: "Supplier Directory",
+        path: "/supplier-directory",
+    },
+    {
+        name: "Exceptions",
+        icon: <ListIcon />,
+        subItems: [{ name: "Upload Exceptions", path: "/upload-exceptions" }],
+    },
+];
+
+const configurationItems: NavItem[] = [
+    {
+        icon: <EnvelopeIcon />,
+        name: "Email Templates",
+        subItems: [{ name: "Template A", path: "/template-a" }],
+    },
+    {
+        icon: <BoxCubeIcon />,
+        name: "System Configurations",
+        subItems: [
+            { name: "Invoice Payment Clerk", path: "/invoice-payment-clerk" },
+            { name: "Outcomes", path: "/outcomes" },
+            { name: "Planning", path: "/planning" },
+            { name: "Profiles", path: "/profiles" },
+            // { name: "Suppliers", path: "/suppliers" },
+            { name: "Task Queues", path: "/task-queues" },
+            { name: "Users", path: "/users" },
+        ],
+    },
+];
+
+const others: NavItem[] = [
+    {
+        icon: <GridIcon />,
+        name: "Reports",
+        path: "/reports",
+    },
+    {
+        icon: <GridIcon />,
+        name: "Document Management",
+        path: "/document-management",
+    },
+    {
+        icon: <GridIcon />,
+        name: "Invoice Query Management",
+        path: "/invoice-query-management",
+    },
+];
 
 const AppSidebar: React.FC = () => {
     const { isExpanded, isMobileOpen, isHovered, setIsHovered } = useSidebar();
     const location = useLocation();
-    const { modules, loading } = usePermissions();
 
     const [openSubmenu, setOpenSubmenu] = useState<{
         type: "main" | "configurations" | "others";
@@ -63,54 +118,39 @@ const AppSidebar: React.FC = () => {
         [location.pathname],
     );
 
-    const mainModules = modules.filter((m) => m.parent === null);
-    const subModules = modules.filter((m) => m.parent !== null);
-
-    // Convert backend modules → NavItem format your sidebar uses
-    const dynamicNavItems: NavItem[] = mainModules.map((m) => {
-        const children = subModules.filter((child) => child.parent === m.code);
-
-        return {
-            name: m.name,
-            icon: iconMap[m.code] ?? <GridIcon />, // default icon
-            path: m.path || undefined,
-            subItems: children.length
-                ? children.map((ch) => ({
-                      name: ch.name,
-                      path: ch.path || "",
-                  }))
-                : undefined,
-        };
-    });
-
-    const mainItems = dynamicNavItems.filter(
-        (i) =>
-            i.name === "Dashboard" ||
-            i.name === "Contact Directory" ||
-            i.name === "Invoice Detail" ||
-            i.name === "Task Detail" ||
-            i.name === "Supplier Directory" ||
-            i.name === "Exceptions" ||
-            i.name === "Upload Exceptions",
-    );
-
-    const configItems = dynamicNavItems.filter(
-        (i) =>
-            i.name === "System Configurations" || i.name === "Email Templates",
-    );
-    const othersItems = dynamicNavItems.filter(
-        (i) =>
-            i.name === "Reports" ||
-            i.name === "Document Management" ||
-            i.name === "Invoice Query Management",
-    );
-
     useEffect(() => {
-        // Close submenu when sidebar collapses
-        if (!isExpanded && !isHovered) {
+        let submenuMatched = false;
+        ["main", "configurations", "others"].forEach((menuType) => {
+            let items;
+            if (menuType === "main") {
+                items = navItems;
+            } else if (menuType === "configurations") {
+                items = configurationItems;
+            } else {
+                items = others;
+            }
+            items.forEach((nav, index) => {
+                if (nav.subItems) {
+                    nav.subItems.forEach((subItem) => {
+                        if (isActive(subItem.path)) {
+                            setOpenSubmenu({
+                                type: menuType as
+                                    | "main"
+                                    | "configurations"
+                                    | "others",
+                                index,
+                            });
+                            submenuMatched = true;
+                        }
+                    });
+                }
+            });
+        });
+
+        if (!submenuMatched) {
             setOpenSubmenu(null);
         }
-    }, [isExpanded, isHovered]);
+    }, [location, isActive]);
 
     useEffect(() => {
         if (openSubmenu !== null) {
@@ -286,8 +326,6 @@ const AppSidebar: React.FC = () => {
         </ul>
     );
 
-    if (loading) return <SidebarSkeleton />;
-
     return (
         <aside
             className={`fixed mt-16 flex flex-col lg:mt-0 top-0 px-5 left-0 bg-white dark:bg-gray-900 dark:border-gray-800 text-gray-900 h-screen transition-all duration-300 ease-in-out z-50 border-r border-gray-200 
@@ -359,62 +397,58 @@ const AppSidebar: React.FC = () => {
             <div className="flex flex-col overflow-y-auto duration-300 ease-linear no-scrollbar">
                 <nav className="mb-6">
                     <div className="flex flex-col gap-4">
-                        {mainItems.length > 0 && (
-                            <div>
-                                <h2
-                                    className={`mb-4 text-xs uppercase flex leading-[20px] text-gray-400 ${
-                                        !isExpanded && !isHovered
-                                            ? "lg:justify-center"
-                                            : "justify-start"
-                                    }`}
-                                >
-                                    {isExpanded || isHovered || isMobileOpen ? (
-                                        "Menu"
-                                    ) : (
-                                        <HorizontaLDots className="size-6" />
-                                    )}
-                                </h2>
-                                {renderMenuItems(mainItems, "main")}
-                            </div>
-                        )}
+                        <div>
+                            <h2
+                                className={`mb-4 text-xs uppercase flex leading-[20px] text-gray-400 ${
+                                    !isExpanded && !isHovered
+                                        ? "lg:justify-center"
+                                        : "justify-start"
+                                }`}
+                            >
+                                {isExpanded || isHovered || isMobileOpen ? (
+                                    "Menu"
+                                ) : (
+                                    <HorizontaLDots className="size-6" />
+                                )}
+                            </h2>
+                            {renderMenuItems(navItems, "main")}
+                        </div>
+                        <div className="">
+                            <h2
+                                className={`mb-4 text-xs uppercase flex leading-[20px] text-gray-400 ${
+                                    !isExpanded && !isHovered
+                                        ? "lg:justify-center"
+                                        : "justify-start"
+                                }`}
+                            >
+                                {isExpanded || isHovered || isMobileOpen ? (
+                                    "Configurations"
+                                ) : (
+                                    <HorizontaLDots />
+                                )}
+                            </h2>
+                            {renderMenuItems(
+                                configurationItems,
+                                "configurations",
+                            )}
+                        </div>
 
-                        {configItems.length > 0 && (
-                            <div className="">
-                                <h2
-                                    className={`mb-4 text-xs uppercase flex leading-[20px] text-gray-400 ${
-                                        !isExpanded && !isHovered
-                                            ? "lg:justify-center"
-                                            : "justify-start"
-                                    }`}
-                                >
-                                    {isExpanded || isHovered || isMobileOpen ? (
-                                        "Configurations"
-                                    ) : (
-                                        <HorizontaLDots />
-                                    )}
-                                </h2>
-                                {renderMenuItems(configItems, "configurations")}
-                            </div>
-                        )}
-
-                        {othersItems.length > 0 && (
-                            <div className="">
-                                <h2
-                                    className={`mb-4 text-xs uppercase flex leading-[20px] text-gray-400 ${
-                                        !isExpanded && !isHovered
-                                            ? "lg:justify-center"
-                                            : "justify-start"
-                                    }`}
-                                >
-                                    {isExpanded || isHovered || isMobileOpen ? (
-                                        "Others"
-                                    ) : (
-                                        <HorizontaLDots />
-                                    )}
-                                </h2>
-                                {renderMenuItems(othersItems, "others")}
-                            </div>
-                        )}
+                        <div className="">
+                            <h2
+                                className={`mb-4 text-xs uppercase flex leading-[20px] text-gray-400 ${
+                                    !isExpanded && !isHovered
+                                        ? "lg:justify-center"
+                                        : "justify-start"
+                                }`}
+                            >
+                                {isExpanded || isHovered || isMobileOpen ? (
+                                    "Others"
+                                ) : (
+                                    <HorizontaLDots />
+                                )}
+                            </h2>
+                            {renderMenuItems(others, "others")}
+                        </div>
                     </div>
                 </nav>
                 {/* {isExpanded || isHovered || isMobileOpen ? <SidebarWidget /> : null} */}

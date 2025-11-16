@@ -26,8 +26,8 @@ export default function SupplierView() {
         },
         refetchInterval: 1000 * 60 * 5, // 5 minutes
         refetchIntervalInBackground: true,
-        staleTime: 500,
-        gcTime: 20000,
+        // staleTime: 500,
+        // gcTime: 20000,
     });
 
     const handleDeleteClick = (id: number) => {

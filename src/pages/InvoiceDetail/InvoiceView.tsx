@@ -39,8 +39,8 @@ export default function InvoiceView() {
         },
         refetchInterval: 1000 * 60 * 5,
         refetchIntervalInBackground: true,
-        staleTime: 500,
-        gcTime: 20000,
+        // staleTime: 500,
+        // gcTime: 20000,
     });
 
     // // Action handlers
@@ -221,7 +221,7 @@ export default function InvoiceView() {
                         <div className="flex shrink-0 items-center gap-2">
                             <Button
                                 size="sm"
-                                onClick={() => navigate("/invoice-detail/new")}
+                                onClick={() => navigate("/invoice-detail/create")}
                             >
                                 Add Invoice
                             </Button>

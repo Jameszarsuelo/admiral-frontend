@@ -26,8 +26,8 @@ export default function ContactView() {
         },
         refetchInterval: 1000 * 60 * 5, // 5 minutes
         refetchIntervalInBackground: true,
-        staleTime: 500,
-        gcTime: 20000,
+        // staleTime: 500,
+        // gcTime: 20000,
     });
 
     const handleDeleteClick = (id: number) => {
@@ -77,7 +77,7 @@ export default function ContactView() {
                         <div className="flex shrink-0 items-center gap-2">
                             <Button
                                 size="sm"
-                                onClick={() => navigate("/contact-directory/new")}
+                                onClick={() => navigate("/contact-directory/create")}
                             >
                                 Add New Contact
                             </Button>

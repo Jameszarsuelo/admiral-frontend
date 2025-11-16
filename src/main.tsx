@@ -8,6 +8,7 @@ import { AppWrapper } from "./components/common/PageMeta.tsx";
 import { ThemeProvider } from "./context/ThemeContext.tsx";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { AuthProvider } from "./context/AuthContext";
+import { PermissionProvider } from "./context/PermissionContext.tsx";
 
 const queryClient = new QueryClient();
 
@@ -17,7 +18,9 @@ createRoot(document.getElementById("root")!).render(
             <AppWrapper>
                 <QueryClientProvider client={queryClient}>
                     <AuthProvider>
-                        <App />
+                        <PermissionProvider>
+                            <App />
+                        </PermissionProvider>
                     </AuthProvider>
                 </QueryClientProvider>
             </AppWrapper>
