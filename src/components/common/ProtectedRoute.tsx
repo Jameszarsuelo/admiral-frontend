@@ -29,6 +29,8 @@ export default function ProtectedRoute({
         return <Navigate to="/signin" replace state={{ from: location }} />;
     }
 
+    console.log(permission);
+
     if (permission && !can(permission)) {
         return <Navigate to="/403" replace />;
     }

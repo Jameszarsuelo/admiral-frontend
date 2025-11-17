@@ -10,8 +10,8 @@ const SupplierForm = lazy(
     () => import("../pages/SupplierDirectory/SupplierForm"),
 );
 
-const InvoiceView = lazy(() => import("../pages/InvoiceDetail/InvoiceView"));
-const InvoiceForm = lazy(() => import("../pages/InvoiceDetail/InvoiceForm"));
+const BordereauView = lazy(() => import("../pages/BordereauDetail/BordereauView"));
+const BordereauForm = lazy(() => import("../pages/BordereauDetail/BordereauForm"));
 
 const UserView = lazy(() => import("../pages/SystemConfigurations/Users/UserView"));
 const UserForm = lazy(
@@ -38,16 +38,6 @@ export interface ModuleComponents {
 
 // Correct TypeScript typing
 export const modulePageMap: Record<string, ModuleComponents> = {
-    // dashboard: Home,
-    // contact_directory: ContactView,
-    // invoice_detail: InvoiceView,
-    // supplier_directory: SupplierView,
-    // invoice_payment_clerk: IPCView,
-    // users: UserView,
-    // planning: PlanningForm,
-    // document_management: DMView,
-    // form_elements: FormElements,
-    // not_found: NotFound,
     users: {
         main: UserView,
         create: UserForm,
@@ -60,11 +50,11 @@ export const modulePageMap: Record<string, ModuleComponents> = {
         edit: ContactForm,
         view: ContactView,
     },
-    invoice_detail: {
-        main: InvoiceView,
-        create: InvoiceForm,
-        edit: InvoiceForm,
-        view: InvoiceView,
+   bordereau_detail: {
+        main: BordereauView,
+        create: BordereauForm,
+        edit: BordereauForm,
+        view: BordereauView,
     },
     supplier_directory: {
         main: SupplierView,

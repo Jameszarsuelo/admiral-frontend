@@ -20,7 +20,7 @@ import { fetchInvoiceViewData, upsertInvoice } from "@/database/invoice_api";
 import { handleValidationErrors } from "@/helper/validationError";
 // import { useAuth } from "@/hooks/useAuth";
 
-export default function InvoiceForm() {
+export default function BordereauForm() {
     const { id } = useParams();
     // const { user } = useAuth();
     const navigate = useNavigate();

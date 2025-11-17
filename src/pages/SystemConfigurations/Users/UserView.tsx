@@ -77,7 +77,7 @@ export default function UserView() {
                             </p>
                         </div>
                         <div className="flex shrink-0 items-center gap-2">
-                            <Button size="sm" onClick={() => navigate("/users/new")}>
+                            <Button size="sm" onClick={() => navigate("/users/create")}>
                                 Add New User
                             </Button>
                         </div>

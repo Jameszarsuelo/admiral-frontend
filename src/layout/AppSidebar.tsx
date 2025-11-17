@@ -87,7 +87,7 @@ const AppSidebar: React.FC = () => {
         (i) =>
             i.name === "Dashboard" ||
             i.name === "Contact Directory" ||
-            i.name === "Invoice Detail" ||
+            i.name === "Bordereau Detail" ||
             i.name === "Task Detail" ||
             i.name === "Supplier Directory" ||
             i.name === "Exceptions" ||

@@ -78,7 +78,7 @@ export default function SupplierView() {
                         <div className="flex shrink-0 items-center gap-2">
                             <Button
                                 size="sm"
-                                onClick={() => navigate("/supplier-directory/new")}
+                                onClick={() => navigate("/supplier-directory/create")}
                             >
                                 Add New Supplier
                             </Button>
