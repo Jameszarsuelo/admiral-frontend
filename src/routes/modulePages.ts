@@ -18,6 +18,7 @@ const UserForm = lazy(
     () => import("../pages/SystemConfigurations/Users/UserForm"),
 );
 
+const PlanningIndex = lazy(() => import("../pages/SystemConfigurations/Planning/PlanningIndex"));
 const PlanningForm = lazy(() => import("../pages/SystemConfigurations/Planning/PlanningForm"));
 const ContactIndex = lazy(() => import("../pages/ContactDirectory/ContactIndex"));
 const ContactForm = lazy(() => import("../pages/ContactDirectory/ContactForm"));
@@ -107,9 +108,10 @@ export const modulePageMap: Record<string, ModuleComponents> = {
         view: ModuleActionView,
     },
     planning: {
-        main: PlanningForm,
+        main: PlanningIndex,
+        create: PlanningForm,
         edit: PlanningForm,
-        view: PlanningForm,
+        view: PlanningIndex,
     },
     document_management: {
         main: DMView,

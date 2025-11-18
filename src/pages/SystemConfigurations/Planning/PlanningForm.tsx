@@ -26,6 +26,7 @@ export default function PlanningForm() {
             end_time: "",
             work_saturday: "0",
             work_sunday: "0",
+            is_active: false,
             forecast_horizon: ""
         },
         resolver: zodResolver(PlanningFormSchema)
@@ -35,13 +36,13 @@ export default function PlanningForm() {
         if (id) {
             fetchPlanning(id).then((data) => {
                 console.log("Fetched planning data:", data);
-                // reset(data);
                 reset({
                     start_time: data.start_time || "",
                     end_time: data.end_time || "",
                     work_saturday: (Number(data.work_saturday) === 1 ? "1" : "0") as "0" | "1",
                     work_sunday: (Number(data.work_sunday) === 1 ? "1" : "0") as "0" | "1",
                     forecast_horizon: data.forecast_horizon || "",
+                    is_active: data.is_active || false,
                     created_at: data.created_at || "",
                     updated_at: data.updated_at || ""
                 })
@@ -61,7 +62,7 @@ export default function PlanningForm() {
                     console.log(data)
                     const planningID = data.id;
                     setTimeout(() => {
-                        navigate(`/planning/${planningID}`)
+                        navigate(`/planning/edit/${planningID}`)
                     }, 2000);
                     return id ? "Planning updated successfully" : "Planning created successfully!";
                 },
@@ -227,11 +228,40 @@ export default function PlanningForm() {
                                     )}
                                 />
                             </div>
+
+                            <div className="col-span-4 grid grid-cols-subgrid gap-6 mt-5">
+                                <Controller
+                                    name="is_active"
+                                    control={control}
+                                    render={({ field }) => (
+                                        <div className="grid">
+                                            <Label>Is Active</Label>
+                                            <div className="flex gap-8">
+                                                <Radio
+                                                    id="is_active_no"
+                                                    value={0}
+                                                    checked={!field.value}
+                                                    onChange={() => field.onChange(false)}
+                                                    label="NO" name={""} />
+                                                <Radio
+                                                    id="is_active_yes"
+                                                    value={1}
+                                                    checked={field.value ? true : false}
+                                                    onChange={() => field.onChange(true)}
+                                                    label="YES" name={""} />
+                                            </div>
+                                        </div>
+                                    )}
+                                />
+                            </div>
                         </div>
                     </FieldGroup>
                 </form>
 
                 <div className="mt-6 flex justify-end gap-3">
+                    <Button variant="danger" onClick={() => navigate("/planning")}>
+                        Cancel
+                    </Button>
                     <Button variant="outline" onClick={() => reset()}>
                         Reset
                     </Button>
