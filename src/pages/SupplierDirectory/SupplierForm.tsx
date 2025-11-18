@@ -8,9 +8,6 @@ import Input from "@/components/form/input/InputField";
 import { Field, FieldGroup } from "@/components/ui/field";
 import { Controller, useForm } from "react-hook-form";
 import Button from "@/components/ui/button/Button";
-// import PhoneInput from "@/components/form/group-input/PhoneInput";
-// import Select from "@/components/form/Select";
-// import Switch from "@/components/form/switch/Switch";
 import { Separator } from "@/components/ui/separator";
 import { useNavigate, useParams } from "react-router";
 import { fetchSupplierById, upsertSupplier } from "@/database/supplier_api";
@@ -23,7 +20,6 @@ import {
 } from "@/types/SupplierSchema";
 import Select from "@/components/form/Select";
 import Switch from "@/components/form/switch/Switch";
-// moved into SupplierDocumentFields component
 import { useAuth } from "@/hooks/useAuth";
 import { fetchDocumentVisibilityList } from "@/database/document_visibility_api";
 import { fetchContactList } from "@/database/contact_api";

@@ -1,4 +1,4 @@
-import { IInvoiceCreateSchema, IInvoiceSchema } from "@/types/InvoiceSchema";
+import { IInvoiceCreateSchema, IInvoiceSchema } from "@/types/BordereauSchema";
 import api from "./api";
 import { AxiosError } from "axios";
 

@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { SupplierBaseSchema } from "./SupplierSchema";
-import { IPCBaseSchema } from "./BPCSchema";
+import { BPCBaseSchema } from "./BPCSchema";
 
 // // InvoiceInfos
 export const InvoiceInfoSchema = z.object({
@@ -51,7 +51,7 @@ export const InvoiceBaseSchema = z.object({
     supplier: SupplierBaseSchema,
     invoice_info: InvoiceInfoSchema,
     invoice_status: InvoiceStatusSchema,
-    ipc: IPCBaseSchema.optional(),
+    ipc: BPCBaseSchema.optional(),
 });
 
 export const InvoiceCreateSchema = z.object({

@@ -1,7 +1,7 @@
 import { ColumnDef } from "@tanstack/react-table";
 import { Badge } from "@/components/ui/badge";
 import Button from "@/components/ui/button/Button";
-import { IInvoiceSchema } from "@/types/InvoiceSchema";
+import { IInvoiceSchema } from "@/types/BordereauSchema";
 import { BadgeCheckIcon } from "lucide-react";
 
 export const getInvoiceHeaders = (): ColumnDef<IInvoiceSchema>[] => [

@@ -14,7 +14,7 @@ import Spinner from "@/components/ui/spinner/Spinner";
 import {
     InvoiceCreateSchema,
     IInvoiceCreateSchema,
-} from "@/types/InvoiceSchema";
+} from "@/types/BordereauSchema";
 import { useQuery } from "@tanstack/react-query";
 import { fetchInvoiceViewData, upsertInvoice } from "@/database/invoice_api";
 import { handleValidationErrors } from "@/helper/validationError";
