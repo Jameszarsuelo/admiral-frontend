@@ -13,7 +13,7 @@ export const AuthenticatedRoutes = () => {
         return [<Route key="loading" element={<SidebarSkeleton />} />];
     }
 
-    const Dashboard = modulePageMap["dashboard"].main;
+    // const Dashboard = modulePageMap["dashboard"].main;
     const NotFound = modulePageMap["not_found"].main;
 
     const dynamicRoutes = modules.flatMap((m) => {
@@ -91,7 +91,7 @@ export const AuthenticatedRoutes = () => {
     return [
         <Route key="protected" element={<ProtectedRoute />}>
             <Route element={<AppLayout />}>
-                <Route index element={<Dashboard />} />
+                {/* <Route index element={<Dashboard />} /> */}
 
                 {dynamicRoutes}
 

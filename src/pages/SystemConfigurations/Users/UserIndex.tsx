@@ -1,29 +1,29 @@
 import { DataTable } from "@/components/ui/DataTable";
 import { useNavigate } from "react-router";
 import PageBreadcrumb from "@/components/common/PageBreadCrumb";
-import { getIPCHeaders } from "@/data/IPCHeaders";
+import Button from "@/components/ui/button/Button";;
+import { getUserHeaders } from "@/data/UserHeaders";
 import { useQuery } from "@tanstack/react-query";
+import { deleteUser, fetchUserList } from "@/database/user_api";
 import Spinner from "@/components/ui/spinner/Spinner";
-import Button from "@/components/ui/button/Button";
 import { useState } from "react";
 import { Modal } from "@/components/ui/modal";
-import { deleteIpc, fetchIpcList } from "@/database/ipc_api";
 
-export default function IPCView() {
+export default function UserIndex() {
     const navigate = useNavigate();
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [selectedId, setSelectedId] = useState<number | null>(null);
     const [isDeleting, setIsDeleting] = useState(false);
 
     const {
-        data: ipcData,
+        data: userData,
         isLoading,
         // error,
         refetch,
     } = useQuery({
-        queryKey: ["ipc-data"],
+        queryKey: ["user-data"],
         queryFn: async () => {
-            return await fetchIpcList();
+            return await fetchUserList();
         },
         refetchInterval: 1000 * 60 * 5, // 5 minutes
         refetchIntervalInBackground: true,
@@ -41,7 +41,7 @@ export default function IPCView() {
 
         setIsDeleting(true);
         try {
-            await deleteIpc(selectedId);
+            await deleteUser(selectedId);
             await refetch();
             setIsModalOpen(false);
             setSelectedId(null);
@@ -59,39 +59,34 @@ export default function IPCView() {
         }
     };
 
-    const columns = getIPCHeaders(navigate, handleDeleteClick, refetch);
+    const columns = getUserHeaders(navigate, handleDeleteClick, refetch);
 
     return (
         <>
-            <PageBreadcrumb pageTitle="Invoice Payment Clerk" />
+            <PageBreadcrumb pageTitle="Users" />
             <div className="w-full">
                 <div className="rounded-2xl border border-gray-200 bg-white px-5 pb-5 pt-5 dark:border-gray-800 dark:bg-white/[0.03] sm:px-6 sm:pt-6">
                     <div className="flex flex-col gap-5 mb-6 sm:flex-row sm:justify-between">
                         <div className="w-full">
                             <h3 className="text-lg font-semibold text-gray-800 dark:text-white/90">
-                                Invoice Payment Clerks
+                                Users
                             </h3>
                             <p className="mt-1 text-gray-500 text-theme-sm dark:text-gray-400">
-                                List of all invoice payment clerks and their
+                                List of all Users and their
                                 details.
                             </p>
                         </div>
                         <div className="flex shrink-0 items-center gap-2">
-                            <Button
-                                size="sm"
-                                onClick={() =>
-                                    navigate("/invoice-payment-clerk/create")
-                                }
-                            >
-                                Add New IPC
+                            <Button size="sm" onClick={() => navigate("/users/create")}>
+                                Add New User
                             </Button>
                         </div>
                     </div>
 
                     <div className="max-w-full overflow-x-auto custom-scrollbar">
                         <div className="min-w-[1000px] xl:min-w-full px-2">
-                            {!isLoading && ipcData ? (
-                                <DataTable columns={columns} data={ipcData} />
+                            {!isLoading && userData ? (
+                                <DataTable columns={columns} data={userData} />
                             ) : (
                                 <div className="flex items-center justify-center py-12">
                                     <Spinner size="lg" />
@@ -112,7 +107,7 @@ export default function IPCView() {
                             Delete Confirmation
                         </h4>
                         <p className="mb-6 text-sm text-gray-500 dark:text-gray-400 lg:mb-7">
-                            Are you sure to delete this Invoice Payment Clerk?
+                            Are you sure to delete this User?
                         </p>
                         <Button size="sm" variant="danger" onClick={() => handleConfirmDelete()}>
                             {isDeleting ? "Deleting..." : "Confirm Delete"}

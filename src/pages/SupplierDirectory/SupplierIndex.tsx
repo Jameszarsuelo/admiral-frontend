@@ -1,34 +1,33 @@
-import { DataTable } from "@/components/ui/DataTable";
+import { useState } from "react";
 import { useNavigate } from "react-router";
 import PageBreadcrumb from "@/components/common/PageBreadCrumb";
-import Button from "@/components/ui/button/Button";;
-import { getUserHeaders } from "@/data/UserHeaders";
 import { useQuery } from "@tanstack/react-query";
-import { deleteUser, fetchUserList } from "@/database/user_api";
-import Spinner from "@/components/ui/spinner/Spinner";
-import { useState } from "react";
+import { deleteSupplier, fetchSupplierList } from "@/database/supplier_api";
+import { DataTable } from "@/components/ui/DataTable";
+import { getSupplierHeaders } from "@/data/SupplierHeaders";
+import Button from "@/components/ui/button/Button";
 import { Modal } from "@/components/ui/modal";
+import Spinner from "@/components/ui/spinner/Spinner";
 
-export default function UserView() {
+export default function SupplierIndex() {
     const navigate = useNavigate();
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [selectedId, setSelectedId] = useState<number | null>(null);
     const [isDeleting, setIsDeleting] = useState(false);
 
     const {
-        data: userData,
+        data: supplierData,
         isLoading,
-        // error,
         refetch,
     } = useQuery({
-        queryKey: ["user-data"],
+        queryKey: ["supplier-data"],
         queryFn: async () => {
-            return await fetchUserList();
+            return await fetchSupplierList();
         },
         refetchInterval: 1000 * 60 * 5, // 5 minutes
         refetchIntervalInBackground: true,
-        staleTime: 500,
-        gcTime: 20000,
+        // staleTime: 500,
+        // gcTime: 20000,
     });
 
     const handleDeleteClick = (id: number) => {
@@ -41,7 +40,8 @@ export default function UserView() {
 
         setIsDeleting(true);
         try {
-            await deleteUser(selectedId);
+            // await deleteIpc(selectedId);
+            await deleteSupplier(selectedId);
             await refetch();
             setIsModalOpen(false);
             setSelectedId(null);
@@ -59,34 +59,39 @@ export default function UserView() {
         }
     };
 
-    const columns = getUserHeaders(navigate, handleDeleteClick, refetch);
+    const columns = getSupplierHeaders(navigate, handleDeleteClick, refetch);
 
     return (
         <>
-            <PageBreadcrumb pageTitle="Users" />
+            <PageBreadcrumb pageTitle="Suppliers" />
             <div className="w-full">
                 <div className="rounded-2xl border border-gray-200 bg-white px-5 pb-5 pt-5 dark:border-gray-800 dark:bg-white/[0.03] sm:px-6 sm:pt-6">
                     <div className="flex flex-col gap-5 mb-6 sm:flex-row sm:justify-between">
                         <div className="w-full">
                             <h3 className="text-lg font-semibold text-gray-800 dark:text-white/90">
-                                Users
+                                Suppliers
                             </h3>
                             <p className="mt-1 text-gray-500 text-theme-sm dark:text-gray-400">
-                                List of all Users and their
-                                details.
+                                List of all Suppliers and their details.
                             </p>
                         </div>
                         <div className="flex shrink-0 items-center gap-2">
-                            <Button size="sm" onClick={() => navigate("/users/create")}>
-                                Add New User
+                            <Button
+                                size="sm"
+                                onClick={() => navigate("/supplier-directory/create")}
+                            >
+                                Add New Supplier
                             </Button>
                         </div>
                     </div>
 
                     <div className="max-w-full overflow-x-auto custom-scrollbar">
                         <div className="min-w-[1000px] xl:min-w-full px-2">
-                            {!isLoading && userData ? (
-                                <DataTable columns={columns} data={userData} />
+                            {!isLoading && supplierData ? (
+                                <DataTable
+                                    columns={columns}
+                                    data={supplierData}
+                                />
                             ) : (
                                 <div className="flex items-center justify-center py-12">
                                     <Spinner size="lg" />
@@ -107,9 +112,13 @@ export default function UserView() {
                             Delete Confirmation
                         </h4>
                         <p className="mb-6 text-sm text-gray-500 dark:text-gray-400 lg:mb-7">
-                            Are you sure to delete this User?
+                            Are you sure to delete this Supplier?
                         </p>
-                        <Button size="sm" variant="danger" onClick={() => handleConfirmDelete()}>
+                        <Button
+                            size="sm"
+                            variant="danger"
+                            onClick={() => handleConfirmDelete()}
+                        >
                             {isDeleting ? "Deleting..." : "Confirm Delete"}
                         </Button>
                     </div>

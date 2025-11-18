@@ -4,6 +4,7 @@ import { IContactCreateSchema } from "@/types/ContactSchema";
 import { ColumnDef } from "@tanstack/react-table";
 import { ArrowUpDown, BadgeCheckIcon } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+import Can from "@/components/auth/Can";
 
 export const getContactHeaders = (
     navigate: (path: string) => void,
@@ -102,7 +103,7 @@ export const getContactHeaders = (
         id: "actions",
         header: () => <div>Actions</div>,
         cell: ({ row }) => {
-            const ipc = row.original;
+            const bpc = row.original;
 
             const handleEdit = (id: number) => {
                 navigate(`/contact-directory/edit/${id}`);
@@ -113,22 +114,39 @@ export const getContactHeaders = (
                 refetch();
             };
 
+            const handleView = (id: number) => {
+                navigate(`/contact-directory/view/${id}`);
+            };
+
             return (
                 <div className="flex gap-2">
-                    <Button
-                        onClick={() => handleEdit(ipc.id!)}
-                        variant="primary"
-                        size="sm"
-                    >
-                        Edit
-                    </Button>
-                    <Button
-                        onClick={() => onDelete(ipc.id!)}
-                        variant="danger"
-                        size="sm"
-                    >
-                        Delete
-                    </Button>
+                    <Can permission="contact_directory.edit">
+                        <Button
+                            onClick={() => handleEdit(bpc.id!)}
+                            variant="primary"
+                            size="sm"
+                        >
+                            Edit
+                        </Button>
+                    </Can>
+                    <Can permission="contact_directory.delete">
+                        <Button
+                            onClick={() => onDelete(bpc.id!)}
+                            variant="danger"
+                            size="sm"
+                        >
+                            Delete
+                        </Button>
+                    </Can>
+                    <Can permission="contact_directory.view">
+                        <Button
+                            onClick={() => handleView(bpc.id!)}
+                            variant="info"
+                            size="sm"
+                        >
+                            View
+                        </Button>
+                    </Can>
                 </div>
             );
         },

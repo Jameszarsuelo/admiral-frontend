@@ -1,28 +1,42 @@
 import { lazy } from "react";
 
 const Home = lazy(() => import("../pages-backup/Dashboard/Home"));
-const IPCView = lazy(() => import("../pages/SystemConfigurations/InvoicePaymentClerks/IPCView"));
-const IPCForm = lazy(
-    () => import("../pages/SystemConfigurations/InvoicePaymentClerks/IPCForm"),
+const BPCIndex = lazy(() => import("../pages/SystemConfigurations/BordereauPaymentClerks/BPCIndex"));
+const BPCForm = lazy(
+    () => import("../pages/SystemConfigurations/BordereauPaymentClerks/BPCForm"),
 );
-const SupplierView = lazy(() => import("../pages/SupplierDirectory/SupplierView"));
+const SupplierIndex = lazy(() => import("../pages/SupplierDirectory/SupplierIndex"));
 const SupplierForm = lazy(
     () => import("../pages/SupplierDirectory/SupplierForm"),
 );
 
-const BordereauView = lazy(() => import("../pages/BordereauDetail/BordereauView"));
+const BordereauIndex = lazy(() => import("../pages/BordereauDetail/BordereauIndex"));
 const BordereauForm = lazy(() => import("../pages/BordereauDetail/BordereauForm"));
 
-const UserView = lazy(() => import("../pages/SystemConfigurations/Users/UserView"));
+const UserIndex = lazy(() => import("../pages/SystemConfigurations/Users/UserIndex"));
 const UserForm = lazy(
     () => import("../pages/SystemConfigurations/Users/UserForm"),
 );
 
 const PlanningForm = lazy(() => import("../pages/SystemConfigurations/Planning/PlanningForm"));
-const ContactView = lazy(() => import("../pages/ContactDirectory/ContactView"));
+const ContactIndex = lazy(() => import("../pages/ContactDirectory/ContactIndex"));
 const ContactForm = lazy(() => import("../pages/ContactDirectory/ContactForm"));
+const ContactView = lazy(() => import("../pages/ContactDirectory/ContactView"));
 
 const DMView = lazy(() => import("../pages/DocumentManagement/DMView"));
+
+// System Configurations - new pages
+const ProfileView = lazy(() => import("../pages/SystemConfigurations/Profiles/ProfileView"));
+const ProfileForm = lazy(() => import("../pages/SystemConfigurations/Profiles/ProfileForm"));
+
+const RoleView = lazy(() => import("../pages/SystemConfigurations/Roles/RoleView"));
+const RoleForm = lazy(() => import("../pages/SystemConfigurations/Roles/RoleForm"));
+
+const ModuleView = lazy(() => import("../pages/SystemConfigurations/Modules/ModuleView"));
+const ModuleForm = lazy(() => import("../pages/SystemConfigurations/Modules/ModuleForm"));
+
+const ModuleActionView = lazy(() => import("../pages/SystemConfigurations/ModuleActions/ModuleActionIndex"));
+const ModuleActionForm = lazy(() => import("../pages/SystemConfigurations/ModuleActions/ModuleActionForm"));
 
 const NotFound = lazy(() => import("../pages/OtherPage/NotFound"));
 
@@ -39,34 +53,58 @@ export interface ModuleComponents {
 // Correct TypeScript typing
 export const modulePageMap: Record<string, ModuleComponents> = {
     users: {
-        main: UserView,
+        main: UserIndex,
         create: UserForm,
         edit: UserForm,
-        view: UserView,
+        view: UserIndex,
     },
     contact_directory: {
-        main: ContactView,
+        main: ContactIndex,
         create: ContactForm,
         edit: ContactForm,
         view: ContactView,
     },
    bordereau_detail: {
-        main: BordereauView,
+        main: BordereauIndex,
         create: BordereauForm,
         edit: BordereauForm,
-        view: BordereauView,
+        view: BordereauIndex,
     },
     supplier_directory: {
-        main: SupplierView,
+        main: SupplierIndex,
         create: SupplierForm,
         edit: SupplierForm,
         // supplierDetails: SupplierView,
     },
-    ipc: {
-        main: IPCView,
-        create: IPCForm,
-        edit: IPCForm,
-        view: IPCView,
+    bpc: {
+        main: BPCIndex,
+        create: BPCForm,
+        edit: BPCForm,
+        view: BPCIndex,
+    },
+    profiles: {
+        main: ProfileView,
+        create: ProfileForm,
+        edit: ProfileForm,
+        view: ProfileView,
+    },
+    roles: {
+        main: RoleView,
+        create: RoleForm,
+        edit: RoleForm,
+        view: RoleView,
+    },
+    modules: {
+        main: ModuleView,
+        create: ModuleForm,
+        edit: ModuleForm,
+        view: ModuleView,
+    },
+    module_actions: {
+        main: ModuleActionView,
+        create: ModuleActionForm,
+        edit: ModuleActionForm,
+        view: ModuleActionView,
     },
     planning: {
         main: PlanningForm,

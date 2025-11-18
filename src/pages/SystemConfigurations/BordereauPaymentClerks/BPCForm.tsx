@@ -15,10 +15,9 @@ import { useNavigate, useParams } from "react-router";
 import { handleValidationErrors } from "@/helper/validationError";
 import { useEffect, useState } from "react";
 import Spinner from "@/components/ui/spinner/Spinner";
-import { fetchIpcById, upsertIpc } from "@/database/ipc_api";
-import { IIPCForm, IPCCreateSchema } from "@/types/IPCSchema";
 import { useAuth } from "@/hooks/useAuth";
-// import { IIPCSchema } from "@/types/ipc";
+import { BPCCreateSchema, IBPCForm } from "@/types/BPCSchema";
+import { fetchBpcById, upsertBpc } from "@/database/bpc_api";
 
 const countries = [
     { code: "UK", label: "+44" },
@@ -36,13 +35,13 @@ const salutationOptions = [
     { value: "dr", label: "Dr." },
 ];
 
-export default function IPCForm() {
+export default function BPCForm() {
     const { id } = useParams();
     const { user } = useAuth();
     const navigate = useNavigate();
     const [isLoading, setIsLoading] = useState(false);
 
-    const { handleSubmit, control, reset, setError } = useForm<IIPCForm>({
+    const { handleSubmit, control, reset, setError } = useForm<IBPCForm>({
         defaultValues: {
             two_fa_enabled: false,
             two_fa_type: 0,
@@ -64,15 +63,15 @@ export default function IPCForm() {
                 created_by: user?.id,
             },
         },
-        resolver: zodResolver(IPCCreateSchema),
+        resolver: zodResolver(BPCCreateSchema),
     });
 
     useEffect(() => {
         if (id) {
             setIsLoading(true);
-            fetchIpcById(id)
+            fetchBpcById(id)
                 .then((data) => {
-                    const userData = (data as IIPCForm);
+                    const userData = (data as IBPCForm);
 
                     reset({
                         ...userData,
@@ -96,16 +95,16 @@ export default function IPCForm() {
         toast.error("Please fix the errors in the form");
     }
 
-    async function onSubmit(data: IIPCForm) {
-        toast.promise(upsertIpc(data), {
-            loading: id ? "Updating IPC..." : "Creating IPC...",
+    async function onSubmit(data: IBPCForm) {
+        toast.promise(upsertBpc(data), {
+            loading: id ? "Updating BPC..." : "Creating BPC...",
             success: () => {
                 setTimeout(() => {
-                    navigate("/invoice-payment-clerk");
+                    navigate("/bordereau-payment-clerk");
                 }, 2000);
                 return id
-                    ? "IPC updated successfully!"
-                    : "IPC created successfully!";
+                    ? "BPC updated successfully!"
+                    : "BPC created successfully!";
             },
             error: (error: unknown) => {
                 return handleValidationErrors(error, setError);
@@ -115,15 +114,15 @@ export default function IPCForm() {
 
     return (
         <>
-            <PageBreadcrumb pageTitle="Invoice Payment Clerk" />
-            <ComponentCard title={id ? "Edit IPC" : "Add IPC"}>
+            <PageBreadcrumb pageTitle="Bordereau Payment Clerk" />
+            <ComponentCard title={id ? "Edit BPC" : "Add BPC"}>
                 {isLoading ? (
                     <div className="flex items-center justify-center py-12">
                         <Spinner size="lg" />
                     </div>
                 ) : (
                     <form
-                        id="form-ipc"
+                        id="form-bpc"
                         onSubmit={handleSubmit(onSubmit, onError)}
                     >
                         <FieldGroup>
@@ -656,7 +655,7 @@ export default function IPCForm() {
                             </Button>
                         )}
 
-                        <Button type="submit" form="form-ipc">
+                        <Button type="submit" form="form-bpc">
                             {id ? "Update" : "Submit"}
                         </Button>
                     </div>

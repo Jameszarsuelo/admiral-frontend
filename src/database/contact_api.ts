@@ -1,4 +1,4 @@
-import { IContactCreateSchema } from "@/types/ContactSchema";
+import { IContactCreateSchema, IContactSchema } from "@/types/ContactSchema";
 import api from "./api";
 import { AxiosError } from "axios";
 
@@ -30,7 +30,7 @@ export async function fetchContactList(): Promise<IContactCreateSchema[]> {
     }
 }
 
-export async function fetchContactById(id: string): Promise<IContactCreateSchema> {
+export async function fetchContactById(id: string): Promise<IContactSchema> {
     try {
         const response = await api.get(`/contact/${id}`);
         return response.data;

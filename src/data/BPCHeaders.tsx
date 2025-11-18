@@ -2,13 +2,13 @@ import Button from "@/components/ui/button/Button";
 import { Button as CustomButton } from "@/components/ui/button";
 import { ColumnDef } from "@tanstack/react-table";
 import { ArrowUpDown } from "lucide-react";
-import { IIPCSchema } from "@/types/IPCSchema";
+import { IBPCSchema } from "@/types/BPCSchema";
 
-export const getIPCHeaders = (
+export const getBPCHeaders = (
     navigate: (path: string) => void,
     handleDeleteClick: (id: number) => void,
     refetch: () => void,
-): ColumnDef<IIPCSchema>[] => [
+): ColumnDef<IBPCSchema>[] => [
     {
         accessorKey: "salutation",
         accessorFn: (row) => row.contact.salutation,
@@ -83,10 +83,10 @@ export const getIPCHeaders = (
         id: "actions",
         header: () => <div>Actions</div>,
         cell: ({ row }) => {
-            const ipc = row.original;
+            const bpc = row.original;
 
             const handleEdit = (id: number) => {
-                navigate(`/invoice-payment-clerk/edit/${id}`);
+                navigate(`/bordereau-payment-clerk/edit/${id}`);
             };
 
             const onDelete = (id: number) => {
@@ -97,14 +97,14 @@ export const getIPCHeaders = (
             return (
                 <div className="flex gap-2">
                     <Button
-                        onClick={() => handleEdit(ipc.id!)}
+                        onClick={() => handleEdit(bpc.id!)}
                         variant="primary"
                         size="sm"
                     >
                         Edit
                     </Button>
                     <Button
-                        onClick={() => onDelete(ipc.id!)}
+                        onClick={() => onDelete(bpc.id!)}
                         variant="danger"
                         size="sm"
                     >

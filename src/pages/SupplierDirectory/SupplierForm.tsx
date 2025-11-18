@@ -90,7 +90,6 @@ export default function SupplierForm() {
                 sso_provider: "",
                 sso_sub: "",
                 name: "",
-                vat_number: "",
                 address_line_1: "",
                 address_line_2: "",
                 address_line_3: "",
@@ -99,7 +98,7 @@ export default function SupplierForm() {
                 country: "United Kingdom",
                 postcode: "",
                 phone: "",
-                invoice_query_email: "",
+                bordereau_query_email: "",
                 max_payment_days: 30,
                 target_payment_days: 7,
                 preferred_payment_day: "",
@@ -244,7 +243,7 @@ export default function SupplierForm() {
                                     />
 
                                     <Controller
-                                        name="invoice_query_email"
+                                        name="bordereau_query_email"
                                         control={control}
                                         render={({ field, fieldState }) => (
                                             <Field
@@ -252,14 +251,14 @@ export default function SupplierForm() {
                                                     fieldState.invalid
                                                 }
                                             >
-                                                <Label htmlFor="invoice_query_email">
+                                                <Label htmlFor="bordereau_query_email">
                                                     Invoice Query Email
                                                 </Label>
                                                 <Input
                                                     {...field}
                                                     type="text"
-                                                    id="invoice_query_email"
-                                                    name="invoice_query_email"
+                                                    id="bordereau_query_email"
+                                                    name="bordereau_query_email"
                                                     placeholder="e.g. john@test.com"
                                                 />
                                                 {fieldState.error && (
@@ -487,37 +486,6 @@ export default function SupplierForm() {
                                                     id="preferred_payment_day"
                                                     name="preferred_payment_day"
                                                     placeholder="e.g. Monday"
-                                                />
-                                                {fieldState.error && (
-                                                    <p className="mt-1 text-sm text-error-500">
-                                                        {
-                                                            fieldState.error
-                                                                .message
-                                                        }
-                                                    </p>
-                                                )}
-                                            </Field>
-                                        )}
-                                    />
-
-                                    <Controller
-                                        name="vat_number"
-                                        control={control}
-                                        render={({ field, fieldState }) => (
-                                            <Field
-                                                data-invalid={
-                                                    fieldState.invalid
-                                                }
-                                            >
-                                                <Label htmlFor="vat_number">
-                                                    VAT Number
-                                                </Label>
-                                                <Input
-                                                    {...field}
-                                                    type="text"
-                                                    id="vat_number"
-                                                    name="vat_number"
-                                                    placeholder="Enter VAT number"
                                                 />
                                                 {fieldState.error && (
                                                     <p className="mt-1 text-sm text-error-500">

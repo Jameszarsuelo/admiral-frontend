@@ -18,7 +18,7 @@ import { ArrowUpIcon, GroupIcon } from "@/icons";
 import Badge from "@/components/ui/badge/Badge";
 import { ArrowRight } from "lucide-react";
 
-export default function BordereauForm() {
+export default function BordereauIndex() {
     const navigate = useNavigate();
     const columns = getInvoiceHeaders();
     const [isCsvModalOpen, setIsCsvModalOpen] = useState(false);

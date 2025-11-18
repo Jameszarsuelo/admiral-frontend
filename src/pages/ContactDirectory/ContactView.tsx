@@ -1,128 +1,180 @@
-import { useState } from "react";
-import { useNavigate } from "react-router";
+import ComponentCard from "@/components/common/ComponentCard";
 import PageBreadcrumb from "@/components/common/PageBreadCrumb";
-import { useQuery } from "@tanstack/react-query";
-import { DataTable } from "@/components/ui/DataTable";
-import Button from "@/components/ui/button/Button";
-import { Modal } from "@/components/ui/modal";
 import Spinner from "@/components/ui/spinner/Spinner";
-import { fetchContactList } from "@/database/contact_api";
-import { getContactHeaders } from "@/data/ContactHeaders";
+import { fetchContactById } from "@/database/contact_api";
+import { useQuery } from "@tanstack/react-query";
+import { useParams } from "react-router";
 
 export default function ContactView() {
-    const navigate = useNavigate();
-    const [isModalOpen, setIsModalOpen] = useState(false);
-    const [selectedId, setSelectedId] = useState<number | null>(null);
-    const [isDeleting, setIsDeleting] = useState(false);
+    const { id } = useParams();
 
-    const {
-        data: contactData,
-        isLoading,
-        refetch,
-    } = useQuery({
-        queryKey: ["contact-data"],
+    const { data: contactData, isLoading } = useQuery({
+        queryKey: ["contact-data", id],
         queryFn: async () => {
-            return await fetchContactList();
+            // Replace with actual fetch function
+            return await fetchContactById(id!);
         },
-        refetchInterval: 1000 * 60 * 5, // 5 minutes
-        refetchIntervalInBackground: true,
-        // staleTime: 500,
-        // gcTime: 20000,
+        enabled: !!id,
     });
 
-    const handleDeleteClick = (id: number) => {
-        setSelectedId(id);
-        setIsModalOpen(true);
-    };
-
-    const handleConfirmDelete = async () => {
-        if (selectedId === null) return;
-
-        setIsDeleting(true);
-        try {
-            // await deleteSupplier(selectedId);
-            await refetch();
-            setIsModalOpen(false);
-            setSelectedId(null);
-        } catch (error) {
-            console.error("Error deleting IPC:", error);
-        } finally {
-            setIsDeleting(false);
-        }
-    };
-
-    const handleCloseModal = () => {
-        if (!isDeleting) {
-            setIsModalOpen(false);
-            setSelectedId(null);
-        }
-    };
-
-    const columns = getContactHeaders(navigate, handleDeleteClick, refetch);
+    if (isLoading) {
+        return (
+            <div className="flex items-center justify-center h-full">
+                <Spinner size="md" />
+            </div>
+        );
+    }
 
     return (
         <>
-            <PageBreadcrumb pageTitle="Contact Directory" />
-            <div className="w-full">
-                <div className="rounded-2xl border border-gray-200 bg-white px-5 pb-5 pt-5 dark:border-gray-800 dark:bg-white/[0.03] sm:px-6 sm:pt-6">
-                    <div className="flex flex-col gap-5 mb-6 sm:flex-row sm:justify-between">
-                        <div className="w-full">
-                            <h3 className="text-lg font-semibold text-gray-800 dark:text-white/90">
-                                Contact Directory
-                            </h3>
-                            <p className="mt-1 text-gray-500 text-theme-sm dark:text-gray-400">
-                                List of all Contacts and their details.
-                            </p>
-                        </div>
-                        <div className="flex shrink-0 items-center gap-2">
-                            <Button
-                                size="sm"
-                                onClick={() => navigate("/contact-directory/create")}
-                            >
-                                Add New Contact
-                            </Button>
-                        </div>
-                    </div>
+            <PageBreadcrumb pageTitle="View Contact" />
+            <ComponentCard title="Contact Information">
+                <div>
+                    <div className="grid grid-cols-1 gap-4 lg:grid-cols-2 lg:gap-7 2xl:gap-x-32">
+                        <div className="space-y-6">
+                            <div>
+                                <p className="mb-2 text-xs leading-normal text-gray-500 dark:text-gray-400">
+                                    Salutation
+                                </p>
+                                <p className="text-md font-medium text-gray-800 dark:text-white/90 capitalize">
+                                    {contactData?.salutation}.
+                                </p>
+                            </div>
 
-                    <div className="max-w-full overflow-x-auto custom-scrollbar">
-                        <div className="min-w-[1000px] xl:min-w-full px-2">
-                            {!isLoading && contactData ? (
-                                <DataTable
-                                    columns={columns}
-                                    data={contactData}
-                                />
-                            ) : (
-                                <div className="flex items-center justify-center py-12">
-                                    <Spinner size="lg" />
-                                </div>
-                            )}
+                            <div>
+                                <p className="mb-2 text-xs leading-normal text-gray-500 dark:text-gray-400">
+                                    First Name
+                                </p>
+                                <p className="text-md font-medium text-gray-800 dark:text-white/90">
+                                    {contactData?.firstname}
+                                </p>
+                            </div>
+
+                            <div>
+                                <p className="mb-2 text-xs leading-normal text-gray-500 dark:text-gray-400">
+                                    Last Name
+                                </p>
+                                <p className="text-md font-medium text-gray-800 dark:text-white/90">
+                                    {contactData?.lastname}
+                                </p>
+                            </div>
+
+                            <div>
+                                <p className="mb-2 text-xs leading-normal text-gray-500 dark:text-gray-400">
+                                    Landline Phone Number
+                                </p>
+                                <p className="text-md font-medium text-gray-800 dark:text-white/90">
+                                    {contactData?.phone}
+                                </p>
+                            </div>
+
+                            <div>
+                                <p className="mb-2 text-xs leading-normal text-gray-500 dark:text-gray-400">
+                                    Mobile Phone Number
+                                </p>
+                                <p className="text-md font-medium text-gray-800 dark:text-white/90">
+                                    {contactData?.mobile}
+                                </p>
+                            </div>
+
+                            <div>
+                                <p className="mb-2 text-xs leading-normal text-gray-500 dark:text-gray-400">
+                                    Email
+                                </p>
+                                <p className="text-md font-medium text-gray-800 dark:text-white/90">
+                                    {contactData?.email}
+                                </p>
+                            </div>
+
+                            <div>
+                                <p className="mb-2 text-xs leading-normal text-gray-500 dark:text-gray-400">
+                                    Contact Type
+                                </p>
+                                <p className="text-md font-medium text-gray-800 dark:text-white/90">
+                                    {contactData
+                                        ? contactData.type === "1"
+                                            ? "Client"
+                                            : contactData.type === "2"
+                                            ? "Supplier"
+                                            : "User"
+                                        : ""}
+                                </p>
+                            </div>
+
+                            {/* <div>
+                                <p className="mb-2 text-xs leading-normal text-gray-500 dark:text-gray-400">
+                                    Supplier
+                                </p>
+                                <p className="text-md font-medium text-gray-800 dark:text-white/90">
+                                    
+                                </p>
+                            </div> */}
+                        </div>
+
+                        <div className="space-y-6">
+                            <div>
+                                <p className="mb-2 text-xs leading-normal text-gray-500 dark:text-gray-400">
+                                    Organisation
+                                </p>
+                                <p className="text-md font-medium text-gray-800 dark:text-white/90">
+                                    {contactData?.organisation}
+                                </p>
+                            </div>
+
+                            <div>
+                                <p className="mb-2 text-xs leading-normal text-gray-500 dark:text-gray-400">
+                                    Address
+                                </p>
+                                <p className="text-md font-medium text-gray-800 dark:text-white/90">
+                                    {contactData?.address_line_1}
+                                </p>
+                                <p className="text-md font-medium text-gray-800 dark:text-white/90">
+                                    {contactData?.address_line_2}
+                                </p>
+                                <p className="text-md font-medium text-gray-800 dark:text-white/90">
+                                    {contactData?.address_line_3}
+                                </p>
+                            </div>
+
+                            <div>
+                                <p className="mb-2 text-xs leading-normal text-gray-500 dark:text-gray-400">
+                                    City / Town
+                                </p>
+                                <p className="text-md font-medium text-gray-800 dark:text-white/90">
+                                    {contactData?.city}
+                                </p>
+                            </div>
+
+                            <div>
+                                <p className="mb-2 text-xs leading-normal text-gray-500 dark:text-gray-400">
+                                    County
+                                </p>
+                                <p className="text-md font-medium text-gray-800 dark:text-white/90">
+                                    {contactData?.county}
+                                </p>
+                            </div>
+
+                            <div>
+                                <p className="mb-2 text-xs leading-normal text-gray-500 dark:text-gray-400">
+                                    Country
+                                </p>
+                                <p className="text-md font-medium text-gray-800 dark:text-white/90">
+                                    {contactData?.country}
+                                </p>
+                            </div>
+
+                            <div>
+                                <p className="mb-2 text-xs leading-normal text-gray-500 dark:text-gray-400">
+                                    Postcode
+                                </p>
+                                <p className="text-md font-medium text-gray-800 dark:text-white/90">
+                                    {contactData?.postcode}
+                                </p>
+                            </div>
                         </div>
                     </div>
                 </div>
-            </div>
-            <Modal
-                isOpen={isModalOpen}
-                onClose={handleCloseModal}
-                className="w-lg m-4"
-            >
-                <div className="relative w-full p-4 overflow-y-auto bg-white no-scrollbar rounded-3xl dark:bg-gray-900 lg:p-11">
-                    <div className="px-2 pr-14">
-                        <h4 className="mb-2 text-2xl font-semibold text-gray-800 dark:text-white/90">
-                            Delete Confirmation
-                        </h4>
-                        <p className="mb-6 text-sm text-gray-500 dark:text-gray-400 lg:mb-7">
-                            Are you sure to delete this contact?
-                        </p>
-                        <Button
-                            size="sm"
-                            variant="danger"
-                            onClick={() => handleConfirmDelete()}
-                        >
-                            {isDeleting ? "Deleting..." : "Confirm Delete"}
-                        </Button>
-                    </div>
-                </div>
-            </Modal>
+            </ComponentCard>
         </>
     );
 }
