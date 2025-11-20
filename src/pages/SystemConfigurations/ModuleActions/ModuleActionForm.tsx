@@ -8,49 +8,53 @@ import Label from "@/components/form/Label";
 import Input from "@/components/form/input/InputField";
 import Button from "@/components/ui/button/Button";
 import Spinner from "@/components/ui/spinner/Spinner";
-import api from "@/database/api";
-
-type ModuleActionFormValues = {
-    id?: number;
-    name: string;
-    code?: string;
-    module?: string;
-};
+import { IModuleActionForm } from "@/types/ModuleActionSchema";
+import { fetchModuleActionById, upsertModuleAction } from "@/database/module_actions_api";
+import { useQuery } from "@tanstack/react-query";
+import { fetchModuleList } from "@/database/module_api";
+import { IModuleBase } from "@/types/ModuleSchema";
+import Combobox from "@/components/form/Combobox";
+import { Field } from "@/components/ui/field";
 
 export default function ModuleActionForm() {
     const { id } = useParams();
     const navigate = useNavigate();
     const [isLoading, setIsLoading] = useState(false);
 
-    const { handleSubmit, control, reset } = useForm<ModuleActionFormValues>({
-        defaultValues: { id: undefined, name: "", code: "", module: "" },
+    const { handleSubmit, control, reset } = useForm<IModuleActionForm>({
+        defaultValues: { id: undefined, action: "", code: "", module_id: undefined },
     });
 
     useEffect(() => {
         if (id) {
             setIsLoading(true);
-            api
-                .get(`/api/module-actions/${id}`)
-                .then((res) => reset(res.data as ModuleActionFormValues))
+            fetchModuleActionById(id)
+                .then((res) => reset(res as IModuleActionForm))
                 .catch((err) => console.error(err))
                 .finally(() => setIsLoading(false));
         }
     }, [id, reset]);
 
-    async function onSubmit(data: ModuleActionFormValues) {
+    const { data: moduleOptions = [] } = useQuery<IModuleBase[], unknown, { value: number; label: string }[]>({
+        queryKey: ["modules-list"],
+        queryFn: fetchModuleList,
+        select: (modules) =>
+            (modules ?? []).map((m) => ({ value: Number(m.id), label: m.name })),
+        placeholderData: [],
+        staleTime: 1000 * 60 * 5,
+    });
+
+    async function onSubmit(data: IModuleActionForm) {
         try {
             setIsLoading(true);
-            await toast.promise(
-                id ? api.put(`/api/module-actions/${id}`, data) : api.post(`/api/module-actions`, data),
-                {
-                    loading: id ? "Updating Action..." : "Creating Action...",
-                    success: () => {
-                        setTimeout(() => navigate("/module-actions"), 800);
-                        return id ? "Action updated" : "Action created";
-                    },
-                    error: (e: any) => e?.message || "An error occurred",
+            await toast.promise(upsertModuleAction(data), {
+                loading: id ? "Updating Action..." : "Creating Action...",
+                success: () => {
+                    setTimeout(() => navigate("/module-actions"), 800);
+                    return id ? "Action updated" : "Action created";
                 },
-            );
+                error: (e: unknown) => (e instanceof Error ? e.message : "An error occurred"),
+            });
         } finally {
             setIsLoading(false);
         }
@@ -69,12 +73,12 @@ export default function ModuleActionForm() {
                         <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
                             <div>
                                 <Controller
-                                    name="name"
+                                    name="action"
                                     control={control}
                                     render={({ field }) => (
                                         <div>
-                                            <Label htmlFor="name">Name</Label>
-                                            <Input {...field} id="name" placeholder="Enter action name" />
+                                            <Label htmlFor="action">Action</Label>
+                                            <Input {...field} id="action" placeholder="Enter action name" />
                                         </div>
                                     )}
                                 />
@@ -93,13 +97,25 @@ export default function ModuleActionForm() {
                             </div>
                             <div>
                                 <Controller
-                                    name="module"
+                                    name="module_id"
                                     control={control}
-                                    render={({ field }) => (
-                                        <div>
-                                            <Label htmlFor="module">Module</Label>
-                                            <Input {...field} id="module" placeholder="Module code" />
-                                        </div>
+                                    render={({ field, fieldState }) => (
+                                        <Field data-invalid={fieldState?.invalid}>
+                                            <Label htmlFor="module_id">Module</Label>
+                                            <Combobox
+                                                value={field.value ?? undefined}
+                                                options={moduleOptions}
+                                                onChange={(value) => field.onChange(Number(value))}
+                                                placeholder="Select Parent Module"
+                                                searchPlaceholder="Search module..."
+                                                emptyText="No module found."
+                                            />
+                                            {fieldState?.error && (
+                                                <p className="mt-1 text-sm text-error-500">
+                                                    {fieldState.error.message}
+                                                </p>
+                                            )}
+                                        </Field>
                                     )}
                                 />
                             </div>

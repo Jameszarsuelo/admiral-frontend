@@ -35,7 +35,6 @@ export const SupplierBaseSchema = z.object({
 
 export const SupplierFormSchema = UserCreateSchema.omit({
     contact_id: true,
-    email: true,
     user_profile_id: true,
     user_type_id: true,
     is_active: true,

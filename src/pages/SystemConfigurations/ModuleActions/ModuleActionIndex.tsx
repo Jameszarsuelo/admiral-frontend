@@ -6,16 +6,10 @@ import Button from "@/components/ui/button/Button";
 import { useState } from "react";
 import { Modal } from "@/components/ui/modal";
 import { useQuery } from "@tanstack/react-query";
-import api from "@/database/api";
 import { ColumnDef } from "@tanstack/react-table";
+import { IModuleActionBase } from "@/types/ModuleActionSchema";
+import { fetchModuleActionList, deleteModuleAction } from "@/database/module_actions_api";
 import { usePermissions } from "@/hooks/usePermissions";
-
-type ModuleAction = {
-    id: number;
-    name: string;
-    code?: string;
-    module?: string;
-};
 
 export default function ModuleActionIndex() {
     const navigate = useNavigate();
@@ -25,12 +19,9 @@ export default function ModuleActionIndex() {
     const [selectedId, setSelectedId] = useState<number | null>(null);
     const [isDeleting, setIsDeleting] = useState(false);
 
-    const { data: items, isLoading, refetch } = useQuery({
+    const { data: items, isLoading, refetch } = useQuery<IModuleActionBase[]>({
         queryKey: ["module-actions-list"],
-        queryFn: async () => {
-            const res = await api.get("/module-actions");
-            return res.data as ModuleAction[];
-        },
+        queryFn: fetchModuleActionList,
         staleTime: 500,
     });
 
@@ -43,7 +34,7 @@ export default function ModuleActionIndex() {
         if (selectedId === null) return;
         setIsDeleting(true);
         try {
-            await api.delete(`/module-actions/${selectedId}`);
+            await deleteModuleAction(selectedId);
             await refetch();
             setIsModalOpen(false);
             setSelectedId(null);
@@ -61,16 +52,20 @@ export default function ModuleActionIndex() {
         }
     };
 
-    const columns: ColumnDef<ModuleAction, any>[] = [
+    const columns: ColumnDef<IModuleActionBase>[] = [
         { accessorKey: "id", header: "ID" },
-        { accessorKey: "name", header: "Name" },
+        { accessorKey: "action", header: "Action" },
         { accessorKey: "code", header: "Code" },
-        { accessorKey: "module", header: "Module" },
+        {
+            id: "module",
+            header: "Module",
+            accessorFn: (row) => row.module?.name ?? "",
+        },
         {
             id: "actions",
             header: "Actions",
             cell: ({ row }) => {
-                const item = row.original as ModuleAction;
+                const item = row.original as IModuleActionBase;
                 return (
                     <div className="flex items-center gap-2">
                         {can("module_actions.edit") && (
@@ -79,7 +74,7 @@ export default function ModuleActionIndex() {
                             </Button>
                         )}
                         {can("module_actions.delete") && (
-                            <Button size="sm" variant="danger" onClick={() => handleDeleteClick(item.id)}>
+                            <Button size="sm" variant="danger" onClick={() => item.id && handleDeleteClick(item.id)}>
                                 Delete
                             </Button>
                         )}

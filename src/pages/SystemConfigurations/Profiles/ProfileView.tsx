@@ -6,15 +6,12 @@ import Button from "@/components/ui/button/Button";
 import { useState } from "react";
 import { Modal } from "@/components/ui/modal";
 import { useQuery } from "@tanstack/react-query";
-import api from "@/database/api";
+import { fetchProfileList, deleteProfile } from "@/database/profile_api";
+import { IProfileBase } from "@/types/ProfileSchema";
 import { ColumnDef } from "@tanstack/react-table";
 import { usePermissions } from "@/hooks/usePermissions";
 
-type Profile = {
-    id: number;
-    name: string;
-    description?: string;
-};
+// Profile shape is defined in `src/types/ProfileSchema.ts` as `IProfileBase`
 
 export default function ProfileView() {
     const navigate = useNavigate();
@@ -24,12 +21,9 @@ export default function ProfileView() {
     const [selectedId, setSelectedId] = useState<number | null>(null);
     const [isDeleting, setIsDeleting] = useState(false);
 
-    const { data: profiles, isLoading, refetch } = useQuery({
+    const { data: profiles, isLoading, refetch } = useQuery<IProfileBase[]>({
         queryKey: ["profiles-list"],
-        queryFn: async () => {
-            const res = await api.get("/profiles");
-            return res.data as Profile[];
-        },
+        queryFn: fetchProfileList,
         staleTime: 500,
     });
 
@@ -42,7 +36,7 @@ export default function ProfileView() {
         if (selectedId === null) return;
         setIsDeleting(true);
         try {
-            await api.delete(`/profiles/${selectedId}`);
+            await deleteProfile(selectedId);
             await refetch();
             setIsModalOpen(false);
             setSelectedId(null);
@@ -60,15 +54,15 @@ export default function ProfileView() {
         }
     };
 
-    const columns: ColumnDef<Profile, any>[] = [
+    const columns: ColumnDef<IProfileBase>[] = [
         { accessorKey: "id", header: "ID" },
         { accessorKey: "name", header: "Name" },
-        { accessorKey: "description", header: "Description" },
+        { accessorKey: "role", header: "Role" , cell: ({ row }) => (row.original as IProfileBase).role?.name ?? "-"},
         {
             id: "actions",
             header: "Actions",
             cell: ({ row }) => {
-                const item = row.original as Profile;
+                const item = row.original as IProfileBase;
                 return (
                     <div className="flex items-center gap-2">
                         {can("profiles.edit") && (

@@ -53,6 +53,7 @@ export const DocumentBaseSchema = z.object({
 export const DocumentCreateSchema = z.object({
   name: z.union([z.string().optional(), z.instanceof(File)]), // Accept either string or File
   revision: z.string().optional(),
+  description: z.string().optional(),
   document_type_id: z.number().int().optional(),
   expiry_date: z.string().optional(),
   location: z.string().optional(),

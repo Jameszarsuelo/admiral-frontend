@@ -8,54 +8,61 @@ import Label from "@/components/form/Label";
 import Input from "@/components/form/input/InputField";
 import Button from "@/components/ui/button/Button";
 import Spinner from "@/components/ui/spinner/Spinner";
-import api from "@/database/api";
-
-type ProfileFormValues = {
-    id?: number;
-    name: string;
-    description?: string;
-};
+import Combobox from "@/components/form/Combobox";
+import { Field } from "@/components/ui/field";
+import { useQuery } from "@tanstack/react-query";
+import { fetchProfileById, upsertProfile } from "@/database/profile_api";
+import { IProfileForm } from "@/types/ProfileSchema";
+import { fetchRoleOptions } from "@/database/roles_api";
+import { handleValidationErrors } from "@/helper/validationError";
 
 export default function ProfileForm() {
     const { id } = useParams();
     const navigate = useNavigate();
     const [isLoading, setIsLoading] = useState(false);
 
-    const { handleSubmit, control, reset } = useForm<ProfileFormValues>({
-        defaultValues: {
-            id: undefined,
-            name: "",
-            description: "",
-        },
+    const { handleSubmit, control, reset, setError } = useForm<IProfileForm>({
+        defaultValues: { id: undefined, role_id: 0, name: "" },
     });
 
     useEffect(() => {
         if (id) {
             setIsLoading(true);
-            api
-                .get(`/api/profiles/${id}`)
+            fetchProfileById(id)
                 .then((res) => {
-                    reset({ ...(res.data as ProfileFormValues) });
+                    reset({ id: res.id, role_id: res.role_id, name: res.name });
                 })
                 .catch((err) => console.error(err))
                 .finally(() => setIsLoading(false));
         }
     }, [id, reset]);
 
-    async function onSubmit(data: ProfileFormValues) {
+    const { data: roleOptionsData } = useQuery({
+        queryKey: ["role-options"],
+        queryFn: async () => {
+            return await fetchRoleOptions();
+        },
+        staleTime: 1000 * 60 * 5,
+    });
+
+    const roleOptions = (roleOptionsData ?? []).map((r) => ({
+        value: Number(r.value),
+        label: r.label,
+    }));
+
+    async function onSubmit(data: IProfileForm) {
         try {
             setIsLoading(true);
-            await toast.promise(
-                id ? api.put(`/api/profiles/${id}`, data) : api.post(`/api/profiles`, data),
-                {
-                    loading: id ? "Updating Profile..." : "Creating Profile...",
-                    success: () => {
-                        setTimeout(() => navigate("/profiles"), 800);
-                        return id ? "Profile updated" : "Profile created";
-                    },
-                    error: (e: any) => e?.message || "An error occurred",
+            await toast.promise(upsertProfile(data), {
+                loading: id ? "Updating Profile..." : "Creating Profile...",
+                success: () => {
+                    setTimeout(() => navigate("/profiles"), 800);
+                    return id ? "Profile updated" : "Profile created";
                 },
-            );
+                error: (error: unknown) => {
+                    return handleValidationErrors(error, setError);
+                },
+            });
         } finally {
             setIsLoading(false);
         }
@@ -72,30 +79,50 @@ export default function ProfileForm() {
                 ) : (
                     <form id="form-profile" onSubmit={handleSubmit(onSubmit)}>
                         <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
-                            <div>
-                                <Controller
-                                    name="name"
-                                    control={control}
-                                    render={({ field }) => (
-                                        <div>
-                                            <Label htmlFor="name">Name</Label>
-                                            <Input {...field} id="name" placeholder="Enter profile name" />
-                                        </div>
-                                    )}
-                                />
-                            </div>
-                            <div>
-                                <Controller
-                                    name="description"
-                                    control={control}
-                                    render={({ field }) => (
-                                        <div>
-                                            <Label htmlFor="description">Description</Label>
-                                            <Input {...field} id="description" placeholder="Enter description" />
-                                        </div>
-                                    )}
-                                />
-                            </div>
+                            <Controller
+                                name="name"
+                                control={control}
+                                render={({ field, fieldState }) => (
+                                    <Field data-invalid={fieldState?.invalid}>
+                                        <Label htmlFor="name">Name</Label>
+                                        <Input
+                                            {...field}
+                                            id="name"
+                                            placeholder="Enter profile name"
+                                        />
+                                        {fieldState?.error && (
+                                            <p className="mt-1 text-sm text-error-500">
+                                                {fieldState.error.message}
+                                            </p>
+                                        )}
+                                    </Field>
+                                )}
+                            />
+
+                            <Controller
+                                name="role_id"
+                                control={control}
+                                render={({ field, fieldState }) => (
+                                    <Field data-invalid={fieldState?.invalid}>
+                                        <Label htmlFor="role_id">Role</Label>
+                                        <Combobox
+                                            value={field.value ?? undefined}
+                                            options={roleOptions}
+                                            onChange={(v) =>
+                                                field.onChange(Number(v))
+                                            }
+                                            placeholder="Select Role"
+                                            searchPlaceholder="Search role..."
+                                            emptyText="No role found."
+                                        />
+                                        {fieldState?.error && (
+                                            <p className="mt-1 text-sm text-error-500">
+                                                {fieldState.error.message}
+                                            </p>
+                                        )}
+                                    </Field>
+                                )}
+                            />
                         </div>
                     </form>
                 )}

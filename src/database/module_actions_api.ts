@@ -1,14 +1,10 @@
-import { IContactCreateSchema, IContactSchema } from "@/types/ContactSchema";
+import { IModuleActionBase, IModuleActionForm } from "@/types/ModuleActionSchema";
 import api from "./api";
 import { AxiosError } from "axios";
 
-export async function upsertContact(
-    contactData: IContactCreateSchema,
-): Promise<IContactCreateSchema> {
+export async function fetchModuleActionList(): Promise<IModuleActionBase[]> {
     try {
-        const response = contactData.id
-            ? await api.put(`/contact/${contactData.id}`, contactData)
-            : await api.post(`/contact`, contactData);
+        const response = await api.get("/module-actions");
         return response.data;
     } catch (error) {
         if (error instanceof AxiosError && error.response?.data) {
@@ -18,9 +14,9 @@ export async function upsertContact(
     }
 }
 
-export async function fetchContactList(): Promise<IContactCreateSchema[]> {
+export async function fetchModuleActionById(id: string): Promise<IModuleActionForm> {
     try {
-        const response = await api.get("/contact");
+        const response = await api.get(`/module-actions/${id}`);
         return response.data;
     } catch (error) {
         if (error instanceof AxiosError && error.response?.data) {
@@ -30,9 +26,11 @@ export async function fetchContactList(): Promise<IContactCreateSchema[]> {
     }
 }
 
-export async function fetchContactOptions(): Promise<IContactCreateSchema[]> {
+export async function upsertModuleAction(data: IModuleActionForm): Promise<void> {
     try {
-        const response = await api.get("/contact-options");
+        const response = data.id
+            ? await api.put(`/module-actions/${data.id}`, data)
+            : await api.post(`/module-actions`, data);
         return response.data;
     } catch (error) {
         if (error instanceof AxiosError && error.response?.data) {
@@ -42,9 +40,9 @@ export async function fetchContactOptions(): Promise<IContactCreateSchema[]> {
     }
 }
 
-export async function fetchContactById(id: string): Promise<IContactSchema> {
+export async function deleteModuleAction(id: number): Promise<void> {
     try {
-        const response = await api.get(`/contact/${id}`);
+        const response = await api.delete(`/module-actions/${id}`);
         return response.data;
     } catch (error) {
         if (error instanceof AxiosError && error.response?.data) {
