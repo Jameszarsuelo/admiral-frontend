@@ -29,7 +29,7 @@ import { useQuery } from "@tanstack/react-query";
 import { PlusIcon } from "lucide-react";
 import Combobox from "@/components/form/Combobox";
 import DocumentFields from "@/components/supplier/DocumentFields";
-import SupplierDocumentsTable from "./SupplierDocumentTable/SupplierDocumentsTable";
+// import SupplierDocumentsTable from "./SupplierDocumentTable/SupplierDocumentsTable";
 import AddSupplierContactsTable from "./SupplierContactsTable/AddSupplierContactsTable";
 import SupplierContactsTable from "./SupplierContactsTable/SupplierContactTable";
 
@@ -833,7 +833,7 @@ export default function SupplierForm() {
                                                             )
                                                         }
                                                     >
-                                                        View Contacts
+                                                        Add Contacts
                                                     </Button>
                                                 </div>
                                                 <div className="grid grid-cols-1 gap-4">
@@ -844,7 +844,7 @@ export default function SupplierForm() {
                                             </div>
                                         </div>
 
-                                        <div className="p-5 mb-4 border border-gray-200 rounded-2xl dark:border-gray-800 lg:p-6">
+                                        {/* <div className="p-5 mb-4 border border-gray-200 rounded-2xl dark:border-gray-800 lg:p-6">
                                             <div>
                                                 <h4 className="text-lg font-semibold text-gray-800 dark:text-white/90 lg:mb-6">
                                                     Personal Information
@@ -853,7 +853,7 @@ export default function SupplierForm() {
                                                     <SupplierDocumentsTable />
                                                 </div>
                                             </div>
-                                        </div>
+                                        </div> */}
                                     </div>
                                 )}
                             </div>

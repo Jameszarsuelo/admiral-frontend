@@ -20,6 +20,7 @@ export type PermissionContextType = {
     permissions: string[];
     modules: ModulePermission[];
     can: (permission: string) => boolean;
+    reload?: () => Promise<void>;
 };
 
 type UserPermissionData = {

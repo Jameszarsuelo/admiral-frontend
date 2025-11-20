@@ -1,13 +1,14 @@
 import { DataTable } from "@/components/ui/DataTable";
 import { useNavigate } from "react-router";
 import PageBreadcrumb from "@/components/common/PageBreadCrumb";
-import Button from "@/components/ui/button/Button";;
+import Button from "@/components/ui/button/Button";
 import { getPlanningHeaders } from "@/data/PlanningHeaders";
 import { useQuery } from "@tanstack/react-query";
 import { fetchPlanningList, deletePlanning } from "@/database/planning_api";
 import Spinner from "@/components/ui/spinner/Spinner";
 import { useState } from "react";
 import { Modal } from "@/components/ui/modal";
+import Can from "@/components/auth/Can";
 
 export default function UserIndex() {
     const navigate = useNavigate();
@@ -76,21 +77,28 @@ export default function UserIndex() {
                                 Planning
                             </h3>
                             <p className="mt-1 text-gray-500 text-theme-sm dark:text-gray-400">
-                                List of all Planning and their
-                                details.
+                                List of all Planning and their details.
                             </p>
                         </div>
                         <div className="flex shrink-0 items-center gap-2">
-                            <Button size="sm" onClick={() => navigate("/planning/create")}>
-                                Add New Planning
-                            </Button>
+                            <Can permission="planning.create">
+                                <Button
+                                    size="sm"
+                                    onClick={() => navigate("/planning/create")}
+                                >
+                                    Add New Planning
+                                </Button>
+                            </Can>
                         </div>
                     </div>
 
                     <div className="max-w-full overflow-x-auto custom-scrollbar">
                         <div className="min-w-[1000px] xl:min-w-full px-2">
                             {!isLoading && planningData ? (
-                                <DataTable columns={columns} data={planningData} />
+                                <DataTable
+                                    columns={columns}
+                                    data={planningData}
+                                />
                             ) : (
                                 <div className="flex items-center justify-center py-12">
                                     <Spinner size="lg" />
@@ -113,9 +121,11 @@ export default function UserIndex() {
                         <p className="mb-6 text-sm text-gray-500 dark:text-gray-400 lg:mb-7">
                             Are you sure to delete this Planning?
                         </p>
-                        <Button size="sm" variant="danger" 
+                        <Button
+                            size="sm"
+                            variant="danger"
                             onClick={() => handleConfirmDelete()}
-                            >
+                        >
                             {isDeleting ? "Deleting..." : "Confirm Delete"}
                         </Button>
                     </div>

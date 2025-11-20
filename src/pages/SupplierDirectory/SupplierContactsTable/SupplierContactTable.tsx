@@ -14,7 +14,7 @@ export default function SupplierContactsTable({
         isLoading,
         // refetch,
     } = useQuery({
-        queryKey: ["contact-data"],
+        queryKey: ["contact-data", supplierId],
         queryFn: async () => {
             return await fetchSupplierContacts(supplierId as string);
         },

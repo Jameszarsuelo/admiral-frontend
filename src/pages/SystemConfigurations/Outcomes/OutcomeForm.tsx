@@ -52,11 +52,9 @@ export default function OutcomeForm() {
             toast.promise(
                 upsertOutcome(payload), {
                 loading: id ? "Updating Outcome..." : "Creating Outcome...",
-                success: (data) => {
-                    console.log(data)
-                    const outcomeID = data.id;
+                success: () => {
                     setTimeout(() => {
-                        navigate(`/outcomes/edit/${outcomeID}`)
+                        navigate(`/outcomes`)
                     }, 2000);
                     return id ? "Outcome updated successfully" : "Outcome created successfully!";
                 },

@@ -15,7 +15,6 @@ import { fetchPlanning, upsertPlanning } from "@/database/planning_api";
 import { handleValidationErrors } from "@/helper/validationError";
 import { IPlanningForm, PlanningFormSchema } from "@/types/PlanningSchema";
 
-
 export default function PlanningForm() {
     const { id } = useParams();
     const navigate = useNavigate();
@@ -27,9 +26,9 @@ export default function PlanningForm() {
             work_saturday: "0",
             work_sunday: "0",
             is_active: false,
-            forecast_horizon: ""
+            forecast_horizon: "",
         },
-        resolver: zodResolver(PlanningFormSchema)
+        resolver: zodResolver(PlanningFormSchema),
     });
 
     useEffect(() => {
@@ -39,42 +38,45 @@ export default function PlanningForm() {
                 reset({
                     start_time: data.start_time || "",
                     end_time: data.end_time || "",
-                    work_saturday: (Number(data.work_saturday) === 1 ? "1" : "0") as "0" | "1",
-                    work_sunday: (Number(data.work_sunday) === 1 ? "1" : "0") as "0" | "1",
+                    work_saturday: (Number(data.work_saturday) === 1
+                        ? "1"
+                        : "0") as "0" | "1",
+                    work_sunday: (Number(data.work_sunday) === 1
+                        ? "1"
+                        : "0") as "0" | "1",
                     forecast_horizon: data.forecast_horizon || "",
                     is_active: data.is_active || false,
                     created_at: data.created_at || "",
-                    updated_at: data.updated_at || ""
-                })
-            })
+                    updated_at: data.updated_at || "",
+                });
+            });
         }
     }, [id, reset]);
-
 
     const onSubmit = async (planningData: IPlanningForm) => {
         try {
             // console.log(id ? true : false);
-            const payload = id ? { ...planningData, id: Number(id) } : planningData;
-            toast.promise(
-                upsertPlanning(payload), {
+            const payload = id
+                ? { ...planningData, id: Number(id) }
+                : planningData;
+            toast.promise(upsertPlanning(payload), {
                 loading: id ? "Updating Planning..." : "Creating Planning...",
-                success: (data) => {
-                    console.log(data)
-                    const planningID = data.id;
+                success: () => {
                     setTimeout(() => {
-                        navigate(`/planning/edit/${planningID}`)
+                        navigate(`/planning`);
                     }, 2000);
-                    return id ? "Planning updated successfully" : "Planning created successfully!";
+                    return id
+                        ? "Planning updated successfully"
+                        : "Planning created successfully!";
                 },
                 error: (error: unknown) => {
-                    return handleValidationErrors(error, setError)
-                }
-            }
-            )
+                    return handleValidationErrors(error, setError);
+                },
+            });
         } catch (error) {
             console.log("Error upon Submitting", error);
         }
-    }
+    };
 
     return (
         <>
@@ -84,7 +86,6 @@ export default function PlanningForm() {
                     <FieldGroup>
                         <div className="grid grid-cols-4 gap-6 ">
                             <div className="col-span-4 grid grid-cols-subgrid gap-6">
-                                
                                 <Controller
                                     name="start_time"
                                     control={control}
@@ -157,20 +158,30 @@ export default function PlanningForm() {
                                     control={control}
                                     render={({ field }) => (
                                         <div className="grid">
-                                            <Label>Able to Work on Saturday</Label>
+                                            <Label>
+                                                Able to Work on Saturday
+                                            </Label>
                                             <div className="flex gap-8">
                                                 <Radio
                                                     id="work_saturday_no"
                                                     value={0}
                                                     checked={field.value == "0"}
-                                                    onChange={() => field.onChange("0")}
-                                                    label="NO" name={""} />
+                                                    onChange={() =>
+                                                        field.onChange("0")
+                                                    }
+                                                    label="NO"
+                                                    name={""}
+                                                />
                                                 <Radio
                                                     id="work_saturday_yes"
                                                     value={1}
                                                     checked={field.value == "1"}
-                                                    onChange={() => field.onChange("1")}
-                                                    label="YES" name={""} />
+                                                    onChange={() =>
+                                                        field.onChange("1")
+                                                    }
+                                                    label="YES"
+                                                    name={""}
+                                                />
                                             </div>
                                         </div>
                                     )}
@@ -181,20 +192,30 @@ export default function PlanningForm() {
                                     control={control}
                                     render={({ field }) => (
                                         <div className="grid">
-                                            <Label>Able to Work on Sunday</Label>
+                                            <Label>
+                                                Able to Work on Sunday
+                                            </Label>
                                             <div className="flex gap-8">
                                                 <Radio
                                                     id="work_sunday_no"
                                                     value={0}
                                                     checked={field.value == "0"}
-                                                    onChange={() => field.onChange("0")}
-                                                    label="NO" name={""} />
+                                                    onChange={() =>
+                                                        field.onChange("0")
+                                                    }
+                                                    label="NO"
+                                                    name={""}
+                                                />
                                                 <Radio
                                                     id="work_sunday_yes"
                                                     value={1}
                                                     checked={field.value == "1"}
-                                                    onChange={() => field.onChange("1")}
-                                                    label="YES" name={""} />
+                                                    onChange={() =>
+                                                        field.onChange("1")
+                                                    }
+                                                    label="YES"
+                                                    name={""}
+                                                />
                                             </div>
                                         </div>
                                     )}
@@ -241,14 +262,26 @@ export default function PlanningForm() {
                                                     id="is_active_no"
                                                     value={0}
                                                     checked={!field.value}
-                                                    onChange={() => field.onChange(false)}
-                                                    label="NO" name={""} />
+                                                    onChange={() =>
+                                                        field.onChange(false)
+                                                    }
+                                                    label="NO"
+                                                    name={""}
+                                                />
                                                 <Radio
                                                     id="is_active_yes"
                                                     value={1}
-                                                    checked={field.value ? true : false}
-                                                    onChange={() => field.onChange(true)}
-                                                    label="YES" name={""} />
+                                                    checked={
+                                                        field.value
+                                                            ? true
+                                                            : false
+                                                    }
+                                                    onChange={() =>
+                                                        field.onChange(true)
+                                                    }
+                                                    label="YES"
+                                                    name={""}
+                                                />
                                             </div>
                                         </div>
                                     )}
@@ -259,7 +292,10 @@ export default function PlanningForm() {
                 </form>
 
                 <div className="mt-6 flex justify-end gap-3">
-                    <Button variant="danger" onClick={() => navigate("/planning")}>
+                    <Button
+                        variant="danger"
+                        onClick={() => navigate("/planning")}
+                    >
                         Cancel
                     </Button>
                     <Button variant="outline" onClick={() => reset()}>

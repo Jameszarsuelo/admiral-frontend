@@ -1,10 +1,8 @@
 import Button from "@/components/ui/button/Button";
-import { Button as CustomButton } from "@/components/ui/button";
 import { ColumnDef } from "@tanstack/react-table";
-import { ArrowUpDown, BadgeCheckIcon, BadgeXIcon } from "lucide-react";
+import { BadgeCheckIcon, BadgeXIcon } from "lucide-react";
 import { IOutcomeHeaders } from "@/types/OutcomeSchema";
 import { Badge } from "@/components/ui/badge";
-import { InfoIcon } from "@/icons";
 
 
 export const getOutcomeHeaders = (
@@ -62,7 +60,7 @@ export const getOutcomeHeaders = (
             const outcomeData = row.original;
 
             const handleEdit = (id: number) => {
-                navigate(`/outcome/edit/${id}`);
+                navigate(`/outcomes/edit/${id}`);
             };
 
             const onDelete = (id: number) => {

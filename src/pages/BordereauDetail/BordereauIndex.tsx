@@ -17,13 +17,18 @@ import Label from "@/components/form/Label";
 import { ArrowUpIcon, GroupIcon } from "@/icons";
 import Badge from "@/components/ui/badge/Badge";
 import { ArrowRight } from "lucide-react";
+import Can from "@/components/auth/Can";
 
 export default function BordereauIndex() {
     const navigate = useNavigate();
-    const columns = getInvoiceHeaders();
+    // const columns = getInvoiceHeaders();
     const [isCsvModalOpen, setIsCsvModalOpen] = useState(false);
 
-    const { control: csvControl, handleSubmit: handleCsvSubmit, reset: resetCsv } = useForm<{ document?: File | null }>({
+    const {
+        control: csvControl,
+        handleSubmit: handleCsvSubmit,
+        reset: resetCsv,
+    } = useForm<{ document?: File | null }>({
         defaultValues: { document: undefined },
     });
     const [isUploading, setIsUploading] = useState(false);
@@ -219,20 +224,29 @@ export default function BordereauIndex() {
                             </h3>
                         </div>
                         <div className="flex shrink-0 items-center gap-2">
-                            <Button
-                                size="sm"
-                                onClick={() => navigate("/invoice-detail/create")}
-                            >
-                                Add Invoice
-                            </Button>
-                            <Button size="sm" variant="outline" onClick={() => setIsCsvModalOpen(true)}>
-                                Upload CSV
-                            </Button>
+                            <Can permission="bordereau.create">
+                                <Button
+                                    size="sm"
+                                    onClick={() =>
+                                        navigate("/invoice-detail/create")
+                                    }
+                                >
+                                    Add Invoice
+                                </Button>
+                            </Can>
+                            <Can permission="bordereau.create">
+                                <Button
+                                    size="sm"
+                                    variant="outline"
+                                    onClick={() => setIsCsvModalOpen(true)}
+                                >
+                                    Upload CSV
+                                </Button>
+                            </Can>
                         </div>
                     </div>
                     <div className="max-w-full overflow-x-auto custom-scrollbar">
-                        <div className="min-w-[1000px] xl:min-w-full px-2">
-                            {/* <DataTable columns={columns} data={data} /> */}
+                        {/* <div className="min-w-[1000px] xl:min-w-full px-2">
                             {!isLoading && invoiceData ? (
                                 <DataTable
                                     columns={columns}
@@ -243,21 +257,32 @@ export default function BordereauIndex() {
                                     <Spinner size="lg" />
                                 </div>
                             )}
-                        </div>
+                        </div> */}
                     </div>
                 </div>
                 {/* CSV Upload Modal */}
-                <Modal isOpen={isCsvModalOpen} onClose={() => setIsCsvModalOpen(false)} className="max-w-3xl mx-4">
+                <Modal
+                    isOpen={isCsvModalOpen}
+                    onClose={() => setIsCsvModalOpen(false)}
+                    className="max-w-3xl mx-4"
+                >
                     <div className="p-6 md:p-8">
-                        <h3 className="text-lg font-semibold">Upload Invoices CSV</h3>
-                        <p className="text-sm text-gray-600 mt-2">Upload a CSV file containing invoices — the file will be processed and invoices will be created.</p>
+                        <h3 className="text-lg font-semibold">
+                            Upload Invoices CSV
+                        </h3>
+                        <p className="text-sm text-gray-600 mt-2">
+                            Upload a CSV file containing invoices — the file
+                            will be processed and invoices will be created.
+                        </p>
 
                         <form
                             className="mt-4"
                             onSubmit={handleCsvSubmit(async (data) => {
                                 const file = data.document;
                                 if (!file) {
-                                    toast.error("Please choose a CSV file to upload");
+                                    toast.error(
+                                        "Please choose a CSV file to upload",
+                                    );
                                     return;
                                 }
 
@@ -265,25 +290,32 @@ export default function BordereauIndex() {
                                 form.append("file", file);
 
                                 try {
-                                        setIsUploading(true);
+                                    setIsUploading(true);
+                                    try {
+                                        await uploadInvoiceCsv(file);
+                                        toast.success(
+                                            "CSV uploaded successfully",
+                                        );
+                                        setIsCsvModalOpen(false);
+                                        resetCsv();
+                                        // refetch invoice list
                                         try {
-                                            await uploadInvoiceCsv(file);
-                                            toast.success("CSV uploaded successfully");
-                                            setIsCsvModalOpen(false);
-                                            resetCsv();
-                                            // refetch invoice list
-                                            try {
-                                                await refetch?.();
-                                            } catch (err) {
-                                                console.warn("Refetch after upload failed", err);
-                                            }
+                                            await refetch?.();
                                         } catch (err) {
-                                            console.error("Upload failed:", err);
-                                            toast.error("Upload failed");
+                                            console.warn(
+                                                "Refetch after upload failed",
+                                                err,
+                                            );
                                         }
+                                    } catch (err) {
+                                        console.error("Upload failed:", err);
+                                        toast.error("Upload failed");
+                                    }
                                 } catch (err) {
                                     console.error(err);
-                                    toast.error("Upload failed (network error)");
+                                    toast.error(
+                                        "Upload failed (network error)",
+                                    );
                                 } finally {
                                     setIsUploading(false);
                                 }
@@ -297,23 +329,35 @@ export default function BordereauIndex() {
                                         <Label>Upload a file</Label>
                                         <FileInput
                                             onChange={(e) => {
-                                                const file = e.target.files?.[0];
+                                                const file =
+                                                    e.target.files?.[0];
                                                 if (file) field.onChange(file);
                                             }}
                                             className="mt-2"
                                         />
                                         {fieldState.error && (
-                                            <p className="mt-1 text-sm text-error-500">{fieldState.error.message}</p>
+                                            <p className="mt-1 text-sm text-error-500">
+                                                {fieldState.error.message}
+                                            </p>
                                         )}
                                     </div>
                                 )}
                             />
 
                             <div className="mt-6 flex justify-end gap-3">
-                                <Button variant="danger" onClick={() => { setIsCsvModalOpen(false); resetCsv(); }} disabled={isUploading}>
+                                <Button
+                                    variant="danger"
+                                    onClick={() => {
+                                        setIsCsvModalOpen(false);
+                                        resetCsv();
+                                    }}
+                                    disabled={isUploading}
+                                >
                                     Cancel
                                 </Button>
-                                <Button type="submit" disabled={isUploading}>{isUploading ? "Uploading..." : "Upload"}</Button>
+                                <Button type="submit" disabled={isUploading}>
+                                    {isUploading ? "Uploading..." : "Upload"}
+                                </Button>
                             </div>
                         </form>
                     </div>
