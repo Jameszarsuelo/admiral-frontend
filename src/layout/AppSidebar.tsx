@@ -40,10 +40,7 @@ const iconMap: Record<string, React.ReactNode> = {
     users: <BoxCubeIcon />,
     reports: <GridIcon />,
     document_management: <GridIcon />,
-<<<<<<< Updated upstream
-=======
     bordereau_query_management: <GridIcon />,
->>>>>>> Stashed changes
     invoice_query_management: <GridIcon />,
 };
 
@@ -106,10 +103,7 @@ const AppSidebar: React.FC = () => {
         (i) =>
             i.name === "Reports" ||
             i.name === "Document Management" ||
-<<<<<<< Updated upstream
-=======
             i.name === "Bordereau Query Management" ||
->>>>>>> Stashed changes
             i.name === "Invoice Query Management",
     );
 

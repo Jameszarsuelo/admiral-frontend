@@ -4,7 +4,7 @@ import Spinner from "@/components/ui/spinner/Spinner";
 import Button from "@/components/ui/button/Button";
 import { DataTable } from "@/components/ui/DataTable";
 import { useQuery } from "@tanstack/react-query";
-import api from "@/database/api";
+// import api from "@/database/api";
 import { ColumnDef } from "@tanstack/react-table";
 import { IDocumentSchema } from "@/types/DocumentSchema";
 import { fetchDocumentList } from "@/database/document_api";
@@ -19,7 +19,7 @@ export default function DMView() {
     const {
         data: documents,
         isLoading,
-        refetch,
+        // refetch,
     } = useQuery({
         queryKey: ["document-list"],
         queryFn: async () => {

@@ -63,7 +63,7 @@ export async function fetchProfileOptions(): Promise<{ label: string; value: num
 }
 
 export async function fetchViewMember(id: number | string): Promise<IUserProfile[]> {
-  
+  console.log(id);
   return [
             {
               id: 1,

@@ -5,7 +5,6 @@ import { IOutcomeHeaders } from "@/types/OutcomeSchema";
 import { Badge } from "@/components/ui/badge";
 import Can from "@/components/auth/Can";
 
-
 export const getOutcomeHeaders = (
     navigate: (path: string) => void,
     handleDeleteClick: (id: number) => void,
@@ -43,14 +42,24 @@ export const getOutcomeHeaders = (
             <div className="capitalize">{row.getValue("description")}</div>
         ),
     },
-     {
+    {
         accessorKey: "status",
         accessorFn: (row) => row.status,
         header: "Status",
         cell: ({ row }) => (
-            <Badge className={row.getValue("status") == 1 ? "bg-success-500" : "bg-error-500" }>
-                {row.getValue("status")  == 1 ? <BadgeCheckIcon className="mr-1 inline-block" /> : <BadgeXIcon className="mr-1 inline-block"/> }
-                {row.getValue("status") == 1 ? "Active" : "Inactive" }
+            <Badge
+                className={
+                    row.getValue("status") == 1
+                        ? "bg-success-500"
+                        : "bg-error-500"
+                }
+            >
+                {row.getValue("status") == 1 ? (
+                    <BadgeCheckIcon className="mr-1 inline-block" />
+                ) : (
+                    <BadgeXIcon className="mr-1 inline-block" />
+                )}
+                {row.getValue("status") == 1 ? "Active" : "Inactive"}
             </Badge>
         ),
     },
@@ -71,14 +80,16 @@ export const getOutcomeHeaders = (
 
             return (
                 <div className="flex gap-2">
-                    <Button
-                        onClick={() => handleEdit(outcomeData.id!)}
-                        variant="primary"
-                        size="sm"
-                    >
-                        View
-                    </Button>
-                   <Can permission='outcome.delete'>
+                    <Can permission="outcomes.view">
+                        <Button
+                            onClick={() => handleEdit(outcomeData.id!)}
+                            variant="primary"
+                            size="sm"
+                        >
+                            View
+                        </Button>
+                    </Can>
+                    <Can permission="outcomes.delete">
                         <Button
                             onClick={() => onDelete(outcomeData.id!)}
                             variant="danger"
@@ -86,7 +97,7 @@ export const getOutcomeHeaders = (
                         >
                             Delete
                         </Button>
-                   </Can>
+                    </Can>
                 </div>
             );
         },

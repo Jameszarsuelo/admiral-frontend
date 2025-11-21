@@ -11,6 +11,7 @@ const SupplierForm = lazy(
 );
 
 const BordereauIndex = lazy(() => import("../pages/BordereauDetail/BordereauIndex"));
+const BordereauView = lazy(() => import("../pages/BordereauDetail/BordereauView"));
 const BordereauForm = lazy(() => import("../pages/BordereauDetail/BordereauForm"));
 
 const UserIndex = lazy(() => import("../pages/SystemConfigurations/Users/UserIndex"));
@@ -27,13 +28,10 @@ const ContactForm = lazy(() => import("../pages/ContactDirectory/ContactForm"));
 const ContactView = lazy(() => import("../pages/ContactDirectory/ContactView"));
 
 const DMView = lazy(() => import("../pages/DocumentManagement/DMView"));
-<<<<<<< Updated upstream
-=======
 const DMForm = lazy(() => import("../pages/DocumentManagement/DMForm"));
 
 const BQMView = lazy(() => import("../pages/BordereauQueryManagement/BQMView"));
 // const DMForm = lazy(() => import("../pages/DocumentManagement/DMForm"));
->>>>>>> Stashed changes
 
 // System Configurations - new pages
 const ProfileView = lazy(() => import("../pages/SystemConfigurations/Profiles/ProfileView"));
@@ -79,7 +77,7 @@ export const modulePageMap: Record<string, ModuleComponents> = {
         main: BordereauIndex,
         create: BordereauForm,
         edit: BordereauForm,
-        view: BordereauIndex,
+        view: BordereauView,
     },
     supplier_directory: {
         main: SupplierIndex,
@@ -131,8 +129,6 @@ export const modulePageMap: Record<string, ModuleComponents> = {
     },
     document_management: {
         main: DMView,
-<<<<<<< Updated upstream
-=======
         create: DMForm,
         edit: DMForm,
     },
@@ -140,7 +136,6 @@ export const modulePageMap: Record<string, ModuleComponents> = {
         main: BQMView,
         create: DMForm,
         edit: DMForm,
->>>>>>> Stashed changes
     },
     dashboard: {
         main: Home,

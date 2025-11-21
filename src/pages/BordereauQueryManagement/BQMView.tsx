@@ -1,5 +1,5 @@
 import PageBreadcrumb from "@/components/common/PageBreadCrumb";
-import { useNavigate } from "react-router";
+// import { useNavigate } from "react-router";
 import Can from "@/components/auth/Can";
 import Button from "@/components/ui/button/Button";
 import { DataTable } from "@/components/ui/DataTable";
@@ -36,7 +36,7 @@ const data: BQMType[] = [
 ];
 
 export default function BQMView () {
-    const navigate = useNavigate();
+    // const navigate = useNavigate();
    
     const columns: ColumnDef<BQMType>[] = [
         { accessorKey: "id", header: "ID" },
@@ -53,6 +53,7 @@ export default function BQMView () {
             header: "Actions",
             cell: ({ row }) => {
                 const item = row.original as BQMType;
+                console.log(item);
                 return (
                     <div className="flex items-center gap-2">
                         <Can permission="modules.edit">
