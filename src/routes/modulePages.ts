@@ -27,6 +27,13 @@ const ContactForm = lazy(() => import("../pages/ContactDirectory/ContactForm"));
 const ContactView = lazy(() => import("../pages/ContactDirectory/ContactView"));
 
 const DMView = lazy(() => import("../pages/DocumentManagement/DMView"));
+<<<<<<< Updated upstream
+=======
+const DMForm = lazy(() => import("../pages/DocumentManagement/DMForm"));
+
+const BQMView = lazy(() => import("../pages/BordereauQueryManagement/BQMView"));
+// const DMForm = lazy(() => import("../pages/DocumentManagement/DMForm"));
+>>>>>>> Stashed changes
 
 // System Configurations - new pages
 const ProfileView = lazy(() => import("../pages/SystemConfigurations/Profiles/ProfileView"));
@@ -123,6 +130,16 @@ export const modulePageMap: Record<string, ModuleComponents> = {
     },
     document_management: {
         main: DMView,
+<<<<<<< Updated upstream
+=======
+        create: DMForm,
+        edit: DMForm,
+    },
+    bordereau_query_management: {
+        main: BQMView,
+        create: DMForm,
+        edit: DMForm,
+>>>>>>> Stashed changes
     },
     dashboard: {
         main: Home,
