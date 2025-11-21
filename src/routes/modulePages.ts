@@ -30,6 +30,7 @@ const DMView = lazy(() => import("../pages/DocumentManagement/DMView"));
 
 // System Configurations - new pages
 const ProfileView = lazy(() => import("../pages/SystemConfigurations/Profiles/ProfileView"));
+const ProfileIndex = lazy(() => import("../pages/SystemConfigurations/Profiles/ProfileIndex"));
 const ProfileForm = lazy(() => import("../pages/SystemConfigurations/Profiles/ProfileForm"));
 
 const RoleView = lazy(() => import("../pages/SystemConfigurations/Roles/RoleView"));
@@ -86,7 +87,7 @@ export const modulePageMap: Record<string, ModuleComponents> = {
         view: BPCIndex,
     },
     profiles: {
-        main: ProfileView,
+        main: ProfileIndex,
         create: ProfileForm,
         edit: ProfileForm,
         view: ProfileView,
