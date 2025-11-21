@@ -8,6 +8,7 @@ import { fetchOutcomeList, deleteOutcome } from "@/database/outcome_api";
 import Spinner from "@/components/ui/spinner/Spinner";
 import { useState } from "react";
 import { Modal } from "@/components/ui/modal";
+import Can from "@/components/auth/Can";
 
 export default function UserIndex() {
     const navigate = useNavigate();
@@ -81,9 +82,11 @@ export default function UserIndex() {
                             </p>
                         </div>
                         <div className="flex shrink-0 items-center gap-2">
-                            <Button size="sm" onClick={() => navigate("/outcomes/create")}>
-                                Add New Outcome
-                            </Button>
+                            <Can permission="outcome.create">
+                                    <Button size="sm" onClick={() => navigate("/outcomes/create")}>
+                                    Add New Outcome
+                                </Button>
+                            </Can>
                         </div>
                     </div>
 
