@@ -1,6 +1,6 @@
 import { AxiosError } from "axios";
 import api from "./api";
-import { IProfileBase, IProfileForm } from "@/types/ProfileSchema";
+import { IProfileBase, IProfileForm, IUserProfile } from "@/types/ProfileSchema";
 
 export async function fetchProfileList(): Promise<IProfileBase[]> {
   try {
@@ -60,6 +60,51 @@ export async function fetchProfileOptions(): Promise<{ label: string; value: num
     }
     throw error;
   }
+}
+
+export async function fetchViewMember(id: number | string): Promise<IUserProfile[]> {
+  
+  return [
+            {
+              id: 1,
+              firstname: "Alice",
+              lastname: "Johnson",
+              organization: "TechCorp"
+            },
+            {
+              id: 2,
+              firstname: "Bob",
+              lastname: "Smith",
+              organization: "Innovate Solutions"
+            },
+            {
+              id: 3,
+              firstname: "Carla",
+              lastname: "Martinez",
+              organization: "NextGen Labs"
+            },
+            {
+              id: 4,
+              firstname: "David",
+              lastname: "Lee",
+              organization: "GlobalSoft"
+            },
+            {
+              id: 5,
+              firstname: "Emma",
+              lastname: "Williams",
+              organization: "BrightFuture Inc."
+            }
+          ]
+  // try {
+  //   const res = await api.get(`/profiles/${id}`);
+  //   return res.data as IProfileBase;
+  // } catch (error) {
+  //   if (error instanceof AxiosError && error.response?.data) {
+  //     throw error.response.data;
+  //   }
+  //   throw error;
+  // }
 }
 
 export default { fetchProfileList, fetchProfileById, upsertProfile, deleteProfile, fetchProfileOptions };
