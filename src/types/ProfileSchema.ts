@@ -1,3 +1,4 @@
+import { z } from "zod";
 import { IRoleBase } from "@/types/RoleSchema";
 
 export interface IProfileBase {
@@ -16,4 +17,12 @@ export interface IProfileForm {
   name: string;
 }
 
+export const UserProfileSchema = z.object({
+    id: z.number(),
+    firstname: z.string(),
+    lastname: z.string(),
+    organization: z.string(),
+});
+
 export type IProfileList = IProfileBase[];
+export type IUserProfile = z.infer<typeof UserProfileSchema>;
