@@ -35,14 +35,12 @@ export const SupplierBaseSchema = z.object({
 
 export const SupplierFormSchema = UserCreateSchema.omit({
     contact_id: true,
-    email: true,
     user_profile_id: true,
     user_type_id: true,
     is_active: true,
 }).extend({
     id: z.number().int().optional(),
     name: NonEmptyString,
-    vat_number: z.string().optional(),
     address_line_1: z.string().optional(),
     address_line_2: z.string().optional(),
     address_line_3: z.string().optional(),
@@ -51,7 +49,7 @@ export const SupplierFormSchema = UserCreateSchema.omit({
     country: z.string().optional(),
     postcode: z.string().optional(),
     phone: z.string().optional(),
-    invoice_query_email: EmailString.optional(),
+    bordereau_query_email: EmailString.optional(),
     contact_id: z.number({ message: "Contact is required" }).int(),
     max_payment_days: z.number().int().nonnegative().optional(),
     target_payment_days: z.number().int().nonnegative().optional(),
@@ -59,7 +57,6 @@ export const SupplierFormSchema = UserCreateSchema.omit({
     priority: z.number().int().optional(),
     created_by: z.number().int().optional(),
     updated_by: z.number().int().optional(),
-    // Include document fields for supplier document creation
     document: DocumentCreateSchema.optional(),
 });
 

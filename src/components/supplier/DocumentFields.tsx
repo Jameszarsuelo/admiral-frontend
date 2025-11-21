@@ -20,7 +20,7 @@ type Props = {
 /**
  * Document fields component for forms with nested document structure
  * Works with document.* nested fields (e.g., in SupplierFormSchema, Document Management)
- * 
+ *
  * Usage:
  * - Supplier forms: document.name, document.revision, etc.
  * - Document Management module: document.name, document.revision, etc.
@@ -68,6 +68,28 @@ export default function DocumentFields({
                                 id="revision"
                                 name="revision"
                                 placeholder="Enter Revision"
+                            />
+                            {fieldState.error && (
+                                <p className="mt-1 text-sm text-error-500">
+                                    {fieldState.error.message}
+                                </p>
+                            )}
+                        </Field>
+                    )}
+                />
+
+                <Controller
+                    name="document.description"
+                    control={control}
+                    render={({ field, fieldState }) => (
+                        <Field data-invalid={fieldState.invalid}>
+                            <Label htmlFor="Description">Description</Label>
+                            <Input
+                                {...field}
+                                type="text"
+                                id="Description"
+                                name="Description"
+                                placeholder="Enter Description"
                             />
                             {fieldState.error && (
                                 <p className="mt-1 text-sm text-error-500">
@@ -132,4 +154,3 @@ export default function DocumentFields({
         </>
     );
 }
-

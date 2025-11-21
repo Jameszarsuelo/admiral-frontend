@@ -23,7 +23,6 @@ export default function SignInForm() {
             ?.pathname || "/";
 
     async function onSubmit(e: FormEvent) {
-        console.log(e);
         e.preventDefault();
         setError(null);
         setSubmitting(true);

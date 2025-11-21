@@ -25,6 +25,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
         // On boot, try to get the current user; if not authenticated, user stays null
         (async () => {
             try {
+                setLoading(true);
                 await fetchUser();
             } catch {
                 // ignore

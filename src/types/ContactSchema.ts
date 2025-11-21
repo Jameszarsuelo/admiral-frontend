@@ -21,7 +21,9 @@ export const ContactBaseSchema = z.object({
     county: z.string().nullable().optional(),
     country: z.string().default("United Kingdom"),
     postcode: z.string().nullable().optional(),
-    type: z.number().int().min(1).max(3),
+    type: z.string().refine((val) => ["1", "2", "3"].includes(val), {
+        message: "Type must be '1', '2', or '3'",
+    }),
     created_by: z.number().int().positive().nullable().optional(),
     updated_by: z.number().int().positive().nullable().optional(),
     deleted_by: z.number().int().positive().nullable().optional(),

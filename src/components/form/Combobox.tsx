@@ -74,7 +74,7 @@ export default function Combobox({
                     <ChevronsUpDownIcon className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                 </Button>
             </PopoverTrigger>
-            <PopoverContent className={cn("w-full p-0", className)} align="start">
+            <PopoverContent className={cn("w-full p-0 z-99999", className)} align="start">
                 <Command>
                     <CommandInput placeholder={searchPlaceholder} />
                     <CommandList>

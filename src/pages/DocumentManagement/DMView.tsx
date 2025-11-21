@@ -1,27 +1,76 @@
 import PageBreadcrumb from "@/components/common/PageBreadCrumb";
+import { useNavigate } from "react-router";
+import Spinner from "@/components/ui/spinner/Spinner";
 import Button from "@/components/ui/button/Button";
+import { DataTable } from "@/components/ui/DataTable";
+import { useQuery } from "@tanstack/react-query";
+// import api from "@/database/api";
+import { ColumnDef } from "@tanstack/react-table";
+import { IDocumentSchema } from "@/types/DocumentSchema";
+import { fetchDocumentList } from "@/database/document_api";
+import Can from "@/components/auth/Can";
 
 export default function DMView() {
-    // const navigate = useNavigate();
+    const navigate = useNavigate();
     // const [isModalOpen, setIsModalOpen] = useState(false);
     // const [selectedId, setSelectedId] = useState<number | null>(null);
     // const [isDeleting, setIsDeleting] = useState(false);
 
-    // const {
-    //     data: userData,
-    //     isLoading,
-    //     // error,
-    //     refetch,
-    // } = useQuery({
-    //     queryKey: ["user-data"],
-    //     queryFn: async () => {
-    //         return await fetchUserList();
-    //     },
-    //     refetchInterval: 1000 * 60 * 5, // 5 minutes
-    //     refetchIntervalInBackground: true,
-    //     staleTime: 500,
-    //     gcTime: 20000,
-    // });
+    const {
+        data: documents,
+        isLoading,
+        // refetch,
+    } = useQuery({
+        queryKey: ["document-list"],
+        queryFn: async () => {
+            return await fetchDocumentList();
+        },
+        staleTime: 500,
+
+    });
+
+    console.log(documents);
+
+    const columns: ColumnDef<IDocumentSchema>[] = [
+        { accessorKey: "id", header: "ID" },
+        { accessorKey: "name", header: "Document Name" },
+        { accessorKey: "revision", header: "Revision" },
+        { accessorKey: "document_type_id", header: "Type" },
+        { accessorKey: "path", header: "Upload" },
+        { accessorKey: "expiry_date", header: "Expiry" },
+        { accessorKey: "description", header: "Description" },
+        {
+            id: "actions",
+            header: "Actions",
+            cell: ({ row }) => {
+                const item = row.original as IDocumentSchema;
+                return (
+                    <div className="flex items-center gap-2">
+                        <Can permission="modules.edit">
+                            <Button
+                                size="sm"
+                                onClick={() =>
+                                    navigate(`/document-management/edit/${item.id}`)
+                                }
+                            >
+                                Edit
+                            </Button>
+                        </Can>
+
+                        <Can permission="modules.delete">
+                            <Button
+                                size="sm"
+                                variant="danger"
+                                // onClick={() => handleDeleteClick(item.id!)}
+                            >
+                                Delete
+                            </Button>
+                        </Can>
+                    </div>
+                );
+            },
+        },
+    ];
 
     // const handleDeleteClick = (id: number) => {
     //     setSelectedId(id);
@@ -69,24 +118,26 @@ export default function DMView() {
                             </p>
                         </div>
                         <div className="flex shrink-0 items-center gap-2">
-                            <Button
-                                size="sm"
-                                // onClick={() => navigate("/users/new")}
-                            >
-                                Add New Document
-                            </Button>
+                            <Can permission="document_management.create">
+                                <Button
+                                    size="sm"
+                                    onClick={() => navigate(`/document-management/create`)}
+                                >
+                                    Add New Documents
+                                </Button>
+                            </Can>
                         </div>
                     </div>
 
                     <div className="max-w-full overflow-x-auto custom-scrollbar">
                         <div className="min-w-[1000px] xl:min-w-full px-2">
-                            {/* {!isLoading && userData ? (
-                                <DataTable columns={columns} data={userData} />
+                            {!isLoading && documents ? (
+                                <DataTable columns={columns} data={documents} />
                             ) : (
                                 <div className="flex items-center justify-center py-12">
                                     <Spinner size="lg" />
                                 </div>
-                            )} */}
+                            )}
                         </div>
                     </div>
                 </div>
