@@ -1,0 +1,256 @@
+import { Controller } from "react-hook-form";
+import { Modal } from "@/components/ui/modal";
+import FileInput from "@/components/form/input/FileInput";
+import Button from "@/components/ui/button/Button";
+import Label from "@/components/form/Label";
+import Alert from "@/components/ui/alert/Alert";
+import { Field } from "@/components/ui/field";
+import Combobox from "@/components/form/Combobox";
+import { fetchBpcOptions } from "@/database/bpc_api";
+import { useQuery } from "@tanstack/react-query";
+ 
+import { IBordereauIndex } from "@/types/BordereauSchema";
+
+interface Props {
+    isCsvModalOpen: boolean;
+    setIsCsvModalOpen: (v: boolean) => void;
+    globalModalOpen: any;
+    setGlobalModalOpen: (v: any) => void;
+    bordereauSelected?: IBordereauIndex;
+    refetch?: () => Promise<any> | undefined;
+    isUploading: boolean;
+    setIsUploading: (b: boolean) => void;
+    csvController: any;
+    assignControl: any;
+    processControl: any;
+    closeControl: any;
+    onCsvSubmit?: () => Promise<void> | void;
+    onAssignSubmit?: () => Promise<void> | void;
+    onProcessSubmit?: () => Promise<void> | void;
+    onCloseSubmit?: () => Promise<void> | void;
+    resetAssign: any;
+    resetProcess: any;
+    resetClose: any;
+    resetCsv: () => void;
+}
+
+export default function BordereauControls({
+    isCsvModalOpen,
+    setIsCsvModalOpen,
+    globalModalOpen,
+    setGlobalModalOpen,
+    bordereauSelected,
+    isUploading,
+    csvController,
+    assignControl,
+    processControl,
+    closeControl,
+    onCsvSubmit,
+    onAssignSubmit,
+    onProcessSubmit,
+    onCloseSubmit,
+    resetAssign,
+    resetProcess,
+    resetClose,
+    resetCsv,
+}: Props) {
+    const { data: bpcData = [] } = useQuery({
+        queryKey: ["bpc-data-controls"],
+        queryFn: async () => await fetchBpcOptions(),
+        staleTime: 1000 * 60 * 5,
+    });
+
+    return (
+        <>
+            <Modal
+                isOpen={isCsvModalOpen}
+                onClose={() => setIsCsvModalOpen(false)}
+                className="max-w-3xl mx-4"
+            >
+                <div className="p-6 md:p-8">
+                    <h3 className="text-lg font-semibold">Upload Invoices CSV</h3>
+                    <p className="text-sm text-gray-600 mt-2">
+                        Upload a CSV file containing invoices — the file will be processed and invoices will be created.
+                    </p>
+
+                    <form className="mt-4" onSubmit={(e) => { e.preventDefault(); onCsvSubmit?.(); }}>
+                        <Controller
+                            name="document"
+                            control={csvController}
+                            render={({ field, fieldState }) => (
+                                <div>
+                                    <Label>Upload a file</Label>
+                                    <FileInput
+                                        onChange={(e) => {
+                                            const file = e.target.files?.[0];
+                                            if (file) field.onChange(file);
+                                        }}
+                                        className="mt-2"
+                                    />
+                                    {fieldState.error && (
+                                        <p className="mt-1 text-sm text-error-500">
+                                            {fieldState.error.message}
+                                        </p>
+                                    )}
+                                </div>
+                            )}
+                        />
+
+                            <div className="mt-6 flex justify-end gap-3">
+                                <Button
+                                    variant="danger"
+                                    onClick={() => {
+                                        setIsCsvModalOpen(false);
+                                        resetCsv();
+                                    }}
+                                    disabled={isUploading}
+                                >
+                                    Cancel
+                                </Button>
+                                <Button type="submit" disabled={isUploading}>Upload</Button>
+                            </div>
+                    </form>
+                </div>
+            </Modal>
+
+            <Modal
+                isOpen={globalModalOpen.assignModal}
+                onClose={() => setGlobalModalOpen((p: any) => ({ ...p, assignModal: !p.assignModal }))}
+                className="max-w-3xl mx-4"
+            >
+                <div className="p-6 md:p-8">
+                    <h3 className="text-lg font-semibold mb-5">(Re)Assign BPC</h3>
+
+                    <Alert
+                        variant="info"
+                        title="Current BPC"
+                        message={
+                            bordereauSelected?.bpc
+                                ? String(
+                                      bordereauSelected?.bpc?.contact.firstname + " " + bordereauSelected?.bpc?.contact.lastname,
+                                  )
+                                : "No BPC Assigned"
+                        }
+                        showLink={false}
+                    />
+
+                    <form className="mt-4">
+                        <Controller
+                            name="bpcId"
+                            control={assignControl}
+                            render={({ field, fieldState }) => (
+                                <Field data-invalid={fieldState.invalid}>
+                                    <Label htmlFor="bpcId">BPC to Assign</Label>
+                                    <div className="flex gap-2 w-full">
+                                        <div className="flex-1">
+                                            <Combobox
+                                                value={field.value ?? undefined}
+                                                options={bpcData}
+                                                onChange={(value) => field.onChange(Number(value))}
+                                                placeholder="Select BPC..."
+                                                searchPlaceholder="Search BPC..."
+                                                emptyText="No BPC found."
+                                            />
+                                        </div>
+                                    </div>
+                                    {fieldState.error && <p className="mt-1 text-sm text-error-500">{fieldState.error.message}</p>}
+                                </Field>
+                            )}
+                        />
+
+                        <div className="mt-6 flex justify-end gap-3">
+                            <Button
+                                variant="danger"
+                                onClick={() => {
+                                    setGlobalModalOpen((p: any) => ({ ...p, assignModal: !p.assignModal }));
+                                    resetAssign();
+                                }}
+                                disabled={isUploading}
+                            >
+                                Cancel
+                            </Button>
+                            <Button onClick={() => onAssignSubmit?.()} disabled={isUploading}>{isUploading ? "Changing BPC..." : "Change BPC"}</Button>
+                        </div>
+                    </form>
+                </div>
+            </Modal>
+
+            <Modal
+                isOpen={globalModalOpen.payNowModal}
+                onClose={() => setGlobalModalOpen((p: any) => ({ ...p, payNowModal: !p.payNowModal }))}
+                className="max-w-3xl mx-4"
+            >
+                <div className="p-6 md:p-8">
+                    <h3 className="text-lg font-semibold">Process Next (Will Force this Bordereau to Top of Queue)</h3>
+                    <form className="mt-6">
+                        <Controller name="reason" control={processControl} render={({ field }) => (
+                            <div>
+                                <Label>Reason</Label>
+                                <select {...field} className="mt-1 block w-full rounded-md border-gray-200 bg-white px-3 py-2 text-sm shadow-sm dark:bg-slate-800 dark:border-slate-700">
+                                    <option value="">Select reason</option>
+                                    <option value="force">Force Process</option>
+                                    <option value="urgent">Urgent</option>
+                                    <option value="retry">Retry</option>
+                                </select>
+                            </div>
+                        )} />
+
+                        <Controller name="bpcId" control={processControl} render={({ field }) => (
+                            <Field>
+                                <Label>Assign BPC</Label>
+                                <div className="mt-1">
+                                    <Combobox value={field.value ?? undefined} options={bpcData} onChange={(value) => field.onChange(Number(value))} placeholder="Select BPC..." searchPlaceholder="Search BPC..." emptyText="No BPC found." />
+                                </div>
+                            </Field>
+                        )} />
+
+                        <Controller name="instructions" control={processControl} render={({ field }) => (
+                            <div>
+                                <Label>Instructions</Label>
+                                <textarea {...field} rows={6} className="mt-1 w-full rounded-md border border-gray-200 p-3 text-sm dark:bg-slate-800 dark:border-slate-700" placeholder="Write Instructions for BPC Here" />
+                            </div>
+                        )} />
+
+                        <div className="mt-6 flex justify-end gap-3">
+                            <Button variant="danger" onClick={() => { setGlobalModalOpen((p:any) => ({ ...p, payNowModal: !p.payNowModal })); resetProcess(); }} disabled={isUploading}>Cancel</Button>
+                            <Button onClick={() => onProcessSubmit?.()} disabled={isUploading}>{isUploading ? "Processing..." : "Process Now"}</Button>
+                        </div>
+                    </form>
+                </div>
+            </Modal>
+
+            <Modal isOpen={globalModalOpen.closeModal} onClose={() => setGlobalModalOpen((p:any) => ({ ...p, closeModal: !p.closeModal }))} className="max-w-3xl mx-4">
+                <div className="p-6 md:p-8">
+                    <h3 className="text-lg font-semibold">Close Bordereau</h3>
+                    <form className="mt-6">
+                        <Controller name="reason" control={closeControl} rules={{ required: "Reason is required" }} render={({ field, fieldState }) => (
+                            <Field data-invalid={fieldState.invalid}>
+                                <Label>Reason</Label>
+                                <select {...field} className="mt-1 block w-full rounded-md border-gray-200 bg-white px-3 py-2 text-sm shadow-sm dark:bg-slate-800 dark:border-slate-700">
+                                    <option value="">Select reason</option>
+                                    <option value="wrong_contact">Wrong Contact Details</option>
+                                    <option value="duplicate">Duplicate</option>
+                                    <option value="other">Other</option>
+                                </select>
+                                {fieldState.error && <p className="mt-1 text-sm text-error-500">{fieldState.error.message}</p>}
+                            </Field>
+                        )} />
+
+                        <Controller name="notes" control={closeControl} rules={{ required: "Notes are required" }} render={({ field, fieldState }) => (
+                            <Field data-invalid={fieldState.invalid}>
+                                <Label>Notes</Label>
+                                <textarea {...field} rows={6} className="mt-1 w-full rounded-md border border-gray-200 p-3 text-sm dark:bg-slate-800 dark:border-slate-700" placeholder="Enter Notes" />
+                                {fieldState.error && <p className="mt-1 text-sm text-error-500">{fieldState.error.message}</p>}
+                            </Field>
+                        )} />
+
+                        <div className="mt-6 flex justify-end gap-3">
+                            <Button variant="danger" onClick={() => { setGlobalModalOpen((p:any) => ({ ...p, closeModal: !p.closeModal })); resetClose(); }} disabled={isUploading}>Close</Button>
+                            <Button onClick={() => onCloseSubmit?.()} disabled={isUploading}>{isUploading ? "Closing..." : "Close Bordereau"}</Button>
+                        </div>
+                    </form>
+                </div>
+            </Modal>
+        </>
+    );
+}

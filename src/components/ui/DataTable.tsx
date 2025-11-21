@@ -26,11 +26,13 @@ import { Input } from "./input";
 interface DataTableProps<TData, TValue> {
     columns: ColumnDef<TData, TValue>[];
     data: TData[];
+    onRowSelectionChange?: (selected: TData[]) => void;
 }
 
 export function DataTable<TData, TValue>({
     columns,
     data,
+    onRowSelectionChange,
 }: DataTableProps<TData, TValue>) {
     const [sorting, setSorting] = React.useState<SortingState>([]);
     const [columnFilters, setColumnFilters] =
@@ -61,6 +63,17 @@ export function DataTable<TData, TValue>({
             globalFilter,
         },
     });
+
+    React.useEffect(() => {
+        if (onRowSelectionChange) {
+            const selected = table
+                .getFilteredSelectedRowModel()
+                .rows.map((r) => r.original as TData);
+            onRowSelectionChange(selected);
+        }
+        // Only run when selection or callback changes
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [rowSelection, onRowSelectionChange]);
 
     return (
         <>
@@ -126,10 +139,10 @@ export function DataTable<TData, TValue>({
                 </Table>
             </div>
             <div className="flex items-center justify-end space-x-2 py-4">
-                {/* <div className="text-muted-foreground flex-1 text-sm">
+                <div className="text-muted-foreground flex-1 text-sm">
                     {table.getFilteredSelectedRowModel().rows.length} of{" "}
                     {table.getFilteredRowModel().rows.length} row(s) selected.
-                </div> */}
+                </div>
                 <div className="space-x-2">
                     <Button
                         variant="outline"

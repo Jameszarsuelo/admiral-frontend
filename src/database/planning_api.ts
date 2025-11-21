@@ -2,6 +2,19 @@ import api from "./api";
 import { AxiosError } from "axios";
 import { IPlanningForm } from "@/types/PlanningSchema";
 
+
+export async function fetchPlanningList(): Promise<IPlanningForm[]> {
+    try {
+        const response = await api.get(`/planning`);
+        return response.data;
+    } catch (error) {
+       if (error instanceof AxiosError && error.response?.data) {
+            throw error.response.data;
+        }
+        throw error;
+    }
+}
+
 export async function upsertPlanning(
     planningData: IPlanningForm,
 ): Promise<IPlanningForm> {
@@ -21,16 +34,6 @@ export async function upsertPlanning(
 }
 
 export async function fetchPlanning(id: string): Promise<IPlanningForm> {
-    // return {
-    //     id: 1,
-    //     start_time: "08:00", // string, required
-    //     end_time: "17:00", // string, required
-    //     work_saturday: "0", // boolean, required
-    //     work_sunday: "1", // boolean, required
-    //     forecast_horizon: "3 months", // string, required
-    //     created_at: Date.now(), // number (timestamp)
-    //     updated_at: Date.now(),
-    // };
     try {
         const response = await api.get(`/planning/${id}`);
         // console.log(response);
@@ -43,15 +46,16 @@ export async function fetchPlanning(id: string): Promise<IPlanningForm> {
     }
 }
 
-
-export async function fetchPlanningList(): Promise<IPlanningForm[]> {
+export async function deletePlanning(id: number): Promise<void> {
     try {
-        const response = await api.get(`/planning`);
-        return response.data.id;
+        await api.delete(`/planning/${id}`);
     } catch (error) {
-       if (error instanceof AxiosError && error.response?.data) {
+        if (error instanceof AxiosError && error.response?.data) {
             throw error.response.data;
         }
         throw error;
     }
 }
+
+
+

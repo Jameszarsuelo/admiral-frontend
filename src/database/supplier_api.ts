@@ -1,6 +1,7 @@
 import api from "./api";
 import { AxiosError } from "axios";
 import { ISupplierFormSchema, ISupplierSchema } from "@/types/SupplierSchema";
+import { IContactCreateSchema, IContactSchema } from "@/types/ContactSchema";
 
 export async function upsertSupplier(
     supplierData: ISupplierFormSchema,
@@ -51,6 +52,24 @@ export async function upsertSupplier(
     }
 }
 
+export async function addContactsToSupplier(
+    supplierId: string | number | undefined,
+    selectedContacts: IContactSchema[],
+): Promise<void> {
+    try {
+        const response = await api.post(`/add-contacts`, {
+            supplier_id: supplierId,
+            contacts: selectedContacts,
+        });
+        return response.data;
+    } catch (error) {
+        if (error instanceof AxiosError && error.response?.data) {
+            throw error.response.data;
+        }
+        throw error;
+    }
+}
+
 export async function fetchSupplierList(): Promise<ISupplierSchema[]> {
     try {
         const response = await api.get(`/supplier`);
@@ -63,7 +82,23 @@ export async function fetchSupplierList(): Promise<ISupplierSchema[]> {
     }
 }
 
-export async function fetchSupplierById(id: string): Promise<ISupplierFormSchema> {
+export async function fetchSupplierContacts(
+    id: string,
+): Promise<IContactCreateSchema[]> {
+    try {
+        const response = await api.get(`/supplier-contacts/${id}`);
+        return response.data;
+    } catch (error) {
+        if (error instanceof AxiosError && error.response?.data) {
+            throw error.response.data;
+        }
+        throw error;
+    }
+}
+
+export async function fetchSupplierById(
+    id: string,
+): Promise<ISupplierFormSchema> {
     try {
         const response = await api.get(`/supplier/${id}`);
         return response.data;

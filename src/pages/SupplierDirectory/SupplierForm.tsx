@@ -8,9 +8,6 @@ import Input from "@/components/form/input/InputField";
 import { Field, FieldGroup } from "@/components/ui/field";
 import { Controller, useForm } from "react-hook-form";
 import Button from "@/components/ui/button/Button";
-// import PhoneInput from "@/components/form/group-input/PhoneInput";
-// import Select from "@/components/form/Select";
-// import Switch from "@/components/form/switch/Switch";
 import { Separator } from "@/components/ui/separator";
 import { useNavigate, useParams } from "react-router";
 import { fetchSupplierById, upsertSupplier } from "@/database/supplier_api";
@@ -23,15 +20,18 @@ import {
 } from "@/types/SupplierSchema";
 import Select from "@/components/form/Select";
 import Switch from "@/components/form/switch/Switch";
-// moved into SupplierDocumentFields component
 import { useAuth } from "@/hooks/useAuth";
 import { fetchDocumentVisibilityList } from "@/database/document_visibility_api";
 import { fetchContactList } from "@/database/contact_api";
 import ContactFormModal from "@/components/modal/ContactFormModal";
+import { Modal } from "@/components/ui/modal";
 import { useQuery } from "@tanstack/react-query";
 import { PlusIcon } from "lucide-react";
 import Combobox from "@/components/form/Combobox";
 import DocumentFields from "@/components/supplier/DocumentFields";
+// import SupplierDocumentsTable from "./SupplierDocumentTable/SupplierDocumentsTable";
+import AddSupplierContactsTable from "./SupplierContactsTable/AddSupplierContactsTable";
+import SupplierContactsTable from "./SupplierContactsTable/SupplierContactTable";
 
 // const countries = [
 //     { code: "UK", label: "+44" },
@@ -48,13 +48,14 @@ interface DocumentVisibilityOption {
 }
 
 export default function SupplierForm() {
-    const { id, method } = useParams();
+    const { id } = useParams();
     const navigate = useNavigate();
     const { user } = useAuth();
     const [documentVisibilityOptions, setDocumentVisibilityOptions] = useState<
         DocumentVisibilityOption[]
     >([]);
     const [isContactModalOpen, setIsContactModalOpen] = useState(false);
+    const [isDocsModalOpen, setIsDocsModalOpen] = useState(false);
 
     // Fetch contacts for dropdown
     const { data: contacts = [], refetch: refetchContacts } = useQuery({
@@ -90,7 +91,6 @@ export default function SupplierForm() {
                 sso_provider: "",
                 sso_sub: "",
                 name: "",
-                vat_number: "",
                 address_line_1: "",
                 address_line_2: "",
                 address_line_3: "",
@@ -99,7 +99,7 @@ export default function SupplierForm() {
                 country: "United Kingdom",
                 postcode: "",
                 phone: "",
-                invoice_query_email: "",
+                bordereau_query_email: "",
                 max_payment_days: 30,
                 target_payment_days: 7,
                 preferred_payment_day: "",
@@ -109,6 +109,7 @@ export default function SupplierForm() {
                 document: {
                     name: "",
                     revision: "",
+                    description: "",
                     expiry_date: "",
                     document_visibility_id: 1,
                     uploaded_by: user?.id,
@@ -244,7 +245,7 @@ export default function SupplierForm() {
                                     />
 
                                     <Controller
-                                        name="invoice_query_email"
+                                        name="bordereau_query_email"
                                         control={control}
                                         render={({ field, fieldState }) => (
                                             <Field
@@ -252,14 +253,14 @@ export default function SupplierForm() {
                                                     fieldState.invalid
                                                 }
                                             >
-                                                <Label htmlFor="invoice_query_email">
+                                                <Label htmlFor="bordereau_query_email">
                                                     Invoice Query Email
                                                 </Label>
                                                 <Input
                                                     {...field}
                                                     type="text"
-                                                    id="invoice_query_email"
-                                                    name="invoice_query_email"
+                                                    id="bordereau_query_email"
+                                                    name="bordereau_query_email"
                                                     placeholder="e.g. john@test.com"
                                                 />
                                                 {fieldState.error && (
@@ -487,37 +488,6 @@ export default function SupplierForm() {
                                                     id="preferred_payment_day"
                                                     name="preferred_payment_day"
                                                     placeholder="e.g. Monday"
-                                                />
-                                                {fieldState.error && (
-                                                    <p className="mt-1 text-sm text-error-500">
-                                                        {
-                                                            fieldState.error
-                                                                .message
-                                                        }
-                                                    </p>
-                                                )}
-                                            </Field>
-                                        )}
-                                    />
-
-                                    <Controller
-                                        name="vat_number"
-                                        control={control}
-                                        render={({ field, fieldState }) => (
-                                            <Field
-                                                data-invalid={
-                                                    fieldState.invalid
-                                                }
-                                            >
-                                                <Label htmlFor="vat_number">
-                                                    VAT Number
-                                                </Label>
-                                                <Input
-                                                    {...field}
-                                                    type="text"
-                                                    id="vat_number"
-                                                    name="vat_number"
-                                                    placeholder="Enter VAT number"
                                                 />
                                                 {fieldState.error && (
                                                     <p className="mt-1 text-sm text-error-500">
@@ -821,7 +791,7 @@ export default function SupplierForm() {
                                         />
                                     </div>
                                 </div>
-                                {method !== "edit" && (
+                                {!id && (
                                     <>
                                         <div className="col-span-full">
                                             <Separator className="my-4" />
@@ -843,6 +813,48 @@ export default function SupplierForm() {
                                             }
                                         />
                                     </>
+                                )}
+
+                                {id && (
+                                    <div className="col-span-full">
+                                        <Separator className="my-4" />
+                                        <div className="p-5 mb-4 border border-gray-200 rounded-2xl dark:border-gray-800 lg:p-6">
+                                            <div>
+                                                <div className="flex items-center justify-between mb-4">
+                                                    <h4 className="text-lg font-semibold text-gray-800 dark:text-white/90">
+                                                        Supplier Contacts
+                                                    </h4>
+                                                    <Button
+                                                        size="sm"
+                                                        variant="outline"
+                                                        onClick={() =>
+                                                            setIsDocsModalOpen(
+                                                                true,
+                                                            )
+                                                        }
+                                                    >
+                                                        Add Contacts
+                                                    </Button>
+                                                </div>
+                                                <div className="grid grid-cols-1 gap-4">
+                                                    <SupplierContactsTable
+                                                        supplierId={id}
+                                                    />
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        {/* <div className="p-5 mb-4 border border-gray-200 rounded-2xl dark:border-gray-800 lg:p-6">
+                                            <div>
+                                                <h4 className="text-lg font-semibold text-gray-800 dark:text-white/90 lg:mb-6">
+                                                    Personal Information
+                                                </h4>
+                                                <div className="grid grid-cols-1 gap-4">
+                                                    <SupplierDocumentsTable />
+                                                </div>
+                                            </div>
+                                        </div> */}
+                                    </div>
                                 )}
                             </div>
                         </FieldGroup>
@@ -866,6 +878,21 @@ export default function SupplierForm() {
                     </div>
                 )}
             </ComponentCard>
+
+            <Modal
+                isOpen={isDocsModalOpen}
+                onClose={() => setIsDocsModalOpen(false)}
+                className="max-w-5xl p-6 max-h-[90vh] overflow-y-auto"
+            >
+                <div className="px-4 py-2">
+                    <div className="mt-4">
+                        <AddSupplierContactsTable
+                            supplierId={id}
+                            setIsDocsModalOpen={setIsDocsModalOpen}
+                        />
+                    </div>
+                </div>
+            </Modal>
 
             <ContactFormModal
                 isOpen={isContactModalOpen}
