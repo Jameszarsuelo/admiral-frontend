@@ -3,6 +3,7 @@ import { ColumnDef } from "@tanstack/react-table";
 import { BadgeCheckIcon, BadgeXIcon } from "lucide-react";
 import { IOutcomeHeaders } from "@/types/OutcomeSchema";
 import { Badge } from "@/components/ui/badge";
+import Can from "@/components/auth/Can";
 
 
 export const getOutcomeHeaders = (
@@ -16,16 +17,6 @@ export const getOutcomeHeaders = (
         header: "Outcome ID",
         cell: ({ row }) => (
             <div className="capitalize">{row.getValue("id")}</div>
-        ),
-    },
-    {
-        accessorKey: "status",
-        accessorFn: (row) => row.status,
-        header: "Status",
-        cell: ({ row }) => (
-            <Badge variant="secondary">
-                {row.getValue("status") ? <BadgeCheckIcon className="mr-1 inline-block" /> : <BadgeXIcon className="mr-1 inline-block"/> }
-            </Badge>
         ),
     },
     {
@@ -52,7 +43,17 @@ export const getOutcomeHeaders = (
             <div className="capitalize">{row.getValue("description")}</div>
         ),
     },
-   
+     {
+        accessorKey: "status",
+        accessorFn: (row) => row.status,
+        header: "Status",
+        cell: ({ row }) => (
+            <Badge className={row.getValue("status") == 1 ? "bg-success-500" : "bg-error-500" }>
+                {row.getValue("status")  == 1 ? <BadgeCheckIcon className="mr-1 inline-block" /> : <BadgeXIcon className="mr-1 inline-block"/> }
+                {row.getValue("status") == 1 ? "Active" : "Inactive" }
+            </Badge>
+        ),
+    },
     {
         id: "actions",
         header: () => <div>Actions</div>,
@@ -75,15 +76,17 @@ export const getOutcomeHeaders = (
                         variant="primary"
                         size="sm"
                     >
-                        Edit
+                        View
                     </Button>
-                    <Button
-                        onClick={() => onDelete(outcomeData.id!)}
-                        variant="danger"
-                        size="sm"
-                    >
-                        Delete
-                    </Button>
+                   <Can permission='outcome.delete'>
+                        <Button
+                            onClick={() => onDelete(outcomeData.id!)}
+                            variant="danger"
+                            size="sm"
+                        >
+                            Delete
+                        </Button>
+                   </Can>
                 </div>
             );
         },
