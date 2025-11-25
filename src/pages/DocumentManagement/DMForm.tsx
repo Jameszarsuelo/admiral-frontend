@@ -119,8 +119,8 @@ export default function DMForm() {
     return (
         <>
             <PageBreadcrumb pageTitle="Document Management" />
-            {/* <ComponentCard title={id ? "Edit Module" : "Add Module"}> */}
-            <ComponentCard title="Document Management">
+            <ComponentCard title={id ? "Edit Document" : "Add Document"}>
+            {/* <ComponentCard title="Document Management"> */}
                 {isLoading ? (
                     <div className="flex items-center justify-center py-12">
                         <Spinner size="lg" />

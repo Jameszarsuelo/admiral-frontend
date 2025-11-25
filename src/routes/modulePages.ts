@@ -27,13 +27,10 @@ const ContactForm = lazy(() => import("../pages/ContactDirectory/ContactForm"));
 const ContactView = lazy(() => import("../pages/ContactDirectory/ContactView"));
 
 const DMView = lazy(() => import("../pages/DocumentManagement/DMView"));
-<<<<<<< Updated upstream
-=======
 const DMForm = lazy(() => import("../pages/DocumentManagement/DMForm"));
 
 const BQMView = lazy(() => import("../pages/BordereauQueryManagement/BQMView"));
 // const DMForm = lazy(() => import("../pages/DocumentManagement/DMForm"));
->>>>>>> Stashed changes
 
 // System Configurations - new pages
 const ProfileView = lazy(() => import("../pages/SystemConfigurations/Profiles/ProfileView"));
@@ -47,6 +44,10 @@ const ModuleForm = lazy(() => import("../pages/SystemConfigurations/Modules/Modu
 
 const ModuleActionView = lazy(() => import("../pages/SystemConfigurations/ModuleActions/ModuleActionIndex"));
 const ModuleActionForm = lazy(() => import("../pages/SystemConfigurations/ModuleActions/ModuleActionForm"));
+
+const TaskDetailView = lazy(() => import("@/pages/TaskDetail/TaskDetailView"));
+
+const TaskQueuesView = lazy(() => import("@/pages/SystemConfigurations/TaskQueues/TaskQueuesView"));
 
 const NotFound = lazy(() => import("../pages/OtherPage/NotFound"));
 
@@ -130,8 +131,6 @@ export const modulePageMap: Record<string, ModuleComponents> = {
     },
     document_management: {
         main: DMView,
-<<<<<<< Updated upstream
-=======
         create: DMForm,
         edit: DMForm,
     },
@@ -139,7 +138,16 @@ export const modulePageMap: Record<string, ModuleComponents> = {
         main: BQMView,
         create: DMForm,
         edit: DMForm,
->>>>>>> Stashed changes
+    },
+    task_detail: {
+        main: TaskDetailView,
+        create: DMForm,
+        edit: DMForm,
+    },
+    task_queues: {
+        main: TaskQueuesView,
+        create: DMForm,
+        edit: DMForm,
     },
     dashboard: {
         main: Home,
