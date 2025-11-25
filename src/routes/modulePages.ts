@@ -9,6 +9,7 @@ const SupplierIndex = lazy(() => import("../pages/SupplierDirectory/SupplierInde
 const SupplierForm = lazy(
     () => import("../pages/SupplierDirectory/SupplierForm"),
 );
+const SupplierView = lazy(() => import("../pages/SupplierDirectory/SupplierView"));
 
 const BordereauIndex = lazy(() => import("../pages/BordereauDetail/BordereauIndex"));
 const BordereauView = lazy(() => import("../pages/BordereauDetail/BordereauView"));
@@ -87,7 +88,7 @@ export const modulePageMap: Record<string, ModuleComponents> = {
         main: SupplierIndex,
         create: SupplierForm,
         edit: SupplierForm,
-        // supplierDetails: SupplierView,
+        view: SupplierView,
     },
     bpc: {
         main: BPCIndex,

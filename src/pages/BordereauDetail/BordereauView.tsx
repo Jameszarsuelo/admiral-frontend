@@ -42,7 +42,6 @@ export default function BordereauView() {
                             ) : (
                                 <div className="grid grid-cols-1 gap-6">
                                     <div className="p-5 border border-gray-200 rounded-2xl dark:border-gray-800 lg:p-6 col-span-2 ">
-
                                         {/* Summary grid (responsive cards) */}
                                         <div className="mt-6 mb-6">
                                             <BordereauSummaryGrid
@@ -342,7 +341,11 @@ export default function BordereauView() {
                                                 </h4>
                                                 <div className="grid grid-cols-1 gap-4 lg:grid-cols-1 lg:gap-7">
                                                     <div>
-                                                        <CommentSection comments={bordereauDetail?.comments}/>
+                                                        <CommentSection
+                                                            comments={
+                                                                bordereauDetail?.comments
+                                                            }
+                                                        />
                                                     </div>
                                                 </div>
                                             </div>
