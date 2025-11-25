@@ -1,59 +1,39 @@
 import { DataTable } from "@/components/ui/DataTable";
-import { DocumentHeaders } from "@/data/DocumentHeaders";
+import { useQuery } from "@tanstack/react-query";
+import Spinner from "@/components/ui/spinner/Spinner";
+import { fetchSupplierDocuments } from "@/database/supplier_api";
+import { getSupplierDocumentHeaders } from "./SupplierDocumentHeaders";
 
-export type Payment = {
-    id: string;
-    amount: number;
-    status: "pending" | "processing" | "success" | "failed";
-    email: string;
-};
+export default function SupplierDocumentsTable({
+    supplierId,
+}: {
+    supplierId: number | string | undefined;
+}) {
+    const {
+        data: supplierDocumentData,
+        isLoading,
+        // refetch,
+    } = useQuery({
+        queryKey: ["supplier-documents", supplierId],
+        queryFn: async () => {
+            return await fetchSupplierDocuments(supplierId as number);
+        },
+        refetchInterval: 1000 * 60 * 5,
+        refetchIntervalInBackground: true,
+    });
 
-const data: Payment[] = [
-    {
-        id: "m5gr84i9",
-        amount: 316,
-        status: "success",
-        email: "ken99@example.com",
-    },
-    {
-        id: "3u1reuv4",
-        amount: 242,
-        status: "success",
-        email: "Abe45@example.com",
-    },
-    {
-        id: "derv1ws0",
-        amount: 837,
-        status: "processing",
-        email: "Monserrat44@example.com",
-    },
-    {
-        id: "5kma53ae",
-        amount: 874,
-        status: "success",
-        email: "Silas22@example.com",
-    },
-    {
-        id: "bhqecj4p",
-        amount: 721,
-        status: "failed",
-        email: "carmella@example.com",
-    },
-];
+    const columns = getSupplierDocumentHeaders();
 
-export default function SupplierDocumentsTable() {
-    const columns = DocumentHeaders;
     return (
         <div className="max-w-full overflow-x-auto custom-scrollbar">
             <div className="min-w-[1000px] xl:min-w-full px-2">
-                <DataTable columns={columns} data={data} />
-                {/* {!isLoading && supplierData ? (
-                    <DataTable columns={columns} data={supplierData} />
+                {!isLoading && supplierDocumentData ? (
+                    <DataTable columns={columns} data={supplierDocumentData} />
                 ) : (
                     <div className="flex items-center justify-center py-12">
                         <Spinner size="lg" />
                     </div>
-                )} */}
+                )}
             </div>
         </div>
     );

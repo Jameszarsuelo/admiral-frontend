@@ -1,6 +1,11 @@
 import api from "./api";
 import { AxiosError } from "axios";
-import { ISupplierFormSchema, ISupplierSchema } from "@/types/SupplierSchema";
+import {
+    ISupplierDocumentSchema,
+    ISupplierFormSchema,
+    ISupplierSchema,
+    ISupplierStatisticsSchema,
+} from "@/types/SupplierSchema";
 import { IContactCreateSchema, IContactSchema } from "@/types/ContactSchema";
 
 export async function upsertSupplier(
@@ -110,9 +115,53 @@ export async function fetchSupplierById(
     }
 }
 
+export async function fetchSupplierStatistics(
+    id: string,
+): Promise<ISupplierStatisticsSchema> {
+    try {
+        const response = await api.get(`/supplier-details/${id}`);
+        return response.data;
+    } catch (error) {
+        if (error instanceof AxiosError && error.response?.data) {
+            throw error.response.data;
+        }
+        throw error;
+    }
+}
+
 export async function deleteSupplier(id: number): Promise<void> {
     try {
         await api.delete(`/supplier/${id}`);
+    } catch (error) {
+        if (error instanceof AxiosError && error.response?.data) {
+            throw error.response.data;
+        }
+        throw error;
+    }
+}
+
+export async function fetchSupplierDocuments(
+    id: number,
+): Promise<ISupplierDocumentSchema[]> {
+    try {
+        const response = await api.get(`/supplier-documents/${id}`);
+        return response.data;
+    } catch (error) {
+        if (error instanceof AxiosError && error.response?.data) {
+            throw error.response.data;
+        }
+        throw error;
+    }
+}
+
+export async function downloadSupplierDocument(
+    id: number,
+): Promise<Blob> {
+    try {
+        const response = await api.get(`/supplier-documents/${id}/download`, {
+            responseType: "blob",
+        });
+        return response.data;
     } catch (error) {
         if (error instanceof AxiosError && error.response?.data) {
             throw error.response.data;

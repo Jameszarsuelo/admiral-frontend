@@ -1,7 +1,8 @@
 import { z } from "zod";
-import { UserCreateSchema } from "./UserSchema";
-import { DocumentCreateSchema } from "./DocumentSchema";
+import { UserBaseSchema, UserCreateSchema } from "./UserSchema";
+import { DocumentBaseSchema, DocumentCreateSchema, DocumentTypeBaseSchema, DocumentVisibilityBaseSchema } from "./DocumentSchema";
 import { ContactBaseSchema } from "./ContactSchema";
+import { BordereauBaseSchema } from "./BordereauSchema";
 
 export const CountryEnum = z.enum(["United Kingdom"]); // From defaults; expand if more are allowed later
 export const ContactTypeEnum = z.enum(["1", "2", "3"]).transform(Number);
@@ -31,6 +32,9 @@ export const SupplierBaseSchema = z.object({
     preferred_payment_day: z.string().nullable().optional(),
     priority: z.number().int().default(5),
     contact: ContactBaseSchema.optional(),
+    created_at: z.string().datetime(),
+    updated_at: z.string().datetime(),
+    deleted_at: z.string().datetime().nullable().optional(),
 });
 
 export const SupplierFormSchema = UserCreateSchema.omit({
@@ -38,6 +42,7 @@ export const SupplierFormSchema = UserCreateSchema.omit({
     user_profile_id: true,
     user_type_id: true,
     is_active: true,
+    email: true
 }).extend({
     id: z.number().int().optional(),
     name: NonEmptyString,
@@ -64,8 +69,49 @@ export const SupplierUpdateSchema = SupplierFormSchema.partial().extend({
     id: z.number().int().positive(),
 });
 
+export const SupplierStatisticsSchema = SupplierBaseSchema.pick({
+    id: true,
+    address_line_1: true,
+    address_line_2: true,
+    address_line_3: true,
+    city: true,
+    contact_id: true,
+    county: true,
+    country: true,
+    max_payment_days: true,
+    name: true,
+    phone: true,
+    postcode: true,
+    preferred_payment_day: true,
+    priority: true,
+    target_payment_days: true,
+    created_at: true,
+    updated_at: true,
+}).extend({
+    bordereau_query_email: true,
+    bordereau: BordereauBaseSchema.array().optional(),
+    contact: ContactBaseSchema.optional(),
+    user: UserBaseSchema.optional(),
+});
+
+
+
+export const SupplierDocumentSchema = DocumentBaseSchema.omit({
+    supplier: true,
+}).extend({
+    document_type: DocumentTypeBaseSchema,
+    visibility: DocumentVisibilityBaseSchema,
+    uploader: UserBaseSchema.omit({
+        contact: true,
+        user_type: true,
+    }),
+});
+
 export type ISupplierSchema = z.infer<typeof SupplierBaseSchema>;
 export type ISupplierFormSchema = z.infer<typeof SupplierFormSchema>;
+// export type ISupplierUpdateSchema = z.infer<typeof SupplierUpdateSchema>;
+export type ISupplierStatisticsSchema = z.infer<typeof SupplierStatisticsSchema>;
+export type ISupplierDocumentSchema = z.infer<typeof SupplierDocumentSchema>;
 
 // export const SupplierInfoBaseSchema = z.object({
 //   id: z.number().int().positive(),

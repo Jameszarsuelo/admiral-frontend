@@ -1,19 +1,19 @@
-import { Controller, Control } from "react-hook-form";
+import { Controller, Control, Path, FieldValues } from "react-hook-form";
 import { Field } from "@/components/ui/field";
 import Label from "@/components/form/Label";
 import FileInput from "@/components/form/input/FileInput";
 import Input from "@/components/form/input/InputField";
 import DatePicker from "@/components/form/date-picker";
 import Select from "@/components/form/Select";
-import { ISupplierFormSchema } from "@/types/SupplierSchema";
+// control is intentionally typed loosely for reuse in nested forms
 
 export interface DocumentVisibilityOption {
     value: number;
     label: string;
 }
 
-type Props = {
-    control: Control<ISupplierFormSchema>;
+type Props<TForm extends FieldValues> = {
+    control: Control<TForm>;
     documentVisibilityOptions: DocumentVisibilityOption[];
 };
 
@@ -25,15 +25,15 @@ type Props = {
  * - Supplier forms: document.name, document.revision, etc.
  * - Document Management module: document.name, document.revision, etc.
  */
-export default function DocumentFields({
+export default function DocumentFields<TForm extends FieldValues>({
     control,
     documentVisibilityOptions,
-}: Props) {
+}: Props<TForm>) {
     return (
         <>
-            <div className="space-y-6">
+            <div className="lg:space-y-6 space-y-4">
                 <Controller
-                    name="document.name"
+                    name={"document.name" as Path<TForm>}
                     control={control}
                     render={({ field, fieldState }) => (
                         <Field data-invalid={fieldState.invalid}>
@@ -57,7 +57,7 @@ export default function DocumentFields({
                 />
 
                 <Controller
-                    name="document.revision"
+                    name={"document.revision" as Path<TForm>}
                     control={control}
                     render={({ field, fieldState }) => (
                         <Field data-invalid={fieldState.invalid}>
@@ -79,7 +79,7 @@ export default function DocumentFields({
                 />
 
                 <Controller
-                    name="document.description"
+                    name={"document.description" as Path<TForm>}
                     control={control}
                     render={({ field, fieldState }) => (
                         <Field data-invalid={fieldState.invalid}>
@@ -101,9 +101,9 @@ export default function DocumentFields({
                 />
             </div>
 
-            <div className="space-y-6">
+            <div className="lg:space-y-6 space-y-4">
                 <Controller
-                    name="document.expiry_date"
+                    name={"document.expiry_date" as Path<TForm>}
                     control={control}
                     render={({ field, fieldState }) => (
                         <Field data-invalid={fieldState.invalid}>
@@ -127,7 +127,7 @@ export default function DocumentFields({
                 />
 
                 <Controller
-                    name="document.document_visibility_id"
+                    name={"document.document_visibility_id" as Path<TForm>}
                     control={control}
                     render={({ field, fieldState }) => (
                         <Field data-invalid={fieldState.invalid}>

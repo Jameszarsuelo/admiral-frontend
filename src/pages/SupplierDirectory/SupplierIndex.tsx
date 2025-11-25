@@ -8,10 +8,14 @@ import { getSupplierHeaders } from "@/data/SupplierHeaders";
 import Button from "@/components/ui/button/Button";
 import { Modal } from "@/components/ui/modal";
 import Spinner from "@/components/ui/spinner/Spinner";
+import SupplierContactsTable from "./SupplierContactsTable/SupplierContactTable";
+import SupplierDocumentsTable from "./SupplierDocumentTable/SupplierDocumentsTable";
 
 export default function SupplierIndex() {
     const navigate = useNavigate();
     const [isModalOpen, setIsModalOpen] = useState(false);
+    const [isStaffModalOpen, setIsStaffModelOpen] = useState(false);
+    const [isContactModalOpen, setIsContactModalOpen] = useState(false);
     const [selectedId, setSelectedId] = useState<number | null>(null);
     const [isDeleting, setIsDeleting] = useState(false);
 
@@ -59,7 +63,23 @@ export default function SupplierIndex() {
         }
     };
 
-    const columns = getSupplierHeaders(navigate, handleDeleteClick, refetch);
+    const handleStaffModal = (id: number) => {
+        setSelectedId(id);
+        setIsStaffModelOpen((prev) => !prev);
+    };
+
+    const handleContactModal = (id: number) => {
+        setSelectedId(id);
+        setIsContactModalOpen((prev) => !prev);
+    };
+
+    const columns = getSupplierHeaders(
+        navigate,
+        handleDeleteClick,
+        refetch,
+        handleStaffModal,
+        handleContactModal
+    );
 
     return (
         <>
@@ -78,7 +98,9 @@ export default function SupplierIndex() {
                         <div className="flex shrink-0 items-center gap-2">
                             <Button
                                 size="sm"
-                                onClick={() => navigate("/supplier-directory/create")}
+                                onClick={() =>
+                                    navigate("/supplier-directory/create")
+                                }
                             >
                                 Add New Supplier
                             </Button>
@@ -121,6 +143,33 @@ export default function SupplierIndex() {
                         >
                             {isDeleting ? "Deleting..." : "Confirm Delete"}
                         </Button>
+                    </div>
+                </div>
+            </Modal>
+
+            <Modal
+                isOpen={isStaffModalOpen}
+                onClose={() => setIsStaffModelOpen((prev) => !prev)}
+                className="!w-auto m-4"
+            >
+                <div className="relative w-full p-4 overflow-y-auto bg-white rounded-3xl dark:bg-gray-900 lg:p-11">
+                    <div className="px-2">
+                        {selectedId && (
+                            <SupplierContactsTable supplierId={selectedId!} />
+                        )}
+                    </div>
+                </div>
+            </Modal>
+
+            <Modal isOpen={isContactModalOpen}
+                onClose={() => setIsContactModalOpen((prev) => !prev)}
+                className="!w-auto m-4"
+            >
+                <div className="relative w-full p-4 overflow-y-auto bg-white rounded-3xl dark:bg-gray-900 lg:p-11">
+                    <div className="px-2">
+                        {selectedId && (
+                            <SupplierDocumentsTable supplierId={selectedId!} />
+                        )}
                     </div>
                 </div>
             </Modal>
