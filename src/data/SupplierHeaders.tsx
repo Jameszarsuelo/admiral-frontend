@@ -1,11 +1,14 @@
 import Button from "@/components/ui/button/Button";
 import { ColumnDef } from "@tanstack/react-table";
 import { ISupplierSchema } from "@/types/SupplierSchema";
+import Can from "@/components/auth/Can";
 
 export const getSupplierHeaders = (
     navigate: (path: string) => void,
     handleDeleteClick: (id: number) => void,
     refetch: () => void,
+    handleStaffModal: (id: number) => void,
+    handleContactModal: (id: number) => void
 ): ColumnDef<ISupplierSchema>[] => [
     {
         accessorKey: "id",
@@ -29,7 +32,8 @@ export const getSupplierHeaders = (
     },
     {
         accessorKey: "primary_contact_name",
-        accessorFn: (row) => row.contact?.firstname + " " + row.contact?.lastname,
+        accessorFn: (row) =>
+            row.contact?.firstname + " " + row.contact?.lastname,
         header: () => <div className="ml-4">Primary Contact Name</div>,
         cell: ({ row }) => (
             <div className="capitalize dark:text-white ml-4">
@@ -72,43 +76,59 @@ export const getSupplierHeaders = (
                 refetch();
             };
 
+            const handleNavigateToDetails = (id: number) => {
+                navigate(`/supplier-directory/view/${id}`);
+            };
+
             return (
                 <div className="flex gap-1">
-                    <Button
-                        onClick={() => handleEdit(supplier.id!)}
-                        variant="primary"
-                        size="xs"
-                    >
-                        Edit
-                    </Button>
-                    <Button
-                        onClick={() => onDelete(supplier.id!)}
-                        variant="danger"
-                        size="xs"
-                    >
-                        Delete
-                    </Button>
-                    <Button
-                        onClick={() => onDelete(supplier.id!)}
-                        variant="success"
-                        size="xs"
-                    >
-                        Supplier Details
-                    </Button>
-                    <Button
-                        onClick={() => onDelete(supplier.id!)}
-                        variant="warning"
-                        size="xs"
-                    >
-                        View Staff
-                    </Button>
-                    <Button
-                        onClick={() => onDelete(supplier.id!)}
-                        variant="secondary"
-                        size="xs"
-                    >
-                        View Documents
-                    </Button>
+                    <Can permission="supplier_directory.edit">
+                        <Button
+                            onClick={() => handleEdit(supplier.id!)}
+                            variant="primary"
+                            size="xs"
+                        >
+                            Edit
+                        </Button>
+                    </Can>
+                    <Can permission="supplier_directory.delete">
+                        <Button
+                            onClick={() => onDelete(supplier.id!)}
+                            variant="danger"
+                            size="xs"
+                        >
+                            Delete
+                        </Button>
+                    </Can>
+                    <Can permission="supplier_directory.view">
+                        <Button
+                            onClick={() =>
+                                handleNavigateToDetails(supplier.id!)
+                            }
+                            variant="success"
+                            size="xs"
+                        >
+                            Supplier Details
+                        </Button>
+                    </Can>
+                    <Can permission="supplier_directory.view_staff">
+                        <Button
+                            onClick={() => handleStaffModal(supplier.id!)}
+                            variant="warning"
+                            size="xs"
+                        >
+                            View Staff
+                        </Button>
+                    </Can>
+                    <Can permission="supplier_directory.view_documents">
+                        <Button
+                            onClick={() => handleContactModal(supplier.id!)}
+                            variant="secondary"
+                            size="xs"
+                        >
+                            View Documents
+                        </Button>
+                    </Can>
                 </div>
             );
         },

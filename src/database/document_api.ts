@@ -17,6 +17,7 @@ export async function fetchDocumentList(): Promise<IDocumentSchema[]> {
 export async function fetchDocumentById(id: string): Promise<IDocumentFormSchema> {
     try {
         const response = await api.get(`/document/${id}`);
+        console.log(response.data);
         return response.data;
     } catch (error) {
         if (error instanceof AxiosError && error.response?.data) {

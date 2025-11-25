@@ -5,9 +5,9 @@ const NonEmptyString = z.string().min(1);
 export const DocumentVisibilityBaseSchema = z.object({
     id: z.number().int().positive(),
     name: NonEmptyString,
-    //   created_at: z.string().datetime(),
-    //   updated_at: z.string().datetime(),
-    //   deleted_at: z.string().datetime().nullable().optional(),
+    created_at: z.string().datetime(),
+    updated_at: z.string().datetime(),
+    deleted_at: z.string().datetime().nullable().optional(),
 });
 
 export const DocumentVisibilityCreateSchema = z.object({
@@ -22,9 +22,9 @@ export const DocumentVisibilityUpdateSchema =
 export const DocumentTypeBaseSchema = z.object({
     id: z.number().int().positive(),
     type: NonEmptyString,
-    //   created_at: z.string().datetime(),
-    //   updated_at: z.string().datetime(),
-    //   deleted_at: z.string().datetime().nullable().optional(),
+    created_at: z.string().datetime(),
+    updated_at: z.string().datetime(),
+    deleted_at: z.string().datetime().nullable().optional(),
 });
 
 export const DocumentTypeCreateSchema = z.object({

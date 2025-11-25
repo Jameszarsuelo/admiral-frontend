@@ -9,6 +9,7 @@ const SupplierIndex = lazy(() => import("../pages/SupplierDirectory/SupplierInde
 const SupplierForm = lazy(
     () => import("../pages/SupplierDirectory/SupplierForm"),
 );
+const SupplierView = lazy(() => import("../pages/SupplierDirectory/SupplierView"));
 
 const BordereauIndex = lazy(() => import("../pages/BordereauDetail/BordereauIndex"));
 const BordereauView = lazy(() => import("../pages/BordereauDetail/BordereauView"));
@@ -47,6 +48,10 @@ const ModuleForm = lazy(() => import("../pages/SystemConfigurations/Modules/Modu
 const ModuleActionView = lazy(() => import("../pages/SystemConfigurations/ModuleActions/ModuleActionIndex"));
 const ModuleActionForm = lazy(() => import("../pages/SystemConfigurations/ModuleActions/ModuleActionForm"));
 
+const TaskDetailView = lazy(() => import("@/pages/TaskDetail/TaskDetailView"));
+
+const TaskQueuesView = lazy(() => import("@/pages/SystemConfigurations/TaskQueues/TaskQueuesView"));
+
 const NotFound = lazy(() => import("../pages/OtherPage/NotFound"));
 
 export interface ModuleComponents {
@@ -83,7 +88,7 @@ export const modulePageMap: Record<string, ModuleComponents> = {
         main: SupplierIndex,
         create: SupplierForm,
         edit: SupplierForm,
-        // supplierDetails: SupplierView,
+        view: SupplierView,
     },
     bpc: {
         main: BPCIndex,
@@ -134,6 +139,16 @@ export const modulePageMap: Record<string, ModuleComponents> = {
     },
     bordereau_query_management: {
         main: BQMView,
+        create: DMForm,
+        edit: DMForm,
+    },
+    task_detail: {
+        main: TaskDetailView,
+        create: DMForm,
+        edit: DMForm,
+    },
+    task_queues: {
+        main: TaskQueuesView,
         create: DMForm,
         edit: DMForm,
     },

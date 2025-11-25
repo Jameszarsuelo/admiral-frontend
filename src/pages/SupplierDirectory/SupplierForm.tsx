@@ -29,9 +29,12 @@ import { useQuery } from "@tanstack/react-query";
 import { PlusIcon } from "lucide-react";
 import Combobox from "@/components/form/Combobox";
 import DocumentFields from "@/components/supplier/DocumentFields";
-// import SupplierDocumentsTable from "./SupplierDocumentTable/SupplierDocumentsTable";
 import AddSupplierContactsTable from "./SupplierContactsTable/AddSupplierContactsTable";
 import SupplierContactsTable from "./SupplierContactsTable/SupplierContactTable";
+import SupplierDocumentsTable from "./SupplierDocumentTable/SupplierDocumentsTable";
+import { IDocumentFormSchema } from "@/types/DocumentSchema";
+import { upsertDocument } from "@/database/document_api";
+import { useForm as useLocalForm } from "react-hook-form";
 
 // const countries = [
 //     { code: "UK", label: "+44" },
@@ -56,6 +59,39 @@ export default function SupplierForm() {
     >([]);
     const [isContactModalOpen, setIsContactModalOpen] = useState(false);
     const [isDocsModalOpen, setIsDocsModalOpen] = useState(false);
+    const [isAddDocModalOpen, setIsAddDocModalOpen] = useState(false);
+    const [isUploadingDoc, setIsUploadingDoc] = useState(false);
+
+    const docForm = useLocalForm<{ document: Partial<IDocumentFormSchema> }>({
+        defaultValues: {
+            document: {
+                name: "",
+                revision: "",
+                description: "",
+                expiry_date: "",
+                document_visibility_id: 1,
+            },
+        },
+    });
+
+    async function handleAddDocument(values: { document: Partial<IDocumentFormSchema> }) {
+        setIsUploadingDoc(true);
+        const payload: Record<string, unknown> = { ...(values.document || {}) };
+        if (id) payload["supplier_id"] = Number(id);
+
+        try {
+            await toast.promise(upsertDocument(payload as IDocumentFormSchema), {
+                loading: "Uploading document...",
+                success: "Document uploaded",
+                error: "Failed to upload document",
+            });
+            docForm.reset();
+            setIsAddDocModalOpen(false);
+            refetchSupplier?.();
+        } finally {
+            setIsUploadingDoc(false);
+        }
+    }
 
     // Fetch contacts for dropdown
     const { data: contacts = [], refetch: refetchContacts } = useQuery({
@@ -64,7 +100,7 @@ export default function SupplierForm() {
     });
 
     // Fetch current supplier data if editing
-    const { data: supplierData, isLoading } = useQuery({
+    const { data: supplierData, isLoading, refetch: refetchSupplier } = useQuery({
         queryKey: ["supplier", id],
         queryFn: () => (id ? fetchSupplierById(id) : null),
         enabled: !!id,
@@ -844,16 +880,30 @@ export default function SupplierForm() {
                                             </div>
                                         </div>
 
-                                        {/* <div className="p-5 mb-4 border border-gray-200 rounded-2xl dark:border-gray-800 lg:p-6">
+                                        <div className="p-5 mb-4 border border-gray-200 rounded-2xl dark:border-gray-800 lg:p-6">
                                             <div>
-                                                <h4 className="text-lg font-semibold text-gray-800 dark:text-white/90 lg:mb-6">
-                                                    Personal Information
-                                                </h4>
+                                                <div className="flex items-center justify-between mb-4">
+                                                    <h4 className="text-lg font-semibold text-gray-800 dark:text-white/90 lg:mb-6">
+                                                        Supplier Documents
+                                                    </h4>
+                                                    <div>
+                                                        <Button
+                                                            size="sm"
+                                                            variant="outline"
+                                                            onClick={() => setIsAddDocModalOpen(true)}
+                                                        >
+                                                            <PlusIcon className="w-4 h-4" />
+                                                            Add Document
+                                                        </Button>
+                                                    </div>
+                                                </div>
                                                 <div className="grid grid-cols-1 gap-4">
-                                                    <SupplierDocumentsTable />
+                                                    <SupplierDocumentsTable
+                                                        supplierId={id}
+                                                    />
                                                 </div>
                                             </div>
-                                        </div> */}
+                                        </div>
                                     </div>
                                 )}
                             </div>
@@ -891,6 +941,27 @@ export default function SupplierForm() {
                             setIsDocsModalOpen={setIsDocsModalOpen}
                         />
                     </div>
+                </div>
+            </Modal>
+
+            <Modal
+                isOpen={isAddDocModalOpen}
+                onClose={() => {
+                    setIsAddDocModalOpen(false);
+                    docForm.reset();
+                }}
+                className="max-w-3xl p-6 max-h-[90vh] overflow-y-auto"
+            >
+                <div className="px-4 py-2">
+                    <h3 className="text-lg font-semibold mb-4">Upload Document</h3>
+                    <form onSubmit={docForm.handleSubmit(handleAddDocument)}>
+                        <DocumentFields control={docForm.control} documentVisibilityOptions={documentVisibilityOptions} />
+
+                        <div className="mt-4 flex justify-end gap-3">
+                            <Button variant="danger" onClick={() => { setIsAddDocModalOpen(false); docForm.reset(); }} disabled={isUploadingDoc}>Cancel</Button>
+                            <Button type="submit" disabled={isUploadingDoc}>{isUploadingDoc ? "Uploading..." : "Upload"}</Button>
+                        </div>
+                    </form>
                 </div>
             </Modal>
 

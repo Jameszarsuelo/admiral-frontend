@@ -1,4 +1,5 @@
 import PageBreadcrumb from "@/components/common/PageBreadCrumb";
+import { useState } from "react";
 import { useNavigate } from "react-router";
 import Spinner from "@/components/ui/spinner/Spinner";
 import Button from "@/components/ui/button/Button";
@@ -9,12 +10,13 @@ import { ColumnDef } from "@tanstack/react-table";
 import { IDocumentSchema } from "@/types/DocumentSchema";
 import { fetchDocumentList } from "@/database/document_api";
 import Can from "@/components/auth/Can";
+import { Modal } from "@/components/ui/modal";
 
 export default function DMView() {
     const navigate = useNavigate();
-    // const [isModalOpen, setIsModalOpen] = useState(false);
-    // const [selectedId, setSelectedId] = useState<number | null>(null);
-    // const [isDeleting, setIsDeleting] = useState(false);
+    const [isModalOpen, setIsModalOpen] = useState(false);
+    const [selectedId, setSelectedId] = useState<number | null>(null);
+    const [isDeleting, setIsDeleting] = useState(false);
 
     const {
         data: documents,
@@ -46,7 +48,7 @@ export default function DMView() {
                 const item = row.original as IDocumentSchema;
                 return (
                     <div className="flex items-center gap-2">
-                        <Can permission="modules.edit">
+                        <Can permission="document_management.edit">
                             <Button
                                 size="sm"
                                 onClick={() =>
@@ -57,11 +59,11 @@ export default function DMView() {
                             </Button>
                         </Can>
 
-                        <Can permission="modules.delete">
+                        <Can permission="document_management.delete">
                             <Button
                                 size="sm"
                                 variant="danger"
-                                // onClick={() => handleDeleteClick(item.id!)}
+                                onClick={() => handleDeleteClick(item.id!)}
                             >
                                 Delete
                             </Button>
@@ -72,33 +74,32 @@ export default function DMView() {
         },
     ];
 
-    // const handleDeleteClick = (id: number) => {
-    //     setSelectedId(id);
-    //     setIsModalOpen(true);
-    // };
+    const handleDeleteClick = (id: number) => {
+        setSelectedId(id);
+        setIsModalOpen(true);
+    };
 
-    // const handleConfirmDelete = async () => {
-    //     if (selectedId === null) return;
+    const handleConfirmDelete = async () => {
+        if (selectedId === null) return;
+        setIsDeleting(true);
+        try {
+            await api.delete(`/document/${selectedId}`);
+            await refetch();
+            setIsModalOpen(false);
+            setSelectedId(null);
+        } catch (error) {
+            console.error("Error deleting IPC:", error);
+        } finally {
+            setIsDeleting(false);
+        }
+    };
 
-    //     setIsDeleting(true);
-    //     try {
-    //         await deleteUser(selectedId);
-    //         await refetch();
-    //         setIsModalOpen(false);
-    //         setSelectedId(null);
-    //     } catch (error) {
-    //         console.error("Error deleting IPC:", error);
-    //     } finally {
-    //         setIsDeleting(false);
-    //     }
-    // };
-
-    // const handleCloseModal = () => {
-    //     if (!isDeleting) {
-    //         setIsModalOpen(false);
-    //         setSelectedId(null);
-    //     }
-    // };
+    const handleCloseModal = () => {
+        if (!isDeleting) {
+            setIsModalOpen(false);
+            setSelectedId(null);
+        }
+    };
 
     // const columns = getUserHeaders(navigate, handleDeleteClick, refetch);
 
@@ -142,7 +143,7 @@ export default function DMView() {
                     </div>
                 </div>
             </div>
-            {/* <Modal
+            <Modal
                 isOpen={isModalOpen}
                 onClose={handleCloseModal}
                 className="w-lg m-4"
@@ -153,7 +154,7 @@ export default function DMView() {
                             Delete Confirmation
                         </h4>
                         <p className="mb-6 text-sm text-gray-500 dark:text-gray-400 lg:mb-7">
-                            Are you sure to delete this User?
+                            Are you sure to delete this Document?
                         </p>
                         <Button
                             size="sm"
@@ -164,7 +165,7 @@ export default function DMView() {
                         </Button>
                     </div>
                 </div>
-            </Modal> */}
+            </Modal>
         </>
     );
 }

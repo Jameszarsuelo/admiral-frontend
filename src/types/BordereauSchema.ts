@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { SupplierBaseSchema } from "./SupplierSchema";
+// import { SupplierBaseSchema } from "./SupplierSchema";
 import { BPCBaseSchema } from "./BPCSchema";
 
 // Bordereau Validation
@@ -181,7 +181,7 @@ export const BordereauIndexSchema = BordereauBaseSchema.pick({
     closed_date: true,
 }).extend({
     comments: BordereauCommentBaseSchema.array().optional(),
-    supplier: SupplierBaseSchema.optional(),
+    // supplier: SupplierBaseSchema.optional(),
     bordereau_status: BordereauStatusBaseSchema,
     bpc: BPCBaseSchema.optional(),
 });
