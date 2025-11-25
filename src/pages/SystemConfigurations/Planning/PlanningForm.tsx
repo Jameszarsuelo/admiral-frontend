@@ -14,6 +14,7 @@ import { useEffect } from "react";
 import { fetchPlanning, upsertPlanning } from "@/database/planning_api";
 import { handleValidationErrors } from "@/helper/validationError";
 import { IPlanningForm, PlanningFormSchema } from "@/types/PlanningSchema";
+import Can from "@/components/auth/Can";
 
 export default function PlanningForm() {
     const { id } = useParams();
@@ -254,7 +255,7 @@ export default function PlanningForm() {
                                 <Controller
                                     name="is_active"
                                     control={control}
-                                    render={({ field }) => (
+                                    render={({ field, fieldState }) => (
                                         <div className="grid">
                                             <Label>Is Active</Label>
                                             <div className="flex gap-8">
@@ -283,6 +284,12 @@ export default function PlanningForm() {
                                                     name={""}
                                                 />
                                             </div>
+                                            {fieldState.error && (
+                                                <p className="mt-1 text-sm text-error-500">
+                                                    {fieldState.error.message}
+                                                </p>
+                                            )}
+                                            
                                         </div>
                                     )}
                                 />
@@ -301,9 +308,11 @@ export default function PlanningForm() {
                     <Button variant="outline" onClick={() => reset()}>
                         Reset
                     </Button>
-                    <Button type="submit" form="form-planning">
-                        Submit
-                    </Button>
+                    <Can permission={id ? 'planning.edit':'planning.create'}>
+                        <Button type="submit" form="form-planning">
+                            {id ? 'Update' : 'Submit'}
+                        </Button>
+                    </Can>
                 </div>
             </ComponentCard>
         </>

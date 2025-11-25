@@ -19,7 +19,7 @@ export default function UserIndex() {
     const {
         data: planningData,
         isLoading,
-        error,
+        // error,
         refetch,
     } = useQuery({
         queryKey: ["planning-data"],
@@ -33,8 +33,6 @@ export default function UserIndex() {
         staleTime: 500,
         gcTime: 20000,
     });
-
-    console.log(error);
 
     const handleDeleteClick = (id: number) => {
         setSelectedId(id);

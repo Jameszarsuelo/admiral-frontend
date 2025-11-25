@@ -11,6 +11,7 @@ const SupplierForm = lazy(
 );
 
 const BordereauIndex = lazy(() => import("../pages/BordereauDetail/BordereauIndex"));
+const BordereauView = lazy(() => import("../pages/BordereauDetail/BordereauView"));
 const BordereauForm = lazy(() => import("../pages/BordereauDetail/BordereauForm"));
 
 const UserIndex = lazy(() => import("../pages/SystemConfigurations/Users/UserIndex"));
@@ -34,6 +35,7 @@ const BQMView = lazy(() => import("../pages/BordereauQueryManagement/BQMView"));
 
 // System Configurations - new pages
 const ProfileView = lazy(() => import("../pages/SystemConfigurations/Profiles/ProfileView"));
+const ProfileIndex = lazy(() => import("../pages/SystemConfigurations/Profiles/ProfileIndex"));
 const ProfileForm = lazy(() => import("../pages/SystemConfigurations/Profiles/ProfileForm"));
 
 const RoleView = lazy(() => import("../pages/SystemConfigurations/Roles/RoleView"));
@@ -79,7 +81,7 @@ export const modulePageMap: Record<string, ModuleComponents> = {
         main: BordereauIndex,
         create: BordereauForm,
         edit: BordereauForm,
-        view: BordereauIndex,
+        view: BordereauView,
     },
     supplier_directory: {
         main: SupplierIndex,
@@ -94,7 +96,7 @@ export const modulePageMap: Record<string, ModuleComponents> = {
         view: BPCIndex,
     },
     profiles: {
-        main: ProfileView,
+        main: ProfileIndex,
         create: ProfileForm,
         edit: ProfileForm,
         view: ProfileView,

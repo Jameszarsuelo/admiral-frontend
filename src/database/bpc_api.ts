@@ -50,3 +50,16 @@ export async function deleteBpc(id: number): Promise<void> {
         throw error;
     }
 }
+
+
+export async function fetchBpcOptions(): Promise<{ value: number; label: string }[]> {
+    try {
+        const response = await api.get(`/bpc-options`);
+        return response.data;
+    } catch (error) {
+        if (error instanceof AxiosError && error.response?.data) {
+            throw error.response.data;
+        }
+        throw error;
+    }
+}

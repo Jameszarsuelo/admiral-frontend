@@ -13,6 +13,7 @@ import { useEffect } from "react";
 import { fetchOutcome, upsertOutcome } from "@/database/outcome_api";
 import { handleValidationErrors } from "@/helper/validationError";
 import { IOutcomeForm, OutcomeSchema } from "@/types/OutcomeSchema";
+import Can from "@/components/auth/Can";
 
 export default function OutcomeForm() {
     const { id } = useParams();
@@ -80,7 +81,7 @@ export default function OutcomeForm() {
                                 <Controller
                                     name="status"
                                     control={control}
-                                    render={({ field }) => (
+                                    render={({ field, fieldState }) => (
                                         <div className="grid">
                                             <Label>Status</Label>
                                             <div className="flex gap-8">
@@ -97,7 +98,14 @@ export default function OutcomeForm() {
                                                     onChange={() => field.onChange(true)}
                                                     label="YES" name={""} />
                                             </div>
+                                            {fieldState.error && (
+                                                <p className="mt-1 text-sm text-error-500">
+                                                    {fieldState.error.message}
+                                                </p>
+                                            )}
                                         </div>
+                                        
+                                        
                                     )}
                                 />
                             </div>
@@ -226,9 +234,11 @@ export default function OutcomeForm() {
                     <Button variant="outline" onClick={() => reset()}>
                         Reset
                     </Button>
-                    <Button type="submit" form="form-outcome">
-                        Submit
-                    </Button>
+                    <Can permission={id ? 'outcome.create' : 'outcome.edit'}>
+                        <Button type="submit" form="form-outcome">
+                            {id ? 'Update' : 'Submit'}
+                        </Button>
+                    </Can>
                 </div>
             </ComponentCard>
         </>

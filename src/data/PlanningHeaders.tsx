@@ -1,8 +1,10 @@
 import Button from "@/components/ui/button/Button";
 import { ColumnDef } from "@tanstack/react-table";
 import { IPlanningHeaders } from "@/types/PlanningSchema";
+import { BadgeCheckIcon, BadgeXIcon } from "lucide-react";
+import Can from "@/components/auth/Can";
 import { Badge } from "@/components/ui/badge";
-
+// import { Badge } from "@/components/ui/badge";
 
 export const getPlanningHeaders = (
     navigate: (path: string) => void,
@@ -41,7 +43,7 @@ export const getPlanningHeaders = (
     },
     {
         accessorKey: "work_saturday",
-        accessorFn: (row) => row?.work_saturday,
+        accessorFn: (row) => row?.work_saturday ? "Yes" : "No",
         header: () => <div className="ml-4">Work on Saturday</div>,
         cell: ({ row }) => (
             <div className="capitalize dark:text-white ml-4">
@@ -51,7 +53,7 @@ export const getPlanningHeaders = (
     },
     {
         accessorKey: "work_sunday",
-        accessorFn: (row) => row?.work_sunday,
+        accessorFn: (row) => row?.work_sunday ? "Yes" : "No",
         header: () => <div className="ml-4">Work on Sunday</div>,
         cell: ({ row }) => (
             <div className="capitalize dark:text-white ml-4">
@@ -59,17 +61,25 @@ export const getPlanningHeaders = (
             </div>
         ),
     },
-     {
+    {
         accessorKey: "is_active",
         accessorFn: (row) => row?.is_active,
-        header: () => <div className="ml-4">Is Active</div>,
+        header: "Is Active",
         cell: ({ row }) => (
-            <>
-            <Badge color="success">
-                {row.getValue("is_active") == 1 ? "Yes" : "-" }
+            <Badge
+                className={
+                    row.getValue("is_active") == 1
+                        ? "bg-success-500"
+                        : "bg-error-500"
+                }
+            >
+                {row.getValue("is_active") == 1 ? (
+                    <BadgeCheckIcon className="mr-1 inline-block" />
+                ) : (
+                    <BadgeXIcon className="mr-1 inline-block" />
+                )}
+                {row.getValue("is_active") == 1 ? "Active" : "Inactive"}
             </Badge>
-            </>
-           
         ),
     },
     {
@@ -89,20 +99,24 @@ export const getPlanningHeaders = (
 
             return (
                 <div className="flex gap-2">
-                    <Button
-                        onClick={() => handleEdit(planningData.id!)}
-                        variant="primary"
-                        size="sm"
-                    >
-                        Edit
-                    </Button>
-                    <Button
-                        onClick={() => onDelete(planningData.id!)}
-                        variant="danger"
-                        size="sm"
-                    >
-                        Delete
-                    </Button>
+                    <Can permission="planning.edit">
+                        <Button
+                            onClick={() => handleEdit(planningData.id!)}
+                            variant="primary"
+                            size="sm"
+                        >
+                            Edit
+                        </Button>
+                    </Can>
+                    <Can permission="planning.delete">
+                        <Button
+                            onClick={() => onDelete(planningData.id!)}
+                            variant="danger"
+                            size="sm"
+                        >
+                            Delete
+                        </Button>
+                    </Can>
                 </div>
             );
         },
