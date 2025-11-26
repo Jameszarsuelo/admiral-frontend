@@ -9,12 +9,21 @@ import Spinner from "@/components/ui/spinner/Spinner";
 import { useState } from "react";
 import { Modal } from "@/components/ui/modal";
 import Can from "@/components/auth/Can";
+import Select from "@/components/form/Select";
 
 export default function UserIndex() {
     const navigate = useNavigate();
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [selectedId, setSelectedId] = useState<number | null>(null);
     const [isDeleting, setIsDeleting] = useState(false);
+    const [reasonForDeletion, setReasonForDeletion] = useState<string>("");
+
+    const reasonForDeletionOptions = [
+                { value: "Reason Test One", label: "Reason Test One" },
+                { value: "Reason Test Two", label: "Reason Test Two" },
+                { value: "Reason Test Three", label: "Reason Test Three" },
+                { value: "Reason Test Four", label: "Reason Test Four" },
+            ];
 
     const {
         data: outcomeData,
@@ -62,6 +71,11 @@ export default function UserIndex() {
         }
     };
 
+    const handleReasonForDeletion = (value: string) => {
+        setReasonForDeletion(value);
+        console.log(reasonForDeletion);
+    }
+
     const columns = getOutcomeHeaders(navigate, handleDeleteClick, refetch);
 
     return (
@@ -80,7 +94,7 @@ export default function UserIndex() {
                             </p>
                         </div>
                         <div className="flex shrink-0 items-center gap-2">
-                            <Can permission="outcome.create">
+                            <Can permission="outcomes.create">
                                     <Button size="sm" onClick={() => navigate("/outcomes/create")}>
                                     Add New Outcome
                                 </Button>
@@ -111,6 +125,10 @@ export default function UserIndex() {
                         <h4 className="mb-2 text-2xl font-semibold text-gray-800 dark:text-white/90">
                             Delete Confirmation
                         </h4>
+
+                        <Select options={reasonForDeletionOptions}
+                                onChange={handleReasonForDeletion}
+                        ></Select>
                         <p className="mb-6 text-sm text-gray-500 dark:text-gray-400 lg:mb-7">
                             Are you sure to delete this Outcome?
                         </p>
