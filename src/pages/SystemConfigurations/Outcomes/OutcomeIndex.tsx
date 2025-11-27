@@ -6,10 +6,13 @@ import { getOutcomeHeaders } from "@/data/OutcomeHeaders";
 import { useQuery } from "@tanstack/react-query";
 import { fetchOutcomeList, deleteOutcome } from "@/database/outcome_api";
 import Spinner from "@/components/ui/spinner/Spinner";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Modal } from "@/components/ui/modal";
 import Can from "@/components/auth/Can";
 import Select from "@/components/form/Select";
+import Label from "@/components/form/Label";
+import { Textarea } from "@/components/ui/textarea";
+import { fetchReasonOptions } from "@/database/reason_api";
 
 export default function UserIndex() {
     const navigate = useNavigate();
@@ -17,13 +20,23 @@ export default function UserIndex() {
     const [selectedId, setSelectedId] = useState<number | null>(null);
     const [isDeleting, setIsDeleting] = useState(false);
     const [reasonForDeletion, setReasonForDeletion] = useState<string>("");
+    const [descriptionForDeletion, setDescriptionForDeletion] = useState<string>("");
+    const [deleteErrors, setDeleteErrors] = useState({reason: "", description: ""});
+   const [reasonForDeletionOptions, setReasonForDeletionOptions] = useState<{ value: number; label: string }[]>([]);
 
-    const reasonForDeletionOptions = [
-                { value: "Reason Test One", label: "Reason Test One" },
-                { value: "Reason Test Two", label: "Reason Test Two" },
-                { value: "Reason Test Three", label: "Reason Test Three" },
-                { value: "Reason Test Four", label: "Reason Test Four" },
-            ];
+    // Fetch options once when component mounts
+    useEffect(() => {
+        async function loadOptions() {
+            try {
+                const options = await fetchReasonOptions();
+                setReasonForDeletionOptions(options);
+            } catch (error) {
+                console.error("Failed to load reason options", error);
+            }
+        }
+        loadOptions();
+    }, []);
+    
 
     const {
         data: outcomeData,
@@ -49,11 +62,30 @@ export default function UserIndex() {
     };
 
     const handleConfirmDelete = async () => {
+        let errors = { reason: "", description: "" };
+        let hasError = false;
+
+        if (!reasonForDeletion.trim()) {
+            errors.reason = "Reason is required";
+            hasError = true;
+        }
+
+        if (!descriptionForDeletion.trim()) {
+            errors.description = "Description is required";
+            hasError = true;
+        }
+
+        setDeleteErrors(errors);
+
+        if (hasError) return;
+
         if (selectedId === null) return;
 
         setIsDeleting(true);
+        const payload = {id: selectedId, deleted_reason: reasonForDeletion, deleted_description: descriptionForDeletion }
         try {
-            await deleteOutcome(selectedId);
+            // await deleteOutcome(selectedId);
+            await deleteOutcome(payload);
             await refetch();
             setIsModalOpen(false);
             setSelectedId(null);
@@ -71,10 +103,6 @@ export default function UserIndex() {
         }
     };
 
-    const handleReasonForDeletion = (value: string) => {
-        setReasonForDeletion(value);
-        console.log(reasonForDeletion);
-    }
 
     const columns = getOutcomeHeaders(navigate, handleDeleteClick, refetch);
 
@@ -121,18 +149,35 @@ export default function UserIndex() {
                 className="w-lg m-4"
             >
                 <div className="relative w-full p-4 overflow-y-auto bg-white no-scrollbar rounded-3xl dark:bg-gray-900 lg:p-11">
-                    <div className="px-2 pr-14">
+                    <div className="px-2">
                         <h4 className="mb-2 text-2xl font-semibold text-gray-800 dark:text-white/90">
                             Delete Confirmation
                         </h4>
 
+                        <Label>Reason for Deletion</Label>
+                        
                         <Select options={reasonForDeletionOptions}
-                                onChange={handleReasonForDeletion}
+                                onChange={(value) => setReasonForDeletion(value)}
                         ></Select>
-                        <p className="mb-6 text-sm text-gray-500 dark:text-gray-400 lg:mb-7">
+                        {deleteErrors.reason && (
+                            <p className="text-red-500 text-sm">{deleteErrors.reason}</p>
+                        )}
+                        
+                        <Label className="mt-5">Description</Label>
+                        {/* <TextArea 
+                            name="description_for_deletion"
+                            rows={5}
+                            onChange={(value) => setDescriptionForDeletion(value)}/> */}
+                        <Textarea name="description_for_deletion" onChange={(e) => setDescriptionForDeletion(e.target.value)}/>
+                        {deleteErrors.description && (
+                            <p className="text-red-500 text-sm">{deleteErrors.description}</p>
+                        )}
+                            
+                        {/* <p className="mb-6 text-sm text-gray-500 dark:text-gray-400 lg:mb-7">
                             Are you sure to delete this Outcome?
-                        </p>
-                        <Button size="sm" variant="danger" 
+                        </p> */}
+
+                        <Button className="mt-5" size="sm" variant="danger" 
                             onClick={() => handleConfirmDelete()}
                             >
                             {isDeleting ? "Deleting..." : "Confirm Delete"}
