@@ -14,10 +14,23 @@ export async function fetchReasonList(): Promise<IReasonForm[]>{
     }
 }
 
+export async function fetchReasonOptions(){
+    const data = await fetchReasonList();
+    const result: { value: number; label: string }[] = [];
+    data.forEach((item)=>{
+        if(item.reason_for === "3" && item.id !== undefined){
+            result.push({
+                        value: item.id!,
+                        label: item.reason
+                    })
+        }
+    })
+    return result;
+}
+
 export async function fetchReason(id: string): Promise<IReasonForm> {
     try {
         const response = await api.get(`/reason/${id}`);
-        console.log(response);
         return response.data;
     } catch (error) {
         if (error instanceof AxiosError && error.response?.data) {
