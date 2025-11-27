@@ -14,6 +14,7 @@ export const OutcomeSchema = z.object({
 
 export const OutComeDelete = z.object({
     id: z.number().optional(),
+    // deleted_reason: z.number(),
     deleted_reason: z.string().nonempty("Reason is required"),
     deleted_description:  z.string().nonempty("Description is required"),
 })
