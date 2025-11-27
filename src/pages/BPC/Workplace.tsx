@@ -4,10 +4,16 @@ import { useQuery } from "@tanstack/react-query";
 import { User2Icon } from "lucide-react";
 import Select from "@/components/form/Select";
 import { useMemo, useState, useEffect } from "react";
+import { useQueryClient } from "@tanstack/react-query";
+import { addBordereauComment } from "@/database/comment_api";
 import { IBPCStatus } from "@/types/BPCStatusSchema";
 import { fetchBpcByUserId } from "@/database/bpc_api";
 import { IBPCSchema } from "@/types/BPCSchema";
-import { echo } from "@/lib/echo";
+
+import BordereauDetailsView from "../BordereauDetail/BordereauDetailsView";
+import { IBordereauIndex } from "@/types/BordereauSchema";
+import { fetchBpcBordereauByBpcId } from "@/database/bordereau_api";
+import useBpcNotifications from "@/hooks/useBpcNotifications";
 
 export default function Workplace() {
     const { user } = useAuth();
@@ -37,6 +43,19 @@ export default function Workplace() {
 
     const [selectedStatusId, setSelectedStatusId] = useState<string>("");
     const [isUpdatingStatus, setIsUpdatingStatus] = useState(false);
+    
+    const [newCommentText, setNewCommentText] = useState("");
+    
+
+    const { data: bordereauDetails, isLoading } = useQuery<IBordereauIndex | null>({
+        queryKey: ["current-bordereau", bpcUser?.id],
+        queryFn: async () => {
+            return await fetchBpcBordereauByBpcId(bpcUser!.id);
+        },
+        enabled: !!bpcUser?.id,
+        staleTime: 1000 * 60 * 5, // 5 minutes
+        refetchOnWindowFocus: false,
+    });
 
     useEffect(() => {
         if (!bpcUser) return;
@@ -54,15 +73,25 @@ export default function Workplace() {
         return list.find((s) => String(s.id) === selectedStatusId);
     }, [bpcStatusData, selectedStatusId]);
 
-    useEffect(() => {
-        echo.connector.pusher.connection.bind("connected", () => {
-            console.log("Pusher connected!");
-        });
-        
-        echo.private("testing").listen(".TestBroadcast", (data: string) => {
-            console.log("Received from Laravel:", data);
-        });
-    }, []);
+    // subscribe to notifications and update caches / status
+    useBpcNotifications(bpcUser?.id, {
+        onStatus: (s) => setSelectedStatusId(String(s.id)),
+    });
+
+    const queryClient = useQueryClient();
+    const [isCommentSubmitting, setIsCommentSubmitting] = useState(false);
+
+    const handleAddComment = async (bordereauId: number, comment: string) => {
+        try {
+            setIsCommentSubmitting(true);
+            await addBordereauComment(bordereauId, comment);
+            await queryClient.invalidateQueries({ queryKey: ["current-bordereau", bpcUser?.id] });
+        } catch (err) {
+            console.error("Failed to add comment", err);
+        } finally {
+            setIsCommentSubmitting(false);
+        }
+    };
 
     return (
         <>
@@ -101,7 +130,8 @@ export default function Workplace() {
 
                             <div className="bg-white dark:bg-gray-900 px-6 py-5 sm:px-8 sm:py-6">
                                 <div className="flex items-center justify-between gap-4">
-                                    <div className="flex-1">{/*  */}</div>
+                                    <div className="flex-1">
+                                    </div>
 
                                     <div className="hidden md:flex flex-col items-end">
                                         <div className="flex items-center gap-2">
@@ -120,44 +150,40 @@ export default function Workplace() {
                                             </div>
                                         </div>
 
-                                        <div className="mt-3 w-48">
-                                            <Select
-                                                options={statusOptions}
-                                                placeholder={
-                                                    selectedStatus
-                                                        ? selectedStatus.status
-                                                        : "Change status"
-                                                }
-                                                value={selectedStatusId}
-                                                className={
-                                                    isUpdatingStatus
-                                                        ? "opacity-60 pointer-events-none"
-                                                        : ""
-                                                }
-                                                onChange={async (
-                                                    val: string,
-                                                ) => {
-                                                    setSelectedStatusId(val);
-                                                    setIsUpdatingStatus(true);
-                                                    // TODO: persist change to backend. Example API call:
-                                                    // await api.post(`/bpc/${user?.id}/status`, { status_id: Number(val) })
-                                                    console.log(
-                                                        "Status change requested",
-                                                        {
-                                                            user_id: user?.id,
-                                                            status_id:
-                                                                Number(val),
-                                                        },
-                                                    );
-                                                    setTimeout(
-                                                        () =>
-                                                            setIsUpdatingStatus(
-                                                                false,
-                                                            ),
-                                                        600,
-                                                    );
-                                                }}
-                                            />
+                                        <div className="mt-3 flex items-center gap-2">
+                                            <div className={isUpdatingStatus ? "w-48 opacity-60 pointer-events-none" : "w-48"}>
+                                                <Select
+                                                    options={statusOptions}
+                                                    placeholder={
+                                                        selectedStatus
+                                                            ? selectedStatus.status
+                                                            : "Change status"
+                                                    }
+                                                    value={selectedStatusId}
+                                                    onChange={async (
+                                                        val: string,
+                                                    ) => {
+                                                        setSelectedStatusId(val);
+                                                        setIsUpdatingStatus(true);
+                                                        console.log(
+                                                            "Status change requested",
+                                                            {
+                                                                user_id: user?.id,
+                                                                status_id:
+                                                                    Number(val),
+                                                            },
+                                                        );
+                                                        setTimeout(
+                                                            () =>
+                                                                setIsUpdatingStatus(
+                                                                    false,
+                                                                ),
+                                                            600,
+                                                        );
+                                                    }}
+                                                />
+                                            </div>
+
                                         </div>
                                     </div>
                                 </div>
@@ -166,27 +192,75 @@ export default function Workplace() {
                     </div>
                 </div>
 
-                {/* <div className="col-span-12 xl:col-span-6">
-                    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 md:gap-6">
-                        <EcommerceMetrics
-                            label="Invoices Queries"
-                            value="234"
-                        />
-                        <EcommerceMetrics
-                            label="Approaching Deadline"
-                            value="87"
-                        />
-                        <EcommerceMetrics label="Tasks in Progress" value="7" />
-                        <EcommerceMetrics label="Tasks Overdue" value="2" />
+                <div className="col-span-12 xl:col-span-2">
+                    <div className="sticky top-20 space-y-4">
+                        <div className="rounded-2xl border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-white/[0.03] sm:p-6">
+                            <h3 className="text-lg font-semibold text-gray-800 dark:text-white/90">
+                                Current Status
+                            </h3>
+                            <p className="mt-1 text-gray-500 text-theme-sm dark:text-gray-400">
+                                Overview of your current bordereau status.
+                            </p>
+
+                            <div className="mt-6">
+                                <div className="flex items-center gap-3">
+                                    <span
+                                        className={`inline-block w-3 h-3 rounded-full ${
+                                            selectedStatus &&
+                                            selectedStatus.wfm
+                                                ? "bg-emerald-500"
+                                                : "bg-gray-300"
+                                        }`}
+                                    />
+                                    <div className="ml-2 text-sm font-medium">
+                                        {selectedStatus
+                                            ? selectedStatus.status
+                                            : "Unknown"}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </div>
 
-                <div className="col-span-12">
-                    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 md:gap-6">
-                        <RecentOrders />
-                        <RecentOrders />
+                <div className="col-span-full">
+                    <div className="grid grid-cols-1 gap-4 bg-white p-6 rounded-2xl shadow-md dark:bg-gray-900">
+                        {bordereauDetails != null ? (
+                            <BordereauDetailsView
+                                isLoading={isLoading}
+                                bordereau={bordereauDetails}
+                            />
+                        ) : null}
+                        {/* Comment input at bottom only (comments list remains inside BordereauDetailsView) */}
+                        {bordereauDetails ? (
+                            <div className="mt-6">
+                                <div className="p-4 border border-gray-200 rounded-2xl dark:border-gray-800">
+                                    <textarea
+                                        value={newCommentText}
+                                        onChange={(e) => setNewCommentText(e.target.value)}
+                                        placeholder="Add a comment"
+                                        className="w-full rounded-md border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 px-3 py-2 text-sm"
+                                        rows={3}
+                                    />
+                                    <div className="mt-2 flex items-center justify-end">
+                                        <button
+                                            onClick={async () => {
+                                                if (!newCommentText.trim() || !bordereauDetails?.id) return;
+                                                await handleAddComment(bordereauDetails.id, newCommentText.trim());
+                                                setNewCommentText("");
+                                            }}
+                                            disabled={isCommentSubmitting}
+                                            className="inline-flex items-center gap-2 px-4 py-2 rounded-md bg-cyan-600 text-white text-sm hover:bg-cyan-700 disabled:opacity-60"
+                                        >
+                                            {isCommentSubmitting ? "Adding..." : "Add Comment"}
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        ) : null}
+                        {/* supplier modal removed — reverted changes */}
                     </div>
-                </div> */}
+                </div>
             </div>
         </>
     );

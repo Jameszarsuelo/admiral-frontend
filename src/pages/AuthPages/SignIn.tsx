@@ -21,21 +21,18 @@ export default function SignIn() {
         );
     }
     // If already logged in, redirect appropriately.
-    // Non-intrusive rule: if the user "landed" on the sign-in page (no `from`),
-    // and they are a workplace user (user_type_id === 3), send them to `/workplace`.
+    // For workplace users (user_type_id === 3) always send to `/workplace`.
     if (user) {
+        if (user.user_type_id === 3) {
+            return <Navigate to="/workplace" replace />;
+        }
+
         const locState = (
             location as unknown as {
                 state?: { from?: { pathname?: string } };
             }
         )?.state;
         const from = locState?.from?.pathname;
-
-        const landedOnSignIn = !from || from === "/signin";
-
-        if (user.user_type_id === 3 && landedOnSignIn) {
-            return <Navigate to="/workplace" replace />;
-        }
 
         const dest = from || modules[0]?.path || "/";
         return <Navigate to={dest} replace />;

@@ -17,13 +17,19 @@ import { ArrowUpIcon, GroupIcon } from "@/icons";
 import Badge from "@/components/ui/badge/Badge";
 import { ArrowRight } from "lucide-react";
 import Can from "@/components/auth/Can";
-import { fetchBordereauList, uploadBordereauCsv } from "@/database/bordereau_api";
+import {
+    fetchBordereauList,
+    fetchBordereauValidationViewData,
+    fetchBordereauViewData,
+    uploadBordereauCsv,
+} from "@/database/bordereau_api";
 import { IBordereauIndex } from "@/types/BordereauSchema";
 import Alert from "@/components/ui/alert/Alert";
 import { fetchBpcOptions } from "@/database/bpc_api";
 import api from "@/database/api";
 import { Field } from "@/components/ui/field";
 import Combobox from "@/components/form/Combobox";
+import Input from "@/components/form/input/InputField";
 
 export default function BordereauIndex() {
     const navigate = useNavigate();
@@ -42,8 +48,18 @@ export default function BordereauIndex() {
         control: csvControl,
         handleSubmit: handleCsvSubmit,
         reset: resetCsv,
-    } = useForm<{ document?: File | null }>({
-        defaultValues: { document: undefined },
+    } = useForm<{
+        document?: File | null;
+        admiral_invoice_type?: string;
+        supplier_id?: string;
+        bordereau?: string;
+    }>({
+        defaultValues: {
+            document: undefined,
+            admiral_invoice_type: "",
+            supplier_id: "",
+            bordereau: "",
+        },
     });
 
     const {
@@ -58,7 +74,11 @@ export default function BordereauIndex() {
         control: processControl,
         handleSubmit: handleProcessSubmit,
         reset: resetProcess,
-    } = useForm<{ reason?: string; bpcId?: number | null; instructions?: string }>({
+    } = useForm<{
+        reason?: string;
+        bpcId?: number | null;
+        instructions?: string;
+    }>({
         defaultValues: { reason: "", bpcId: undefined, instructions: "" },
     });
 
@@ -102,7 +122,22 @@ export default function BordereauIndex() {
         gcTime: 20000,
     });
 
-    console.log(bpcData);
+    const { data: supplierData } = useQuery({
+        queryKey: ["bordereau-view-data"],
+        queryFn: async () => {
+            const supplierData = await fetchBordereauViewData();
+            return supplierData || [];
+        },
+    });
+
+    const { data: bordereauValidationData } = useQuery({
+        queryKey: ["bordereau-validations"],
+        queryFn: async () => {
+            const bordereauValidations =
+                await fetchBordereauValidationViewData();
+            return bordereauValidations || [];
+        },
+    });
 
     useEffect(() => {
         if (bordereauData) {
@@ -387,13 +422,10 @@ export default function BordereauIndex() {
                                     return;
                                 }
 
-                                const form = new FormData();
-                                form.append("file", file);
-
                                 try {
                                     setIsUploading(true);
                                     try {
-                                        await uploadBordereauCsv(file);
+                                        await uploadBordereauCsv(data);
                                         toast.success(
                                             "CSV uploaded successfully",
                                         );
@@ -422,28 +454,119 @@ export default function BordereauIndex() {
                                 }
                             })}
                         >
-                            <Controller
-                                name="document"
-                                control={csvControl}
-                                render={({ field, fieldState }) => (
-                                    <div>
-                                        <Label>Upload a file</Label>
-                                        <FileInput
-                                            onChange={(e) => {
-                                                const file =
-                                                    e.target.files?.[0];
-                                                if (file) field.onChange(file);
-                                            }}
-                                            className="mt-2"
-                                        />
-                                        {fieldState.error && (
-                                            <p className="mt-1 text-sm text-error-500">
-                                                {fieldState.error.message}
-                                            </p>
-                                        )}
-                                    </div>
-                                )}
-                            />
+                            <div className="grid grid-cols-1 gap-6 ">
+                                <Controller
+                                    name="supplier_id"
+                                    control={csvControl}
+                                    render={({ field, fieldState }) => (
+                                        <Field
+                                            data-invalid={fieldState.invalid}
+                                        >
+                                            <Label htmlFor="supplier_id">
+                                                Supplier
+                                            </Label>
+                                            <Combobox
+                                                value={field.value ?? ""}
+                                                options={supplierData || []}
+                                                placeholder="Select Supplier"
+                                                searchPlaceholder="Search supplier..."
+                                                onChange={(value) =>
+                                                    field.onChange(
+                                                        Number(value),
+                                                    )
+                                                }
+                                            />
+                                            {fieldState.error && (
+                                                <p className="mt-1 text-sm text-error-500">
+                                                    {fieldState.error.message}
+                                                </p>
+                                            )}
+                                        </Field>
+                                    )}
+                                />
+
+                                <Controller
+                                    name="admiral_invoice_type"
+                                    control={csvControl}
+                                    render={({ field, fieldState }) => (
+                                        <Field
+                                            data-invalid={fieldState.invalid}
+                                        >
+                                            <Label htmlFor="admiral_invoice_type">
+                                                Admiral Invoice Type
+                                            </Label>
+                                            <Combobox
+                                                value={field.value ?? ""}
+                                                options={
+                                                    bordereauValidationData ||
+                                                    []
+                                                }
+                                                placeholder="Select Admiral Invoice Type"
+                                                searchPlaceholder="Search types..."
+                                                onChange={(value) =>
+                                                    field.onChange(
+                                                        Number(value),
+                                                    )
+                                                }
+                                            />
+                                            {fieldState.error && (
+                                                <p className="mt-1 text-sm text-error-500">
+                                                    {fieldState.error.message}
+                                                </p>
+                                            )}
+                                        </Field>
+                                    )}
+                                />
+
+                                <Controller
+                                    name="bordereau"
+                                    control={csvControl}
+                                    render={({ field, fieldState }) => (
+                                        <Field
+                                            data-invalid={fieldState.invalid}
+                                        >
+                                            <Label htmlFor="bordereau">
+                                                Bordereau
+                                            </Label>
+                                            <Input
+                                                {...field}
+                                                id="bordereau"
+                                                placeholder="Enter Bordereau"
+                                                value={field.value ?? ""}
+                                            />
+                                            {fieldState.error && (
+                                                <p className="mt-1 text-sm text-error-500">
+                                                    {fieldState.error.message}
+                                                </p>
+                                            )}
+                                        </Field>
+                                    )}
+                                />
+
+                                <Controller
+                                    name="document"
+                                    control={csvControl}
+                                    render={({ field, fieldState }) => (
+                                        <div>
+                                            <Label>Upload a file</Label>
+                                            <FileInput
+                                                onChange={(e) => {
+                                                    const file =
+                                                        e.target.files?.[0];
+                                                    if (file)
+                                                        field.onChange(file);
+                                                }}
+                                                className="mt-2"
+                                            />
+                                            {fieldState.error && (
+                                                <p className="mt-1 text-sm text-error-500">
+                                                    {fieldState.error.message}
+                                                </p>
+                                            )}
+                                        </div>
+                                    )}
+                                />
+                            </div>
 
                             <div className="mt-6 flex justify-end gap-3">
                                 <Button
@@ -584,7 +707,9 @@ export default function BordereauIndex() {
                                     }
                                     disabled={isUploading}
                                 >
-                                    {isUploading ? "Changing BPC..." : "Change BPC"}
+                                    {isUploading
+                                        ? "Changing BPC..."
+                                        : "Change BPC"}
                                 </Button>
                             </div>
                         </form>
@@ -619,10 +744,18 @@ export default function BordereauIndex() {
                                                 {...field}
                                                 className="mt-1 block w-full rounded-md border-gray-200 bg-white px-3 py-2 text-sm shadow-sm dark:bg-slate-800 dark:border-slate-700"
                                             >
-                                                <option value="">Select reason</option>
-                                                <option value="force">Force Process</option>
-                                                <option value="urgent">Urgent</option>
-                                                <option value="retry">Retry</option>
+                                                <option value="">
+                                                    Select reason
+                                                </option>
+                                                <option value="force">
+                                                    Force Process
+                                                </option>
+                                                <option value="urgent">
+                                                    Urgent
+                                                </option>
+                                                <option value="retry">
+                                                    Retry
+                                                </option>
                                             </select>
                                         </div>
                                     )}
@@ -636,7 +769,9 @@ export default function BordereauIndex() {
                                             <Label>Assign BPC</Label>
                                             <div className="mt-1">
                                                 <Combobox
-                                                    value={field.value ?? undefined}
+                                                    value={
+                                                        field.value ?? undefined
+                                                    }
                                                     options={bpcData}
                                                     onChange={(value) =>
                                                         field.onChange(
@@ -687,24 +822,35 @@ export default function BordereauIndex() {
                                     onClick={() =>
                                         handleProcessSubmit(async (data) => {
                                             if (!bordereauSelected?.id) {
-                                                toast.error("No bordereau selected");
+                                                toast.error(
+                                                    "No bordereau selected",
+                                                );
                                                 return;
                                             }
                                             try {
                                                 setIsUploading(true);
                                                 // POST process request (updates bpc and queues processing)
-                                                await api.post(`/bordereau/process`, {
-                                                    bordereau_id:
-                                                        bordereauSelected.id,
-                                                    bpc_id: data.bpcId ?? null,
-                                                    reason: data.reason ?? null,
-                                                    instructions:
-                                                        data.instructions ?? null,
-                                                });
-                                                toast.success("Bordereau queued for processing");
+                                                await api.post(
+                                                    `/bordereau/process`,
+                                                    {
+                                                        bordereau_id:
+                                                            bordereauSelected.id,
+                                                        bpc_id:
+                                                            data.bpcId ?? null,
+                                                        reason:
+                                                            data.reason ?? null,
+                                                        instructions:
+                                                            data.instructions ??
+                                                            null,
+                                                    },
+                                                );
+                                                toast.success(
+                                                    "Bordereau queued for processing",
+                                                );
                                                 setGlobalModalOpen((prev) => ({
                                                     ...prev,
-                                                    payNowModal: !prev.payNowModal,
+                                                    payNowModal:
+                                                        !prev.payNowModal,
                                                 }));
                                                 resetProcess();
                                                 try {
@@ -717,7 +863,9 @@ export default function BordereauIndex() {
                                                 }
                                             } catch (err) {
                                                 console.error(err);
-                                                toast.error("Failed to queue bordereau");
+                                                toast.error(
+                                                    "Failed to queue bordereau",
+                                                );
                                             } finally {
                                                 setIsUploading(false);
                                             }
@@ -725,7 +873,9 @@ export default function BordereauIndex() {
                                     }
                                     disabled={isUploading}
                                 >
-                                    {isUploading ? "Processing..." : "Process Now"}
+                                    {isUploading
+                                        ? "Processing..."
+                                        : "Process Now"}
                                 </Button>
                             </div>
                         </form>
@@ -744,7 +894,9 @@ export default function BordereauIndex() {
                     className="max-w-3xl mx-4"
                 >
                     <div className="p-6 md:p-8">
-                        <h3 className="text-lg font-semibold">Close Bordereau</h3>
+                        <h3 className="text-lg font-semibold">
+                            Close Bordereau
+                        </h3>
 
                         <form className="mt-6">
                             <div className="grid grid-cols-1 gap-4">
@@ -753,16 +905,26 @@ export default function BordereauIndex() {
                                     control={closeControl}
                                     rules={{ required: "Reason is required" }}
                                     render={({ field, fieldState }) => (
-                                        <Field data-invalid={fieldState.invalid}>
+                                        <Field
+                                            data-invalid={fieldState.invalid}
+                                        >
                                             <Label>Reason</Label>
                                             <select
                                                 {...field}
                                                 className="mt-1 block w-full rounded-md border-gray-200 bg-white px-3 py-2 text-sm shadow-sm dark:bg-slate-800 dark:border-slate-700"
                                             >
-                                                <option value="">Select reason</option>
-                                                <option value="wrong_contact">Wrong Contact Details</option>
-                                                <option value="duplicate">Duplicate</option>
-                                                <option value="other">Other</option>
+                                                <option value="">
+                                                    Select reason
+                                                </option>
+                                                <option value="wrong_contact">
+                                                    Wrong Contact Details
+                                                </option>
+                                                <option value="duplicate">
+                                                    Duplicate
+                                                </option>
+                                                <option value="other">
+                                                    Other
+                                                </option>
                                             </select>
                                             {fieldState.error && (
                                                 <p className="mt-1 text-sm text-error-500">
@@ -778,7 +940,9 @@ export default function BordereauIndex() {
                                     control={closeControl}
                                     rules={{ required: "Notes are required" }}
                                     render={({ field, fieldState }) => (
-                                        <Field data-invalid={fieldState.invalid}>
+                                        <Field
+                                            data-invalid={fieldState.invalid}
+                                        >
                                             <Label>Notes</Label>
                                             <textarea
                                                 {...field}
@@ -814,21 +978,31 @@ export default function BordereauIndex() {
                                     onClick={() =>
                                         handleCloseSubmit(async (data) => {
                                             if (!bordereauSelected?.id) {
-                                                toast.error("No bordereau selected");
+                                                toast.error(
+                                                    "No bordereau selected",
+                                                );
                                                 return;
                                             }
                                             try {
                                                 setIsUploading(true);
-                                                await api.post(`/bordereau/close`, {
-                                                    bordereau_id:
-                                                        bordereauSelected.id,
-                                                    reason: data.reason ?? null,
-                                                    notes: data.notes ?? null,
-                                                });
-                                                toast.success("Bordereau closed");
+                                                await api.post(
+                                                    `/bordereau/close`,
+                                                    {
+                                                        bordereau_id:
+                                                            bordereauSelected.id,
+                                                        reason:
+                                                            data.reason ?? null,
+                                                        notes:
+                                                            data.notes ?? null,
+                                                    },
+                                                );
+                                                toast.success(
+                                                    "Bordereau closed",
+                                                );
                                                 setGlobalModalOpen((prev) => ({
                                                     ...prev,
-                                                    closeModal: !prev.closeModal,
+                                                    closeModal:
+                                                        !prev.closeModal,
                                                 }));
                                                 resetClose();
                                                 try {
@@ -841,7 +1015,9 @@ export default function BordereauIndex() {
                                                 }
                                             } catch (err) {
                                                 console.error(err);
-                                                toast.error("Failed to close bordereau");
+                                                toast.error(
+                                                    "Failed to close bordereau",
+                                                );
                                             } finally {
                                                 setIsUploading(false);
                                             }
@@ -849,7 +1025,9 @@ export default function BordereauIndex() {
                                     }
                                     disabled={isUploading}
                                 >
-                                    {isUploading ? "Closing..." : "Close Bordereau"}
+                                    {isUploading
+                                        ? "Closing..."
+                                        : "Close Bordereau"}
                                 </Button>
                             </div>
                         </form>

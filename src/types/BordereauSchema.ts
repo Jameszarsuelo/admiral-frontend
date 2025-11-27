@@ -1,6 +1,7 @@
 import { z } from "zod";
 // import { SupplierBaseSchema } from "./SupplierSchema";
 import { BPCBaseSchema } from "./BPCSchema";
+import { SupplierBaseSchema } from "./SupplierSchema";
 
 // Bordereau Validation
 export const BordereauValidationBaseSchema = z.object({
@@ -129,12 +130,14 @@ export const BordereauFormSchema = BordereauBaseSchema.pick({
     group_hire_rate: true,
     admiral_invoice_type: true,
     amount_banked: true,
+    bordereau_file: true,
 }).extend({
-    comment: z.array(BordereauCommentBaseSchema).optional(),
+    comment: z.string().nullable(),
 });
 
 export const BordereauIndexSchema = BordereauBaseSchema.pick({
     id: true,
+    bordereau_file: true,
     supplier_id: true,
     claim_number: true,
     name: true,
@@ -181,7 +184,7 @@ export const BordereauIndexSchema = BordereauBaseSchema.pick({
     closed_date: true,
 }).extend({
     comments: BordereauCommentBaseSchema.array().optional(),
-    // supplier: SupplierBaseSchema.optional(),
+    supplier: SupplierBaseSchema.optional(),
     bordereau_status: BordereauStatusBaseSchema,
     bpc: BPCBaseSchema.optional(),
 });

@@ -1,4 +1,4 @@
-import api, { ensureCsrfCookie } from "@/database/api";
+// import api, { ensureCsrfCookie } from "@/database/api";
 import Echo from "laravel-echo";
 import Pusher from "pusher-js";
 
@@ -9,25 +9,23 @@ export const echo = new Echo({
     key: import.meta.env.VITE_PUSHER_APP_KEY,
     cluster: import.meta.env.VITE_PUSHER_APP_CLUSTER,
     forceTLS: true,
-    authorizer: (channel) => {
-    return {
-        authorize: async (socketId) => {
-            try {
-                // 1. Ensure Sanctum CSRF cookie exists
-                await ensureCsrfCookie();
-
-                // 2. Now POST to /broadcasting/auth with CSRF + session cookie
-                await api.post("/broadcasting/auth", {
-                    socket_id: socketId,
-                    channel_name: channel.name,
-                });
-
-                // callback(false, response.data);
-            } catch (error) {
-                console.error("Broadcast auth error:", error);
-                // callback(true, error);
-            }
-        },
-    };
-},
+    // authorizer: (channel: unknown) => {
+    //     return {
+    //         authorize(socketId: string, callback: (err: unknown, auth?: unknown) => void) {
+    //             // use promise chain so this function returns void (Echo expects a void authorizer)
+    //             ensureCsrfCookie()
+    //                 .then(() =>
+    //                     api.post(`/broadcasting/auth`, {
+    //                         socket_id: socketId,
+    //                         channel_name: (channel as { name: string }).name,
+    //                     }),
+    //                 )
+    //                 .then((response) => callback(null, response.data))
+    //                 .catch((error) => {
+    //                     console.error("Broadcast auth error:", error);
+    //                     callback(error instanceof Error ? error : new Error(String(error)));
+    //                 });
+    //         },
+    //     };
+    // },
 });
