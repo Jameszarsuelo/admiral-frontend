@@ -63,3 +63,15 @@ export async function fetchBpcOptions(): Promise<{ value: number; label: string 
         throw error;
     }
 }
+
+export async function fetchBpcByUserId(id: number): Promise<IBPCSchema> {
+    try {
+        const response = await api.get(`/bpc-details/${id}`);
+        return response.data;
+    } catch (error) {
+        if (error instanceof AxiosError && error.response?.data) {
+            throw error.response.data;
+        }
+        throw error;
+    }
+}

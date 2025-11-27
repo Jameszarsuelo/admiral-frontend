@@ -26,7 +26,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
         (async () => {
             try {
                 setLoading(true);
-                await fetchUser();
+                const result = await fetchUser();
+                console.log("Fetched user on auth init:", result);
             } catch {
                 // ignore
             } finally {

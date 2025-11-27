@@ -17,7 +17,7 @@ import { ArrowUpIcon, GroupIcon } from "@/icons";
 import Badge from "@/components/ui/badge/Badge";
 import { ArrowRight } from "lucide-react";
 import Can from "@/components/auth/Can";
-import { fetchBordereauList } from "@/database/bordereau_api";
+import { fetchBordereauList, uploadBordereauCsv } from "@/database/bordereau_api";
 import { IBordereauIndex } from "@/types/BordereauSchema";
 import Alert from "@/components/ui/alert/Alert";
 import { fetchBpcOptions } from "@/database/bpc_api";
@@ -393,7 +393,7 @@ export default function BordereauIndex() {
                                 try {
                                     setIsUploading(true);
                                     try {
-                                        // await uploadInvoiceCsv(file);
+                                        await uploadBordereauCsv(file);
                                         toast.success(
                                             "CSV uploaded successfully",
                                         );
