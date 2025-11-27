@@ -18,6 +18,7 @@ export const rootBase = baseUrl.replace(/\/api$/, "");
 const api = axios.create({
     baseURL: baseUrl,
     withCredentials: true, // send/receive cookies
+    // withXSRFToken: true,
     headers: {
         "Accept": "application/json",
         "Content-Type": "application/json",
