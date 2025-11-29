@@ -1,8 +1,6 @@
 import Button from "@/components/ui/button/Button";
 import { ColumnDef } from "@tanstack/react-table";
-import { BadgeCheckIcon, BadgeXIcon } from "lucide-react";
 import { IOutcomeHeaders } from "@/types/OutcomeSchema";
-import { Badge } from "@/components/ui/badge";
 import Can from "@/components/auth/Can";
 
 export const getOutcomeHeaders = (

@@ -1,6 +1,5 @@
 import { IReasonForm } from "@/types/ReasonSchema";
 import { ColumnDef } from "@tanstack/react-table";
-import { Badge } from "@/components/ui/badge";
 import Can from "@/components/auth/Can";
 import Button from "@/components/ui/button/Button";
 

@@ -16,6 +16,12 @@ export default function useBpcNotifications(bpcId?: number, options?: Options) {
     const queryClient = useQueryClient();
     const navigate = useNavigate();
     const lastToastRef = useRef<number | null>(undefined);
+    const onStatusRef = useRef<Options | undefined>(options);
+
+    // keep a stable ref to the onStatus callback to avoid re-subscribing on every render
+    useEffect(() => {
+        onStatusRef.current = options;
+    }, [options]);
 
     useEffect(() => {
         if (!bpcId) return;
@@ -24,7 +30,10 @@ export default function useBpcNotifications(bpcId?: number, options?: Options) {
 
         const listener = (data: unknown) => {
             const obj = data as {
-                payload?: { bordereau?: IBordereauIndex; bpcStatus?: IBPCStatus };
+                payload?: {
+                    bordereau?: IBordereauIndex;
+                    bpcStatus?: IBPCStatus;
+                };
             };
 
             const incomingBordereau = obj?.payload?.bordereau ?? null;
@@ -42,18 +51,23 @@ export default function useBpcNotifications(bpcId?: number, options?: Options) {
                     };
                 });
 
-                options?.onStatus?.(incomingStatus);
+                // call stable ref to avoid retriggering effect
+                onStatusRef.current?.onStatus?.(incomingStatus);
             }
 
             const cacheKey = ["current-bordereau", bpcId] as const;
 
             if (incomingBordereau) {
-                const current = queryClient.getQueryData<IBordereauIndex | null>(cacheKey);
+                const current =
+                    queryClient.getQueryData<IBordereauIndex | null>(cacheKey);
                 if (current?.id !== incomingBordereau.id) {
                     queryClient.setQueryData(cacheKey, incomingBordereau);
 
                     // show toast only for user_type_id === 3
-                    if (user?.user_type_id === 3 && lastToastRef.current !== incomingBordereau.id) {
+                    if (
+                        user?.user_type_id === 3 &&
+                        lastToastRef.current !== incomingBordereau.id
+                    ) {
                         toast("New bordereau received", {
                             action: {
                                 label: "Open",
@@ -77,5 +91,5 @@ export default function useBpcNotifications(bpcId?: number, options?: Options) {
                 // ignore
             }
         };
-    }, [bpcId, queryClient, options, user, navigate]);
+    }, [bpcId, queryClient, user, navigate]);
 }

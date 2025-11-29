@@ -2,7 +2,8 @@ import axios from "axios";
 
 // Prefer VITE_API_URL from .env (Vite exposes env vars via import.meta.env).
 // Fall back to the hardcoded local IP if not provided.
-const rawBase = import.meta.env.VITE_API_URL
+// const rawBase = import.meta.env.VITE_API_URL
+const rawBase = `http://${window.location.hostname}:8082`;
 
 console.log(rawBase);
 

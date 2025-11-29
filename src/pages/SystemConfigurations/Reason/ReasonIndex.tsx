@@ -7,7 +7,7 @@ import Spinner from '@/components/ui/spinner/Spinner';
 import { getReasonHeaders } from '@/data/ReasonHeaders';
 import { deleteReason, fetchReasonList } from '@/database/reason_api';
 import { useQuery } from '@tanstack/react-query';
-import React, { useState } from 'react'
+import { useState } from 'react'
 import { useNavigate } from 'react-router'
 
 const ReasonIndex = () => {

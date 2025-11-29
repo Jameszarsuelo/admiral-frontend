@@ -111,3 +111,17 @@ export async function uploadBordereauCsv(data: {
         throw error;
     }
 }
+
+export async function changeBordereauOutcome(bordereauId: number, outcomeId: number): Promise<void> {
+    try {
+        const response = await api.post(`/bordereau/${bordereauId}/outcome`, {
+            outcome_id: outcomeId,
+        });
+        return response.data;
+    } catch (error) {
+        if (error instanceof AxiosError && error.response?.data) {
+            throw error.response.data;
+        }
+        throw error;
+    }
+}

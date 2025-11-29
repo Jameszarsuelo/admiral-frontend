@@ -8,11 +8,10 @@ import { Field, FieldGroup } from "@/components/ui/field";
 import { Controller, useForm } from "react-hook-form";
 import Button from "@/components/ui/button/Button";
 import { useNavigate, useParams } from "react-router";
-import Radio from "@/components/form/input/Radio";
 import { useEffect, useState } from "react";
 import { bordereauStatuses, fetchOutcome, upsertOutcome } from "@/database/outcome_api";
 import { handleValidationErrors } from "@/helper/validationError";
-import { IBordereauStatuses, IOutcomeForm, OutcomeSchema } from "@/types/OutcomeSchema";
+import { IOutcomeForm, OutcomeSchema } from "@/types/OutcomeSchema";
 import Can from "@/components/auth/Can";
 import Select from "@/components/form/Select";
 

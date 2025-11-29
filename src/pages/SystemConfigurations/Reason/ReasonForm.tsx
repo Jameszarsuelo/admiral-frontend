@@ -10,8 +10,7 @@ import { handleValidationErrors } from '@/helper/validationError';
 import { IReasonForm, ReasonSchema } from '@/types/ReasonSchema';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Label } from '@radix-ui/react-label';
-import { error } from 'console';
-import React, { useEffect } from 'react'
+import { useEffect } from 'react'
 import { Controller, useForm } from 'react-hook-form';
 import { useNavigate, useParams } from 'react-router'
 import { toast } from 'sonner';

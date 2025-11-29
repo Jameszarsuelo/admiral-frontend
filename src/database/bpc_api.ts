@@ -75,3 +75,20 @@ export async function fetchBpcByUserId(id: number): Promise<IBPCSchema> {
         throw error;
     }
 }
+
+export async function changeBpcStatus(
+    bpcId: number,
+    statusId: number,
+): Promise<{bpc: IBPCSchema}> {
+    try {
+        const response = await api.post(`/bpc/${bpcId}/status`, {
+            bpc_status_id: statusId,
+        });
+        return response.data;
+    } catch (error) {
+        if (error instanceof AxiosError && error.response?.data) {
+            throw error.response.data;
+        }
+        throw error;
+    }
+}

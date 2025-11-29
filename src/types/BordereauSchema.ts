@@ -184,7 +184,7 @@ export const BordereauIndexSchema = BordereauBaseSchema.pick({
     closed_date: true,
 }).extend({
     comments: BordereauCommentBaseSchema.array().optional(),
-    supplier: SupplierBaseSchema.optional(),
+    supplier: z.lazy(() => SupplierBaseSchema.optional()),
     bordereau_status: BordereauStatusBaseSchema,
     bpc: BPCBaseSchema.optional(),
 });
