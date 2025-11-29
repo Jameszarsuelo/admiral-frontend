@@ -8,20 +8,22 @@ import { Field, FieldGroup } from "@/components/ui/field";
 import { Controller, useForm } from "react-hook-form";
 import Button from "@/components/ui/button/Button";
 import { useNavigate, useParams } from "react-router";
-import Radio from "@/components/form/input/Radio";
-import { useEffect } from "react";
-import { fetchOutcome, upsertOutcome } from "@/database/outcome_api";
+import { useEffect, useState } from "react";
+import { bordereauStatuses, fetchOutcome, upsertOutcome } from "@/database/outcome_api";
 import { handleValidationErrors } from "@/helper/validationError";
 import { IOutcomeForm, OutcomeSchema } from "@/types/OutcomeSchema";
 import Can from "@/components/auth/Can";
+import Select from "@/components/form/Select";
 
 export default function OutcomeForm() {
     const { id } = useParams();
     const navigate = useNavigate();
+    const [statusesOptions, setStatusesOptions] = useState<{ value: number; label: string }[]>([]);
+
 
     const { handleSubmit, control, setError, reset } = useForm<IOutcomeForm>({
         defaultValues: {
-            status: false,
+            status: "",
             outcome_code: "",
             classification: "",
             queue: "",
@@ -31,11 +33,17 @@ export default function OutcomeForm() {
     });
 
     useEffect(() => {
+        async function fetchStatuses() {
+            const bordereauOptionResult = await bordereauStatuses(); // fetch API
+            setStatusesOptions(bordereauOptionResult);
+        }
+        fetchStatuses();
+
         if (id) {
             fetchOutcome(id).then((data) => {
                 console.log("Fetched outcome data:", data);
                 reset({
-                    status: data.status || false,
+                    status: data.status || "",
                     outcome_code: data.outcome_code || "",
                     classification: data.classification || "",
                     queue: data.queue || "",
@@ -78,36 +86,39 @@ export default function OutcomeForm() {
 
                         <div className="grid grid-cols-2 gap-6 ">
                             <div>
-                                <Controller
-                                    name="status"
-                                    control={control}
-                                    render={({ field, fieldState }) => (
-                                        <div className="grid">
-                                            <Label>Status</Label>
-                                            <div className="flex gap-8">
-                                                <Radio
-                                                    id="status_no"
-                                                    value={0}
-                                                    checked={!field.value}
-                                                    onChange={() => field.onChange(false)}
-                                                    label="NO" name={""} />
-                                                <Radio
-                                                    id="status_yes"
-                                                    value={1}
-                                                    checked={field.value ? true : false}
-                                                    onChange={() => field.onChange(true)}
-                                                    label="YES" name={""} />
-                                            </div>
-                                            {fieldState.error && (
-                                                <p className="mt-1 text-sm text-error-500">
-                                                    {fieldState.error.message}
-                                                </p>
-                                            )}
-                                        </div>
-                                        
-                                        
-                                    )}
-                                />
+                               <Controller
+                                        name="status"
+                                        control={control}
+                                        render={({ field, fieldState }) => (
+                                            <Field
+                                                data-invalid={
+                                                    fieldState.invalid
+                                                }
+                                            >
+                                                <Label htmlFor="status">
+                                                    Status
+                                                </Label>
+                                                <Select
+                                                    value={String(field.value ?? "")}
+                                                    options={statusesOptions}
+                                                    placeholder="Select Status"
+                                                    onChange={(value: string) =>
+                                                        field.onChange(value)
+                                                    }
+                                                    onBlur={field.onBlur}
+                                                    className="dark:bg-dark-900"
+                                                />
+                                                {fieldState.error && (
+                                                    <p className="mt-1 text-sm text-error-500">
+                                                        {
+                                                            fieldState.error
+                                                                .message
+                                                        }
+                                                    </p>
+                                                )}
+                                            </Field>
+                                        )}
+                                    />
                             </div>
 
                             <div>
@@ -234,7 +245,7 @@ export default function OutcomeForm() {
                     <Button variant="outline" onClick={() => reset()}>
                         Reset
                     </Button>
-                    <Can permission={id ? 'outcome.create' : 'outcome.edit'}>
+                    <Can permission={id ? 'outcomes.create' : 'outcomes.edit'}>
                         <Button type="submit" form="form-outcome">
                             {id ? 'Update' : 'Submit'}
                         </Button>

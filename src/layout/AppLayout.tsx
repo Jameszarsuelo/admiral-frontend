@@ -4,9 +4,26 @@ import AppHeader from "./AppHeader";
 import Backdrop from "./Backdrop";
 import AppSidebar from "./AppSidebar";
 import { Toaster } from "@/components/ui/sonner";
+import { useAuth } from "@/hooks/useAuth";
+import { useQuery } from "@tanstack/react-query";
+import { fetchBpcByUserId } from "@/database/bpc_api";
+import useBpcNotifications from "@/hooks/useBpcNotifications";
 
 const LayoutContent: React.FC = () => {
     const { isExpanded, isHovered, isMobileOpen } = useSidebar();
+    const { user } = useAuth();
+
+    const { data: bpcUser } = useQuery({
+        queryKey: ["bpc-data"],
+        queryFn: async () => {
+            return await fetchBpcByUserId(user!.id);
+        },
+        enabled: !!user,
+        retry: false,
+    });
+
+    // mount notifications globally for this BPC
+    useBpcNotifications(bpcUser?.id);
 
     return (
         <div className="min-h-screen xl:flex">

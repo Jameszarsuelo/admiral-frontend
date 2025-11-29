@@ -89,7 +89,7 @@ export const SupplierStatisticsSchema = SupplierBaseSchema.pick({
     updated_at: true,
 }).extend({
     bordereau_query_email: true,
-    bordereau: BordereauBaseSchema.array().optional(),
+    bordereau: z.lazy(() => BordereauBaseSchema.array().optional()),
     contact: ContactBaseSchema.optional(),
     user: UserBaseSchema.optional(),
 });

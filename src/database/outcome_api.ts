@@ -1,75 +1,12 @@
 import api from "./api";
 import { AxiosError } from "axios";
-import {IOutcomeForm } from "../types/OutcomeSchema"
+import {IBordereauStatuses, IOutcomeDelete, IOutcomeForm } from "../types/OutcomeSchema"
 
 
 export async function fetchOutcomeList(): Promise<IOutcomeForm[]> {
-
-    // return [
-    //         {
-    //           id: 1,
-    //           status: true,
-    //           outcome_code: "OC-1001",
-    //           classification: "Follow-up Required",
-    //           queue: "Support Team",
-    //           description: "Customer needs additional assistance regarding billing inquiry.",
-    //           created_at: "2025-01-15 10:30:00",
-    //           updated_at: "2025-01-15 10:45:00",
-    //         },
-    //         {
-    //           id: 1,
-    //           status: true,
-    //           outcome_code: "OC-1001",
-    //           classification: "Follow-up Required",
-    //           queue: "Support Team",
-    //           description: "Customer needs additional assistance regarding billing inquiry.",
-    //           created_at: "2025-01-15 10:30:00",
-    //           updated_at: "2025-01-15 10:45:00",
-    //         },
-    //         {
-    //           id: 1,
-    //           status: true,
-    //           outcome_code: "OC-1001",
-    //           classification: "Follow-up Required",
-    //           queue: "Support Team",
-    //           description: "Customer needs additional assistance regarding billing inquiry.",
-    //           created_at: "2025-01-15 10:30:00",
-    //           updated_at: "2025-01-15 10:45:00",
-    //         },
-    //         {
-    //           id: 1,
-    //           status: true,
-    //           outcome_code: "OC-1001",
-    //           classification: "Follow-up Required",
-    //           queue: "Support Team",
-    //           description: "Customer needs additional assistance regarding billing inquiry.",
-    //           created_at: "2025-01-15 10:30:00",
-    //           updated_at: "2025-01-15 10:45:00",
-    //         },
-    //         {
-    //           id: 1,
-    //           status: true,
-    //           outcome_code: "OC-1001",
-    //           classification: "Follow-up Required",
-    //           queue: "Support Team",
-    //           description: "Customer needs additional assistance regarding billing inquiry.",
-    //           created_at: "2025-01-15 10:30:00",
-    //           updated_at: "2025-01-15 10:45:00",
-    //         },
-    //         {
-    //           id: 1,
-    //           status: true,
-    //           outcome_code: "OC-1001",
-    //           classification: "Follow-up Required",
-    //           queue: "Support Team",
-    //           description: "Customer needs additional assistance regarding billing inquiry.",
-    //           created_at: "2025-01-15 10:30:00",
-    //           updated_at: "2025-01-15 10:45:00",
-    //         }
-
-    //             ];
     try {
         const response = await api.get(`/outcome`);
+        console.log(response);
         return response.data;
     } catch (error) {
        if (error instanceof AxiosError && error.response?.data) {
@@ -83,7 +20,6 @@ export async function fetchOutcomeList(): Promise<IOutcomeForm[]> {
 export async function upsertOutcome(
     outcomeData: IOutcomeForm,
 ): Promise<IOutcomeForm> {
-    console.log(outcomeData);
     try {
         const response = outcomeData.id
             ? await api.put(`/outcome/${outcomeData.id}`, outcomeData)
@@ -99,20 +35,8 @@ export async function upsertOutcome(
 }
 
 export async function fetchOutcome(id: string): Promise<IOutcomeForm> {
-
-    // return {
-    //           id: 1,
-    //           status: true,
-    //           outcome_code: "OC-1001",
-    //           classification: "Follow-up Required",
-    //           queue: "Support Team",
-    //           description: "Customer needs additional assistance regarding billing inquiry.",
-    //           created_at: "2025-01-15 10:30:00",
-    //           updated_at: "2025-01-15 10:45:00",
-    //         };
     try {
         const response = await api.get(`/outcome/${id}`);
-        // console.log(response);
         return response.data;
     } catch (error) {
         if (error instanceof AxiosError && error.response?.data) {
@@ -122,9 +46,21 @@ export async function fetchOutcome(id: string): Promise<IOutcomeForm> {
     }
 }
 
-export async function deleteOutcome(id: number){
+// export async function deleteOutcome(id: number){
+//     try {
+//         await api.delete(`/outcome/${id}`);
+//     } catch (error) {
+//         if (error instanceof AxiosError && error.response?.data) {
+//             throw error.response.data;
+//         }
+//         throw error;
+//     }
+// }
+
+export async function deleteOutcome(deleteData: IOutcomeDelete){
     try {
-        await api.delete(`/outcome/${id}`);
+        // await api.delete(`/outcome/${id}`);
+        await api.post(`/delete-outcome`, deleteData);
     } catch (error) {
         if (error instanceof AxiosError && error.response?.data) {
             throw error.response.data;
@@ -133,5 +69,14 @@ export async function deleteOutcome(id: number){
     }
 }
 
-
-
+export async function bordereauStatuses(): Promise<IBordereauStatuses[]> {
+    try {
+        const response = await api.get(`/bordereau-statuses`);
+        return response.data;
+    } catch (error) {
+       if (error instanceof AxiosError && error.response?.data) {
+            throw error.response.data;
+        }
+        throw error;
+    }
+}
