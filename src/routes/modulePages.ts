@@ -1,30 +1,58 @@
 import { lazy } from "react";
 
 const Home = lazy(() => import("../pages-backup/Dashboard/Home"));
-const BPCIndex = lazy(() => import("../pages/SystemConfigurations/BordereauPaymentClerks/BPCIndex"));
-const BPCForm = lazy(
-    () => import("../pages/SystemConfigurations/BordereauPaymentClerks/BPCForm"),
+const BPCIndex = lazy(
+    () =>
+        import("../pages/SystemConfigurations/BordereauPaymentClerks/BPCIndex"),
 );
-const SupplierIndex = lazy(() => import("../pages/SupplierDirectory/SupplierIndex"));
+const BPCForm = lazy(
+    () =>
+        import("../pages/SystemConfigurations/BordereauPaymentClerks/BPCForm"),
+);
+const SupplierIndex = lazy(
+    () => import("../pages/SupplierDirectory/SupplierIndex"),
+);
 const SupplierForm = lazy(
     () => import("../pages/SupplierDirectory/SupplierForm"),
 );
-const SupplierView = lazy(() => import("../pages/SupplierDirectory/SupplierView"));
+const SupplierView = lazy(
+    () => import("../pages/SupplierDirectory/SupplierView"),
+);
 
-const BordereauIndex = lazy(() => import("../pages/BordereauDetail/BordereauIndex"));
-const BordereauView = lazy(() => import("../pages/BordereauDetail/BordereauView"));
-const BordereauForm = lazy(() => import("../pages/BordereauDetail/BordereauForm"));
+const BordereauIndex = lazy(
+    () => import("../pages/BordereauDetail/BordereauIndex"),
+);
+const BordereauView = lazy(
+    () => import("../pages/BordereauDetail/BordereauView"),
+);
+const BordereauForm = lazy(
+    () => import("../pages/BordereauDetail/BordereauForm"),
+);
 
-const UserIndex = lazy(() => import("../pages/SystemConfigurations/Users/UserIndex"));
+const UserIndex = lazy(
+    () => import("../pages/SystemConfigurations/Users/UserIndex"),
+);
 const UserForm = lazy(
     () => import("../pages/SystemConfigurations/Users/UserForm"),
 );
 
-const PlanningIndex = lazy(() => import("../pages/SystemConfigurations/Planning/PlanningIndex"));
-const PlanningForm = lazy(() => import("../pages/SystemConfigurations/Planning/PlanningForm"));
-const OutcomeIndex = lazy(() => import("../pages/SystemConfigurations/Outcomes/OutcomeIndex"));
-const OutcomeForm = lazy(() => import("../pages/SystemConfigurations/Outcomes/OutcomeForm"));
-const ContactIndex = lazy(() => import("../pages/ContactDirectory/ContactIndex"));
+const PlanningIndex = lazy(
+    () => import("../pages/SystemConfigurations/Planning/PlanningIndex"),
+);
+const PlanningForm = lazy(
+    () => import("../pages/SystemConfigurations/Planning/PlanningForm"),
+);
+const ReasonIndex = lazy(() => import("../pages/SystemConfigurations/Reason/ReasonIndex"));
+const ReasonForm = lazy(() => import("../pages/SystemConfigurations/Reason/ReasonForm"));
+const OutcomeIndex = lazy(
+    () => import("../pages/SystemConfigurations/Outcomes/OutcomeIndex"),
+);
+const OutcomeForm = lazy(
+    () => import("../pages/SystemConfigurations/Outcomes/OutcomeForm"),
+);
+const ContactIndex = lazy(
+    () => import("../pages/ContactDirectory/ContactIndex"),
+);
 const ContactForm = lazy(() => import("../pages/ContactDirectory/ContactForm"));
 const ContactView = lazy(() => import("../pages/ContactDirectory/ContactView"));
 
@@ -35,22 +63,46 @@ const BQMView = lazy(() => import("../pages/BordereauQueryManagement/BQMView"));
 // const DMForm = lazy(() => import("../pages/DocumentManagement/DMForm"));
 
 // System Configurations - new pages
-const ProfileView = lazy(() => import("../pages/SystemConfigurations/Profiles/ProfileView"));
-const ProfileIndex = lazy(() => import("../pages/SystemConfigurations/Profiles/ProfileIndex"));
-const ProfileForm = lazy(() => import("../pages/SystemConfigurations/Profiles/ProfileForm"));
+const ProfileView = lazy(
+    () => import("../pages/SystemConfigurations/Profiles/ProfileView"),
+);
+const ProfileIndex = lazy(
+    () => import("../pages/SystemConfigurations/Profiles/ProfileIndex"),
+);
+const ProfileForm = lazy(
+    () => import("../pages/SystemConfigurations/Profiles/ProfileForm"),
+);
 
-const RoleView = lazy(() => import("../pages/SystemConfigurations/Roles/RoleView"));
-const RoleForm = lazy(() => import("../pages/SystemConfigurations/Roles/RoleForm"));
+const RoleView = lazy(
+    () => import("../pages/SystemConfigurations/Roles/RoleView"),
+);
+const RoleForm = lazy(
+    () => import("../pages/SystemConfigurations/Roles/RoleForm"),
+);
 
-const ModuleView = lazy(() => import("../pages/SystemConfigurations/Modules/ModuleView"));
-const ModuleForm = lazy(() => import("../pages/SystemConfigurations/Modules/ModuleForm"));
+const ModuleView = lazy(
+    () => import("../pages/SystemConfigurations/Modules/ModuleView"),
+);
+const ModuleForm = lazy(
+    () => import("../pages/SystemConfigurations/Modules/ModuleForm"),
+);
 
-const ModuleActionView = lazy(() => import("../pages/SystemConfigurations/ModuleActions/ModuleActionIndex"));
-const ModuleActionForm = lazy(() => import("../pages/SystemConfigurations/ModuleActions/ModuleActionForm"));
+const ModuleActionView = lazy(
+    () =>
+        import("../pages/SystemConfigurations/ModuleActions/ModuleActionIndex"),
+);
+const ModuleActionForm = lazy(
+    () =>
+        import("../pages/SystemConfigurations/ModuleActions/ModuleActionForm"),
+);
 
 const TaskDetailView = lazy(() => import("@/pages/TaskDetail/TaskDetailView"));
 
-const TaskQueuesView = lazy(() => import("@/pages/SystemConfigurations/TaskQueues/TaskQueuesView"));
+const Workplace = lazy(() => import("../pages/BPC/Workplace"));
+
+const TaskQueuesView = lazy(
+    () => import("@/pages/SystemConfigurations/TaskQueues/TaskQueuesView"),
+);
 
 const NotFound = lazy(() => import("../pages/OtherPage/NotFound"));
 
@@ -78,7 +130,7 @@ export const modulePageMap: Record<string, ModuleComponents> = {
         edit: ContactForm,
         view: ContactView,
     },
-   bordereau_detail: {
+    bordereau_detail: {
         main: BordereauIndex,
         create: BordereauForm,
         edit: BordereauForm,
@@ -132,6 +184,12 @@ export const modulePageMap: Record<string, ModuleComponents> = {
         edit: OutcomeForm,
         view: OutcomeIndex,
     },
+    reason: {
+        main: ReasonIndex,
+        create: ReasonForm,
+        edit: ReasonForm,
+        view: ReasonIndex,
+    },
     document_management: {
         main: DMView,
         create: DMForm,
@@ -151,6 +209,9 @@ export const modulePageMap: Record<string, ModuleComponents> = {
         main: TaskQueuesView,
         create: DMForm,
         edit: DMForm,
+    },
+    workplace: {
+        main: Workplace,
     },
     dashboard: {
         main: Home,

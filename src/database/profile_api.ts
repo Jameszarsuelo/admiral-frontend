@@ -63,48 +63,15 @@ export async function fetchProfileOptions(): Promise<{ label: string; value: num
 }
 
 export async function fetchViewMember(id: number | string): Promise<IUserProfile[]> {
-  console.log(id);
-  return [
-            {
-              id: 1,
-              firstname: "Alice",
-              lastname: "Johnson",
-              organization: "TechCorp"
-            },
-            {
-              id: 2,
-              firstname: "Bob",
-              lastname: "Smith",
-              organization: "Innovate Solutions"
-            },
-            {
-              id: 3,
-              firstname: "Carla",
-              lastname: "Martinez",
-              organization: "NextGen Labs"
-            },
-            {
-              id: 4,
-              firstname: "David",
-              lastname: "Lee",
-              organization: "GlobalSoft"
-            },
-            {
-              id: 5,
-              firstname: "Emma",
-              lastname: "Williams",
-              organization: "BrightFuture Inc."
-            }
-          ]
-  // try {
-  //   const res = await api.get(`/profiles/${id}`);
-  //   return res.data as IProfileBase;
-  // } catch (error) {
-  //   if (error instanceof AxiosError && error.response?.data) {
-  //     throw error.response.data;
-  //   }
-  //   throw error;
-  // }
+     try {
+      const res = await api.get(`/view-members/${id}`);
+      return res.data;
+    } catch (error) {
+      if (error instanceof AxiosError && error.response?.data) {
+        throw error.response.data;
+      }
+      throw error;
+    }
 }
 
 export default { fetchProfileList, fetchProfileById, upsertProfile, deleteProfile, fetchProfileOptions };

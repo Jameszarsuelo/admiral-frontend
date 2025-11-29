@@ -1,8 +1,6 @@
 import Button from "@/components/ui/button/Button";
 import { ColumnDef } from "@tanstack/react-table";
-import { BadgeCheckIcon, BadgeXIcon } from "lucide-react";
 import { IOutcomeHeaders } from "@/types/OutcomeSchema";
-import { Badge } from "@/components/ui/badge";
 import Can from "@/components/auth/Can";
 
 export const getOutcomeHeaders = (
@@ -21,7 +19,7 @@ export const getOutcomeHeaders = (
     {
         accessorKey: "outcome_code",
         accessorFn: (row) => row.outcome_code,
-        header: "Outcome Code",
+        header: "Terminal",
         cell: ({ row }) => (
             <div className="capitalize">{row.getValue("outcome_code")}</div>
         ),
@@ -29,7 +27,7 @@ export const getOutcomeHeaders = (
     {
         accessorKey: "queue",
         accessorFn: (row) => row.queue,
-        header: "Queue",
+        header: "Task",
         cell: ({ row }) => (
             <div className="capitalize">{row.getValue("queue")}</div>
         ),
@@ -47,22 +45,30 @@ export const getOutcomeHeaders = (
         accessorFn: (row) => row.status,
         header: "Status",
         cell: ({ row }) => (
-            <Badge
-                className={
-                    row.getValue("status") == 1
-                        ? "bg-success-500"
-                        : "bg-error-500"
-                }
-            >
-                {row.getValue("status") == 1 ? (
-                    <BadgeCheckIcon className="mr-1 inline-block" />
-                ) : (
-                    <BadgeXIcon className="mr-1 inline-block" />
-                )}
-                {row.getValue("status") == 1 ? "Active" : "Inactive"}
-            </Badge>
+            <div className="capitalize">{row.getValue("status")}</div>
         ),
     },
+    // {
+    //     accessorKey: "status",
+    //     accessorFn: (row) => row.status,
+    //     header: "Status",
+    //     cell: ({ row }) => (
+    //         <Badge
+    //             className={
+    //                 row.getValue("status") == 1
+    //                     ? "bg-success-500"
+    //                     : "bg-error-500"
+    //             }
+    //         >
+    //             {row.getValue("status") == 1 ? (
+    //                 <BadgeCheckIcon className="mr-1 inline-block" />
+    //             ) : (
+    //                 <BadgeXIcon className="mr-1 inline-block" />
+    //             )}
+    //             {row.getValue("status") == 1 ? "Active" : "Inactive"}
+    //         </Badge>
+    //     ),
+    // },
     {
         id: "actions",
         header: () => <div>Actions</div>,

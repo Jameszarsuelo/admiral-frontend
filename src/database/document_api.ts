@@ -57,3 +57,15 @@ export async function upsertDocument(documentData: IDocumentFormSchema): Promise
         throw error;
     }
 }
+
+
+export async function deleteDocument(id: number): Promise<void> {
+    try {
+        await api.delete(`/document/${id}`);
+    } catch (error) {
+        if (error instanceof AxiosError && error.response?.data) {
+            throw error.response.data;
+        }
+        throw error;
+    }
+}

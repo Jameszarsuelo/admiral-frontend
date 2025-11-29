@@ -57,5 +57,17 @@ export async function deletePlanning(id: number): Promise<void> {
     }
 }
 
+export async function getActivePlanning(): Promise<IPlanningForm> {
+    try {
+        const response = await api.get(`/planning-active`);
+        return response.data;
+    } catch (error) {
+        if (error instanceof AxiosError && error.response?.data) {
+            throw error.response.data;
+        }
+        throw error;
+    }
+}
+
 
 

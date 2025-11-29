@@ -2,20 +2,10 @@ import { dateFormat } from "@/helper/dateFormat";
 import { IBordereauIndex } from "@/types/BordereauSchema";
 
 interface Props {
-    bordereau?: IBordereauIndex;
+    bordereau?: IBordereauIndex | null;
 }
 
 export default function BordereauSummaryGrid({ bordereau }: Props) {
-    // const fmt = (v?: string | number | null) => {
-    //     if (v === null || v === undefined || v === "") return "-";
-    //     if (typeof v === "string") {
-    //         // try date detection
-    //         const d = new Date(v);
-    //         if (!isNaN(d.getTime()) && v.indexOf("-") >= 0) return d.toLocaleString();
-    //         return v;
-    //     }
-    //     return String(v);
-    // };
 
     const cards: { title: string; value: string | number }[] = [
         { title: "Supplier", value: bordereau?.supplier?.name ?? "-" },
@@ -27,7 +17,7 @@ export default function BordereauSummaryGrid({ bordereau }: Props) {
                 ? `${bordereau?.bpc?.contact?.firstname} ${bordereau?.bpc?.contact?.lastname}`
                 : "Unassigned",
         },
-        { title: "Uploaded", value: dateFormat(bordereau!.created_at) },
+        { title: "Uploaded", value: bordereau?.created_at ? dateFormat(bordereau.created_at) : "-" },
         { title: "Target", value: bordereau?.target_payment_date ? dateFormat(bordereau?.target_payment_date) : "-" },
         { title: "Deadline", value: bordereau?.deadline_payment_date ? dateFormat(bordereau?.deadline_payment_date) : "-" },
         { title: "Closed", value: bordereau?.closed_date ? dateFormat(bordereau?.closed_date) : "-" },

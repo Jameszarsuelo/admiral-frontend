@@ -2,7 +2,8 @@ import axios from "axios";
 
 // Prefer VITE_API_URL from .env (Vite exposes env vars via import.meta.env).
 // Fall back to the hardcoded local IP if not provided.
-const rawBase = import.meta.env.VITE_API_URL
+// const rawBase = import.meta.env.VITE_API_URL
+const rawBase = `http://${window.location.hostname}:8082`;
 
 console.log(rawBase);
 
@@ -12,12 +13,13 @@ const baseUrl = rawBase.endsWith("/api")
     : rawBase.replace(/\/$/, "") + "/api";
 
 // Root base (without trailing /api) – used for CSRF cookie preflight
-const rootBase = baseUrl.replace(/\/api$/, "");
+export const rootBase = baseUrl.replace(/\/api$/, "");
 
 // Axios instance configured for Laravel Sanctum session-based auth
 const api = axios.create({
     baseURL: baseUrl,
     withCredentials: true, // send/receive cookies
+    // withXSRFToken: true,
     headers: {
         "Accept": "application/json",
         "Content-Type": "application/json",

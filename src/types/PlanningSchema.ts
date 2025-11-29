@@ -8,7 +8,7 @@ export const PlanningFormSchema = z.object({
     work_sunday: z.enum(["0", "1"]),
     forecast_horizon: z.string().nonempty("Forecast Horizon is required"),
     // is_active: z.boolean().optional(),
-      is_active: z.union([z.boolean(), z.number().int().refine(val => val === 0 || val === 1)]).optional(),
+    is_active: z.union([z.boolean(), z.number().int().refine(val => val === 0 || val === 1)]).optional(),
     created_at: z.string().optional(),
     updated_at: z.string().optional(),
 });

@@ -4,10 +4,9 @@ import PageBreadcrumb from "@/components/common/PageBreadCrumb";
 import ComponentCard from "@/components/common/ComponentCard";
 import Label from "@/components/form/Label";
 import Input from "@/components/form/input/InputField";
-import TextArea from "@/components/form/input/TextArea";
 import Combobox from "@/components/form/Combobox";
 import { Field, FieldGroup } from "@/components/ui/field";
-import { Controller, useForm, useFieldArray } from "react-hook-form";
+import { Controller, useForm } from "react-hook-form";
 import Button from "@/components/ui/button/Button";
 import { useNavigate, useParams } from "react-router";
 import { useState } from "react";
@@ -58,19 +57,10 @@ export default function BordereauForm() {
             group_hire_rate: undefined,
             admiral_invoice_type: undefined,
             amount_banked: undefined,
+            comment: "",
+            bordereau_file: "",
         },
         resolver: zodResolver(BordereauFormSchema),
-    });
-
-    const [newComment, setNewComment] = useState("");
-
-    const {
-        fields: commentFields,
-        append: appendComment,
-        remove: removeComment,
-    } = useFieldArray({
-        control,
-        name: "comment",
     });
 
     const { data: supplierData } = useQuery({
@@ -106,7 +96,7 @@ export default function BordereauForm() {
             loading: id ? "Updating Bordereau..." : "Creating Bordereau...",
             success: () => {
                 setTimeout(() => {
-                    // navigate("/bordereau-detail");
+                    navigate("/bordereau-detail");
                 }, 2000);
                 return id
                     ? "Bordereau updated successfully!"
@@ -134,6 +124,36 @@ export default function BordereauForm() {
                         <FieldGroup>
                             <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
                                 <div className="space-y-6">
+                                    <Controller
+                                        name="bordereau_file"
+                                        control={control}
+                                        render={({ field, fieldState }) => (
+                                            <Field
+                                                data-invalid={
+                                                    fieldState.invalid
+                                                }
+                                            >
+                                                <Label htmlFor="bordereau_file">
+                                                    Bordereau
+                                                </Label>
+                                                <Input
+                                                    {...field}
+                                                    id="bordereau_file"
+                                                    placeholder="Enter Bordereau"
+                                                    value={field.value ?? ""}
+                                                />
+                                                {fieldState.error && (
+                                                    <p className="mt-1 text-sm text-error-500">
+                                                        {
+                                                            fieldState.error
+                                                                .message
+                                                        }
+                                                    </p>
+                                                )}
+                                            </Field>
+                                        )}
+                                    />
+
                                     <Controller
                                         name="supplier_id"
                                         control={control}
@@ -543,62 +563,35 @@ export default function BordereauForm() {
                                         )}
                                     />
 
-                                    <Label htmlFor="comment">Comments</Label>
-                                    <div className="flex gap-2 mt-2">
-                                        <div className="flex-1">
-                                            <TextArea
-                                                placeholder="Enter comment"
-                                                rows={4}
-                                                value={newComment}
-                                                onChange={(v) =>
-                                                    setNewComment(v)
+                                    <Controller
+                                        name="comment"
+                                        control={control}
+                                        render={({ field, fieldState }) => (
+                                            <Field
+                                                data-invalid={
+                                                    fieldState.invalid
                                                 }
-                                            />
-                                        </div>
-                                        <div className="w-28">
-                                            <Button
-                                                type="button"
-                                                variant="outline"
-                                                onClick={() => {
-                                                    const v = String(
-                                                        newComment ?? "",
-                                                    ).trim();
-                                                    if (!v) return;
-                                                    appendComment({
-                                                        comment: v,
-                                                    });
-                                                    setNewComment("");
-                                                }}
                                             >
-                                                Add
-                                            </Button>
-                                        </div>
-                                    </div>
-
-                                    {commentFields.length > 0 && (
-                                        <div className="mt-4 space-y-2">
-                                            {commentFields.map((f, i) => (
-                                                <div
-                                                    key={f.id}
-                                                    className="flex items-start gap-2"
-                                                >
-                                                    <div className="flex-1 rounded border px-3 py-2 text-sm bg-gray-50 dark:bg-dark-800">
-                                                        {f.comment}
-                                                    </div>
-                                                    <Button
-                                                        type="button"
-                                                        variant="outline"
-                                                        size="sm"
-                                                        onClick={() =>
-                                                            removeComment(i)
+                                                <Label htmlFor="comment">
+                                                    Comment
+                                                </Label>
+                                                <Input
+                                                    {...field}
+                                                    id="comment"
+                                                    placeholder="Enter Comment"
+                                                    value={field.value ?? ""}
+                                                />
+                                                {fieldState.error && (
+                                                    <p className="mt-1 text-sm text-error-500">
+                                                        {
+                                                            fieldState.error
+                                                                .message
                                                         }
-                                                    >
-                                                        Remove
-                                                    </Button>
-                                                </div>
-                                            ))}
-                                        </div>
-                                    )}
+                                                    </p>
+                                                )}
+                                            </Field>
+                                        )}
+                                    />
                                 </div>
 
                                 <div className="space-y-6">

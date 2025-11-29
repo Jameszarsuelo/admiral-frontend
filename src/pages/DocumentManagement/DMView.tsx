@@ -8,7 +8,7 @@ import { useQuery } from "@tanstack/react-query";
 // import api from "@/database/api";
 import { ColumnDef } from "@tanstack/react-table";
 import { IDocumentSchema } from "@/types/DocumentSchema";
-import { fetchDocumentList } from "@/database/document_api";
+import { deleteDocument, fetchDocumentList } from "@/database/document_api";
 import Can from "@/components/auth/Can";
 import { Modal } from "@/components/ui/modal";
 
@@ -21,7 +21,7 @@ export default function DMView() {
     const {
         data: documents,
         isLoading,
-        // refetch,
+        refetch,
     } = useQuery({
         queryKey: ["document-list"],
         queryFn: async () => {
@@ -83,7 +83,7 @@ export default function DMView() {
         if (selectedId === null) return;
         setIsDeleting(true);
         try {
-            await api.delete(`/document/${selectedId}`);
+            await deleteDocument(selectedId);
             await refetch();
             setIsModalOpen(false);
             setSelectedId(null);
