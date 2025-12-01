@@ -5,14 +5,24 @@ import logo from "../../public/images/auth/admiral-logo.png";
 import {
     BoxCubeIcon,
     ChevronDownIcon,
-    EnvelopeIcon,
     GridIcon,
     HorizontaLDots,
-    ListIcon,
 } from "../icons";
 import { useSidebar } from "../context/SidebarContext";
 import { usePermissions } from "@/hooks/usePermissions";
 import SidebarSkeleton from "@/components/ui/SideBarSkeleton";
+import {
+    ArchiveBoxIcon,
+    BuildingOffice2Icon,
+    ChartBarIcon,
+    ClipboardDocumentIcon,
+    EnvelopeIcon,
+    ExclamationTriangleIcon,
+    ListBulletIcon,
+    QuestionMarkCircleIcon,
+    Squares2X2Icon,
+    UsersIcon,
+} from "@heroicons/react/24/outline";
 
 type NavItem = {
     name: string;
@@ -22,13 +32,13 @@ type NavItem = {
 };
 
 const iconMap: Record<string, React.ReactNode> = {
-    dashboard: <GridIcon />,
-    contact_directory: <GridIcon />,
-    invoice_detail: <GridIcon />,
-    task_detail: <GridIcon />,
-    supplier_directory: <GridIcon />,
-    exceptions: <ListIcon />,
-    upload_exceptions: <ListIcon />,
+    dashboard: <Squares2X2Icon />,
+    contact_directory: <UsersIcon />,
+    bordereau_detail: <ListBulletIcon />,
+    task_detail: <ClipboardDocumentIcon />,
+    supplier_directory: <BuildingOffice2Icon />,
+    exceptions: <ExclamationTriangleIcon />,
+    upload_exceptions: <ExclamationTriangleIcon />,
     email_templates: <EnvelopeIcon />,
     template_a: <EnvelopeIcon />,
     configuration: <BoxCubeIcon />,
@@ -38,10 +48,9 @@ const iconMap: Record<string, React.ReactNode> = {
     profiles: <BoxCubeIcon />,
     task_queues: <BoxCubeIcon />,
     users: <BoxCubeIcon />,
-    reports: <GridIcon />,
-    document_management: <GridIcon />,
-    bordereau_query_management: <GridIcon />,
-    invoice_query_management: <GridIcon />,
+    reports: <ChartBarIcon />,
+    document_management: <ArchiveBoxIcon />,
+    bordereau_query_management: <QuestionMarkCircleIcon />,
 };
 
 const AppSidebar: React.FC = () => {
@@ -104,8 +113,7 @@ const AppSidebar: React.FC = () => {
         (i) =>
             i.name === "Reports" ||
             i.name === "Document Management" ||
-            i.name === "Bordereau Query Management" ||
-            i.name === "Invoice Query Management",
+            i.name === "Bordereau Query Management",
     );
 
     useEffect(() => {
@@ -328,7 +336,7 @@ const AppSidebar: React.FC = () => {
                                         Admiral
                                     </h1>
                                     <p className="text-xs text-gray-500 font-medium">
-                                        Invoice Processing Tool
+                                        Bordereau Processing Tool
                                     </p>
                                 </div>
                             </div>
@@ -344,7 +352,7 @@ const AppSidebar: React.FC = () => {
                                         Admiral
                                     </h1>
                                     <p className="text-xs text-white font-medium">
-                                        Invoice Processing Tool
+                                        Bordereau Processing Tool
                                     </p>
                                 </div>
                             </div>

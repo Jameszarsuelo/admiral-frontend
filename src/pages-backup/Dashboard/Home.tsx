@@ -9,11 +9,11 @@ export default function Home() {
                 <div className="col-span-12 space-y-6 xl:col-span-6">
                     <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 md:gap-6">
                         <EcommerceMetrics
-                            label="Invoices Uploaded"
+                            label="Bordereaux Uploaded"
                             value="11,987"
                         />
                         <EcommerceMetrics
-                            label="Invoices Processed"
+                            label="Bordereaux Processed"
                             value="5,987"
                         />
                         <EcommerceMetrics label="Task Assigned" value="11" />
@@ -24,11 +24,11 @@ export default function Home() {
                 <div className="col-span-12 xl:col-span-6">
                     <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 md:gap-6">
                         <EcommerceMetrics
-                            label="Invoices Queries"
+                            label="Bordereaux Queries"
                             value="234"
                         />
                         <EcommerceMetrics
-                            label="Approaching Deadline"
+                            label="Bordereaux Approaching Deadline"
                             value="87"
                         />
                         <EcommerceMetrics label="Tasks in Progress" value="7" />
