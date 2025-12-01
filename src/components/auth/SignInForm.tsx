@@ -58,7 +58,7 @@ export default function SignInForm() {
                             Admiral
                         </h1>
                         <p className="text-4xl font-normal text-gray-900 dark:text-white">
-                            Invoice Processing Tool
+                            Borderau Processing Tool
                         </p>
                     </div>
                     <div className="mb-5 sm:mb-8">
