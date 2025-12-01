@@ -41,7 +41,7 @@ export default function SignIn() {
     return (
         <>
             <PageMeta
-                title="Admiral IPT"
+                title="Admiral BPT"
                 description="Admiral is a powerful platform for managing and orchestrating your containerized applications with ease."
             />
             <AuthLayout>
