@@ -134,59 +134,6 @@ export default function SupplierDetailsView({
 
                                     <div>
                                         <p className="mb-2 text-xs leading-normal text-gray-500 dark:text-gray-400">
-                                            Invoice Query Email
-                                        </p>
-                                        <p className="text-sm font-medium text-gray-800 dark:text-white/90">
-                                            {supplier?.phone ?? "-"}
-                                        </p>
-                                    </div>
-
-                                    <div>
-                                        <p className="mb-2 text-xs leading-normal text-gray-500 dark:text-gray-400">
-                                            Phone
-                                        </p>
-                                        <p className="text-sm font-medium text-gray-800 dark:text-white/90">
-                                            {supplier?.phone ?? "-"}
-                                        </p>
-                                    </div>
-
-                                    <div>
-                                        <p className="mb-2 text-xs leading-normal text-gray-500 dark:text-gray-400">
-                                            Primary Contact
-                                        </p>
-                                        <p className="text-sm font-medium text-gray-800 dark:text-white/90">
-                                            {supplier?.contact?.firstname
-                                                ? `${
-                                                      supplier.contact.firstname
-                                                  } ${
-                                                      supplier.contact
-                                                          .lastname ?? ""
-                                                  }`
-                                                : "-"}
-                                        </p>
-                                    </div>
-
-                                    <div>
-                                        <p className="mb-2 text-xs leading-normal text-gray-500 dark:text-gray-400">
-                                            Supplier Priority
-                                        </p>
-                                        <p className="text-sm font-medium text-gray-800 dark:text-white/90">
-                                            {supplier?.priority ?? "-"}
-                                        </p>
-                                    </div>
-
-                                    <div>
-                                        <p className="mb-2 text-xs leading-normal text-gray-500 dark:text-gray-400">
-                                            Preferred Payment Day
-                                        </p>
-                                        <p className="text-sm font-medium text-gray-800 dark:text-white/90">
-                                            {supplier?.preferred_payment_day ??
-                                                "-"}
-                                        </p>
-                                    </div>
-
-                                    <div>
-                                        <p className="mb-2 text-xs leading-normal text-gray-500 dark:text-gray-400">
                                             Address
                                         </p>
                                         <p className="text-sm font-medium text-gray-800 dark:text-white/90">
@@ -213,37 +160,10 @@ export default function SupplierDetailsView({
 
                                     <div>
                                         <p className="mb-2 text-xs leading-normal text-gray-500 dark:text-gray-400">
-                                            City / Town
+                                            Supplier Priority
                                         </p>
                                         <p className="text-sm font-medium text-gray-800 dark:text-white/90">
-                                            {supplier?.city ?? "-"}
-                                        </p>
-                                    </div>
-
-                                    <div>
-                                        <p className="mb-2 text-xs leading-normal text-gray-500 dark:text-gray-400">
-                                            Country
-                                        </p>
-                                        <p className="text-sm font-medium text-gray-800 dark:text-white/90">
-                                            {supplier?.country ?? "-"}
-                                        </p>
-                                    </div>
-
-                                    <div>
-                                        <p className="mb-2 text-xs leading-normal text-gray-500 dark:text-gray-400">
-                                            County
-                                        </p>
-                                        <p className="text-sm font-medium text-gray-800 dark:text-white/90">
-                                            {supplier?.county ?? "-"}
-                                        </p>
-                                    </div>
-
-                                    <div>
-                                        <p className="mb-2 text-xs leading-normal text-gray-500 dark:text-gray-400">
-                                            Post Code
-                                        </p>
-                                        <p className="text-sm font-medium text-gray-800 dark:text-white/90">
-                                            {supplier?.postcode ?? "-"}
+                                            {supplier?.priority ?? "-"}
                                         </p>
                                     </div>
 
@@ -262,6 +182,148 @@ export default function SupplierDetailsView({
 
                                     <div>
                                         <p className="mb-2 text-xs leading-normal text-gray-500 dark:text-gray-400">
+                                            Bordereau Query Email​
+                                        </p>
+                                        <p className="text-sm font-medium text-gray-800 dark:text-white/90">
+                                            {supplier?.contact?.email ?? "-"}
+                                        </p>
+                                    </div>
+
+                                    <div>
+                                        <p className="mb-2 text-xs leading-normal text-gray-500 dark:text-gray-400">
+                                            City / Town
+                                        </p>
+                                        <p className="text-sm font-medium text-gray-800 dark:text-white/90">
+                                            {supplier?.city ?? "-"}
+                                        </p>
+                                    </div>
+
+                                    <div>
+                                        <p className="mb-2 text-xs leading-normal text-gray-500 dark:text-gray-400">
+                                            Target Process Days
+                                        </p>
+                                        <p className="text-sm font-medium text-gray-800 dark:text-white/90">
+                                            7
+                                        </p>
+                                    </div>
+
+                                    <div>
+                                        <p className="mb-2 text-xs leading-normal text-gray-500 dark:text-gray-400">
+                                            Created By
+                                        </p>
+                                        <p className="text-sm font-medium text-gray-800 dark:text-white/90">
+                                           Andy Sumpter
+                                        </p>
+                                    </div>
+
+                                    <div>
+                                        <p className="mb-2 text-xs leading-normal text-gray-500 dark:text-gray-400">
+                                            Primary Contact
+                                        </p>
+                                        <p className="text-sm font-medium text-gray-800 dark:text-white/90">
+                                            {supplier?.contact?.firstname
+                                                ? `${
+                                                      supplier.contact.firstname
+                                                  } ${
+                                                      supplier.contact
+                                                          .lastname ?? ""
+                                                  }`
+                                                : "-"}
+                                        </p>
+                                    </div>
+
+                                    <div>
+                                        <p className="mb-2 text-xs leading-normal text-gray-500 dark:text-gray-400">
+                                            County
+                                        </p>
+                                        <p className="text-sm font-medium text-gray-800 dark:text-white/90">
+                                            {supplier?.county ?? "-"}
+                                        </p>
+                                    </div>
+
+                                    <div>
+                                        <p className="mb-2 text-xs leading-normal text-gray-500 dark:text-gray-400">
+                                            Max / Contract Process Days​
+                                        </p>
+                                        <p className="text-sm font-medium text-gray-800 dark:text-white/90">
+                                            30
+                                        </p>
+                                    </div>
+
+                                    <div>
+                                        <p className="mb-2 text-xs leading-normal text-gray-500 dark:text-gray-400">
+                                            Updated Date
+                                        </p>
+                                        <p className="text-sm font-medium text-gray-800 dark:text-white/90">
+                                            {supplier?.created_at
+                                                ? dateFormat(
+                                                      supplier?.updated_at,
+                                                  )
+                                                : "-"}
+                                        </p>
+                                    </div>
+
+                                    <div>
+                                        <p className="mb-2 text-xs leading-normal text-gray-500 dark:text-gray-400">
+                                            Primary Contact Email​
+                                        </p>
+                                        <p className="text-sm font-medium text-gray-800 dark:text-white/90">
+                                            {supplier?.contact?.email
+                                                ? `${
+                                                      supplier.contact.email ?? "-"
+                                                  }`
+                                                : "-"}
+                                        </p>
+                                    </div>
+
+                                    <div>
+                                        <p className="mb-2 text-xs leading-normal text-gray-500 dark:text-gray-400">
+                                            Country
+                                        </p>
+                                        <p className="text-sm font-medium text-gray-800 dark:text-white/90">
+                                            {supplier?.country ?? "-"}
+                                        </p>
+                                    </div>
+
+                                    <div>
+                                        <p className="mb-2 text-xs leading-normal text-gray-500 dark:text-gray-400">
+                                            Preferred Payment Day
+                                        </p>
+                                        <p className="text-sm font-medium text-gray-800 dark:text-white/90">
+                                            {supplier?.preferred_payment_day ??
+                                                "-"}
+                                        </p>
+                                    </div>
+
+                                    <div>
+                                        <p className="mb-2 text-xs leading-normal text-gray-500 dark:text-gray-400">
+                                            Last Updated By
+                                        </p>
+                                        <p className="text-sm font-medium text-gray-800 dark:text-white/90">
+                                           Andy Sumpter
+                                        </p>
+                                    </div>
+
+                                    <div>
+                                        <p className="mb-2 text-xs leading-normal text-gray-500 dark:text-gray-400">
+                                            Primary Contact Mobile​
+                                        </p>
+                                        <p className="text-sm font-medium text-gray-800 dark:text-white/90">
+                                            {supplier?.phone ?? "-"}
+                                        </p>
+                                    </div>
+                                    
+                                    <div>
+                                        <p className="mb-2 text-xs leading-normal text-gray-500 dark:text-gray-400">
+                                            Post Code
+                                        </p>
+                                        <p className="text-sm font-medium text-gray-800 dark:text-white/90">
+                                            {supplier?.postcode ?? "-"}
+                                        </p>
+                                    </div>
+
+                                    {/* <div>
+                                        <p className="mb-2 text-xs leading-normal text-gray-500 dark:text-gray-400">
                                             Updated Date
                                         </p>
                                         <p className="text-sm font-medium text-gray-800 dark:text-white/90">
@@ -271,7 +333,8 @@ export default function SupplierDetailsView({
                                                   )
                                                 : "-"}
                                         </p>
-                                    </div>
+                                    </div> */}
+
                                 </div>
                             </div>
                         </div>
