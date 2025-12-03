@@ -130,7 +130,10 @@ const UserForm = () => {
 
     return (
         <>
-            <PageBreadcrumb pageTitle="User" />
+            <PageBreadcrumb
+                pageTitle={id ? "Edit User" : "Add User"}
+                pageBreadcrumbs={[{ title: "Users", link: "/users" }]}
+            />
             <ComponentCard title={id ? "Edit User" : "Add User"}>
                 {isLoading ? (
                     <div className="flex items-center justify-center py-12">
@@ -297,10 +300,10 @@ const UserForm = () => {
                                                     selectPosition="start"
                                                     placeholder="+1 (555) 000-0000"
                                                     onChange={(
-                                                        phoneNumber: string,
+                                                        phoneNumber: string
                                                     ) => {
                                                         field.onChange(
-                                                            phoneNumber,
+                                                            phoneNumber
                                                         );
                                                     }}
                                                     onBlur={field.onBlur}
@@ -391,13 +394,13 @@ const UserForm = () => {
                                                 </Label>
                                                 <Select
                                                     value={String(
-                                                        field.value ?? "",
+                                                        field.value ?? ""
                                                     )}
                                                     options={twofaTypeOptions}
                                                     placeholder="Select 2FA Type"
                                                     onChange={(value: string) =>
                                                         field.onChange(
-                                                            Number(value),
+                                                            Number(value)
                                                         )
                                                     }
                                                     onBlur={field.onBlur}
@@ -431,15 +434,15 @@ const UserForm = () => {
                                                     </Label>
                                                     <Select
                                                         value={String(
-                                                            field.value ?? "",
+                                                            field.value ?? ""
                                                         )}
                                                         options={user_types}
                                                         placeholder="Select User Type"
                                                         onChange={(
-                                                            value: string,
+                                                            value: string
                                                         ) =>
                                                             field.onChange(
-                                                                Number(value),
+                                                                Number(value)
                                                             )
                                                         }
                                                         onBlur={field.onBlur}
@@ -474,13 +477,13 @@ const UserForm = () => {
                                                 </Label>
                                                 <Select
                                                     value={String(
-                                                        field.value ?? "",
+                                                        field.value ?? ""
                                                     )}
                                                     options={user_profiles}
                                                     placeholder="Select Profile Type"
                                                     onChange={(value: string) =>
                                                         field.onChange(
-                                                            Number(value),
+                                                            Number(value)
                                                         )
                                                     }
                                                     onBlur={field.onBlur}

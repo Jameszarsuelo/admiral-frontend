@@ -9,7 +9,11 @@ import { Controller, useForm } from "react-hook-form";
 import Button from "@/components/ui/button/Button";
 import { useNavigate, useParams } from "react-router";
 import { useEffect, useState } from "react";
-import { bordereauStatuses, fetchOutcome, upsertOutcome } from "@/database/outcome_api";
+import {
+    bordereauStatuses,
+    fetchOutcome,
+    upsertOutcome,
+} from "@/database/outcome_api";
 import { handleValidationErrors } from "@/helper/validationError";
 import { IOutcomeForm, OutcomeSchema } from "@/types/OutcomeSchema";
 import Can from "@/components/auth/Can";
@@ -18,12 +22,14 @@ import Select from "@/components/form/Select";
 export default function OutcomeForm() {
     const { id } = useParams();
     const navigate = useNavigate();
-    const [statusesOptions, setStatusesOptions] = useState<{ value: number; label: string }[]>([]);
-    
+    const [statusesOptions, setStatusesOptions] = useState<
+        { value: number; label: string }[]
+    >([]);
+
     const queueOptions = [
-        {value: "Bordereau", label:"Bordereau"},
-        {value: "Tasks", label:"Tasks"},
-    ]
+        { value: "Bordereau", label: "Bordereau" },
+        { value: "Tasks", label: "Tasks" },
+    ];
 
     const { handleSubmit, control, setError, reset } = useForm<IOutcomeForm>({
         defaultValues: {
@@ -31,9 +37,9 @@ export default function OutcomeForm() {
             outcome_code: "",
             classification: "",
             queue: "",
-            description: ""
+            description: "",
         },
-        resolver: zodResolver(OutcomeSchema)
+        resolver: zodResolver(OutcomeSchema),
     });
 
     useEffect(() => {
@@ -52,42 +58,49 @@ export default function OutcomeForm() {
                     classification: data.classification || "",
                     queue: data.queue || "",
                     description: data.description || "",
-                })
-            })
+                });
+            });
         }
     }, [id, reset]);
-
 
     const onSubmit = async (outcomeData: IOutcomeForm) => {
         try {
             // console.log(id ? true : false);
-            const payload = id ? { ...outcomeData, id: Number(id) } : outcomeData;
-            toast.promise(
-                upsertOutcome(payload), {
+            const payload = id
+                ? { ...outcomeData, id: Number(id) }
+                : outcomeData;
+            toast.promise(upsertOutcome(payload), {
                 loading: id ? "Updating Outcome..." : "Creating Outcome...",
                 success: () => {
                     setTimeout(() => {
-                        navigate(`/outcomes`)
+                        navigate(`/outcomes`);
                     }, 2000);
-                    return id ? "Outcome updated successfully" : "Outcome created successfully!";
+                    return id
+                        ? "Outcome updated successfully"
+                        : "Outcome created successfully!";
                 },
                 error: (error: unknown) => {
-                    return handleValidationErrors(error, setError)
-                }
-            }
-            )
+                    return handleValidationErrors(error, setError);
+                },
+            });
         } catch (error) {
             console.log("Error upon Submitting", error);
         }
-    }
+    };
 
     return (
         <>
-            <PageBreadcrumb pageTitle="Outcome" />
+            <PageBreadcrumb
+                pageTitle={
+                    id ? "Edit Outcome" : "Add Outcome"
+                }
+                pageBreadcrumbs={[
+                    { title: "Outcome", link: "/outcomes" },
+                ]}
+            />
             <ComponentCard title={id ? "Edit Outcome" : "Add Outcome"}>
                 <form id="form-outcome" onSubmit={handleSubmit(onSubmit)}>
                     <FieldGroup>
-
                         <div className="grid grid-cols-2 gap-6 ">
                             <div>
                                 <Controller
@@ -125,9 +138,7 @@ export default function OutcomeForm() {
                                         <Field
                                             data-invalid={fieldState.invalid}
                                         >
-                                            <Label htmlFor="input">
-                                                Queue
-                                            </Label>
+                                            <Label htmlFor="input">Queue</Label>
                                             {/* <Input
                                                 {...field}
                                                 type="text"
@@ -136,15 +147,17 @@ export default function OutcomeForm() {
                                                 placeholder="Enter Queue"
                                             /> */}
                                             <Select
-                                                    value={String(field.value ?? "")}
-                                                    options={queueOptions}
-                                                    placeholder="Select Queue"
-                                                    onChange={(value: string) =>
-                                                        field.onChange(value)
-                                                    }
-                                                    onBlur={field.onBlur}
-                                                    className="dark:bg-dark-900"
-                                                />
+                                                value={String(
+                                                    field.value ?? ""
+                                                )}
+                                                options={queueOptions}
+                                                placeholder="Select Queue"
+                                                onChange={(value: string) =>
+                                                    field.onChange(value)
+                                                }
+                                                onBlur={field.onBlur}
+                                                className="dark:bg-dark-900"
+                                            />
                                             {fieldState.error && (
                                                 <p className="mt-1 text-sm text-error-500">
                                                     {fieldState.error.message}
@@ -158,39 +171,37 @@ export default function OutcomeForm() {
 
                         <div className="grid grid-cols-2 gap-6 ">
                             <div>
-                               <Controller
-                                        name="status"
-                                        control={control}
-                                        render={({ field, fieldState }) => (
-                                            <Field
-                                                data-invalid={
-                                                    fieldState.invalid
-                                                }
-                                            >
-                                                <Label htmlFor="status">
-                                                    Bordereau / Task Terminal Status​
-                                                </Label>
-                                                <Select
-                                                    value={String(field.value ?? "")}
-                                                    options={statusesOptions}
-                                                    placeholder="Select Status"
-                                                    onChange={(value: string) =>
-                                                        field.onChange(value)
-                                                    }
-                                                    onBlur={field.onBlur}
-                                                    className="dark:bg-dark-900"
-                                                />
-                                                {fieldState.error && (
-                                                    <p className="mt-1 text-sm text-error-500">
-                                                        {
-                                                            fieldState.error
-                                                                .message
-                                                        }
-                                                    </p>
+                                <Controller
+                                    name="status"
+                                    control={control}
+                                    render={({ field, fieldState }) => (
+                                        <Field
+                                            data-invalid={fieldState.invalid}
+                                        >
+                                            <Label htmlFor="status">
+                                                Bordereau / Task Terminal
+                                                Status​
+                                            </Label>
+                                            <Select
+                                                value={String(
+                                                    field.value ?? ""
                                                 )}
-                                            </Field>
-                                        )}
-                                    />
+                                                options={statusesOptions}
+                                                placeholder="Select Status"
+                                                onChange={(value: string) =>
+                                                    field.onChange(value)
+                                                }
+                                                onBlur={field.onBlur}
+                                                className="dark:bg-dark-900"
+                                            />
+                                            {fieldState.error && (
+                                                <p className="mt-1 text-sm text-error-500">
+                                                    {fieldState.error.message}
+                                                </p>
+                                            )}
+                                        </Field>
+                                    )}
+                                />
                             </div>
                             <div>
                                 <Controller
@@ -219,7 +230,6 @@ export default function OutcomeForm() {
                                     )}
                                 />
                             </div>
-                            
                         </div>
                         <div className="grid grid-cols-1 gap-6 ">
                             <div>
@@ -254,15 +264,18 @@ export default function OutcomeForm() {
                 </form>
 
                 <div className="mt-6 flex justify-end gap-3">
-                    <Button variant="danger" onClick={() => navigate("/outcomes")}>
+                    <Button
+                        variant="danger"
+                        onClick={() => navigate("/outcomes")}
+                    >
                         Cancel
                     </Button>
                     <Button variant="outline" onClick={() => reset()}>
                         Reset
                     </Button>
-                    <Can permission={id ? 'outcomes.create' : 'outcomes.edit'}>
+                    <Can permission={id ? "outcomes.create" : "outcomes.edit"}>
                         <Button type="submit" form="form-outcome">
-                            {id ? 'Update' : 'Submit'}
+                            {id ? "Update" : "Submit"}
                         </Button>
                     </Can>
                 </div>

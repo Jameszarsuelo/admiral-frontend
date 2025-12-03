@@ -70,7 +70,10 @@ export default function ProfileForm() {
 
     return (
         <>
-            <PageBreadcrumb pageTitle="Profile" />
+            <PageBreadcrumb
+                pageTitle={id ? "Edit Profile" : "Add Profile"}
+                pageBreadcrumbs={[{ title: "Profiles", link: "/profiles" }]}
+            />
             <ComponentCard title={id ? "Edit Profile" : "Add Profile"}>
                 {isLoading ? (
                     <div className="flex items-center justify-center py-12">

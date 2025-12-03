@@ -64,17 +64,22 @@ export default function SupplierForm() {
         },
     });
 
-    async function handleAddDocument(values: { document: Partial<IDocumentFormSchema> }) {
+    async function handleAddDocument(values: {
+        document: Partial<IDocumentFormSchema>;
+    }) {
         setIsUploadingDoc(true);
         const payload: Record<string, unknown> = { ...(values.document || {}) };
         if (id) payload["supplier_id"] = Number(id);
 
         try {
-            await toast.promise(upsertDocument(payload as IDocumentFormSchema), {
-                loading: "Uploading document...",
-                success: "Document uploaded",
-                error: "Failed to upload document",
-            });
+            await toast.promise(
+                upsertDocument(payload as IDocumentFormSchema),
+                {
+                    loading: "Uploading document...",
+                    success: "Document uploaded",
+                    error: "Failed to upload document",
+                }
+            );
             docForm.reset();
             setIsAddDocModalOpen(false);
             refetchSupplier?.();
@@ -90,7 +95,11 @@ export default function SupplierForm() {
     });
 
     // Fetch current supplier data if editing
-    const { data: supplierData, isLoading, refetch: refetchSupplier } = useQuery({
+    const {
+        data: supplierData,
+        isLoading,
+        refetch: refetchSupplier,
+    } = useQuery({
         queryKey: ["supplier", id],
         queryFn: () => (id ? fetchSupplierById(id) : null),
         enabled: !!id,
@@ -102,7 +111,7 @@ export default function SupplierForm() {
         .filter(
             (contact) =>
                 contact.supplier_id === null ||
-                contact.supplier_id === Number(id),
+                contact.supplier_id === Number(id)
         )
         .map((contact) => ({
             value: contact.id || 0,
@@ -180,7 +189,7 @@ export default function SupplierForm() {
             const dvData = await fetchDocumentVisibilityList();
 
             setDocumentVisibilityOptions(
-                dvData.map((dv) => ({ value: dv.id, label: dv.name })),
+                dvData.map((dv) => ({ value: dv.id, label: dv.name }))
             );
         };
 
@@ -189,7 +198,14 @@ export default function SupplierForm() {
 
     return (
         <>
-            <PageBreadcrumb pageTitle="Supplier" />
+            <PageBreadcrumb
+                pageTitle={
+                    id ? "Edit Supplier" : "Add Supplier"
+                }
+                pageBreadcrumbs={[
+                    { title: "Supplier", link: "/supplier-directory" },
+                ]}
+            />
             <ComponentCard title={id ? "Edit Supplier" : "Add Supplier"}>
                 {isLoading ? (
                     <div className="flex items-center justify-center py-12">
@@ -319,12 +335,12 @@ export default function SupplierForm() {
                                                                     contactOptions
                                                                 }
                                                                 onChange={(
-                                                                    value,
+                                                                    value
                                                                 ) =>
                                                                     field.onChange(
                                                                         Number(
-                                                                            value,
-                                                                        ),
+                                                                            value
+                                                                        )
                                                                     )
                                                                 }
                                                                 placeholder="Select Primary Contact"
@@ -338,7 +354,7 @@ export default function SupplierForm() {
                                                             size="sm"
                                                             onClick={() =>
                                                                 setIsContactModalOpen(
-                                                                    true,
+                                                                    true
                                                                 )
                                                             }
                                                             className="flex items-center gap-1 whitespace-nowrap"
@@ -387,8 +403,8 @@ export default function SupplierForm() {
                                                                 ? undefined
                                                                 : Number(
                                                                       e.target
-                                                                          .value,
-                                                                  ),
+                                                                          .value
+                                                                  )
                                                         )
                                                     }
                                                     onBlur={field.onBlur}
@@ -430,8 +446,8 @@ export default function SupplierForm() {
                                                                 ? undefined
                                                                 : Number(
                                                                       e.target
-                                                                          .value,
-                                                                  ),
+                                                                          .value
+                                                                  )
                                                         )
                                                     }
                                                     onBlur={field.onBlur}
@@ -473,8 +489,8 @@ export default function SupplierForm() {
                                                                 ? undefined
                                                                 : Number(
                                                                       e.target
-                                                                          .value,
-                                                                  ),
+                                                                          .value
+                                                                  )
                                                         )
                                                     }
                                                     onBlur={field.onBlur}
@@ -741,6 +757,79 @@ export default function SupplierForm() {
                                             </Field>
                                         )}
                                     />
+<<<<<<< Updated upstream
+=======
+
+                                    <div>
+                                        <Controller
+                                            name="two_fa_type"
+                                            control={control}
+                                            render={({ field, fieldState }) => (
+                                                <Field
+                                                    data-invalid={
+                                                        fieldState.invalid
+                                                    }
+                                                >
+                                                    <Label htmlFor="two_fa_type">
+                                                        2FA Type
+                                                    </Label>
+                                                    <Select
+                                                        value={String(
+                                                            field.value ?? ""
+                                                        )}
+                                                        options={
+                                                            twofaTypeOptions
+                                                        }
+                                                        placeholder="Select 2FA Type"
+                                                        onChange={(
+                                                            value: string
+                                                        ) =>
+                                                            field.onChange(
+                                                                Number(value)
+                                                            )
+                                                        }
+                                                        onBlur={field.onBlur}
+                                                        className="dark:bg-dark-900"
+                                                    />
+                                                    {fieldState.error && (
+                                                        <p className="mt-1 text-sm text-error-500">
+                                                            {
+                                                                fieldState.error
+                                                                    .message
+                                                            }
+                                                        </p>
+                                                    )}
+                                                </Field>
+                                            )}
+                                        />
+                                    </div>
+
+                                    <div>
+                                        <Controller
+                                            name="two_fa_enabled"
+                                            control={control}
+                                            render={({ field, fieldState }) => (
+                                                <Field
+                                                    data-invalid={
+                                                        fieldState.invalid
+                                                    }
+                                                >
+                                                    <Label htmlFor="input">
+                                                        Multi-factor
+                                                        authentication
+                                                    </Label>
+                                                    <Switch
+                                                        checked={field.value}
+                                                        onCheckedChange={
+                                                            field.onChange
+                                                        }
+                                                        label="Enable multi-factor authentication to secure your account."
+                                                    />
+                                                </Field>
+                                            )}
+                                        />
+                                    </div>
+>>>>>>> Stashed changes
                                 </div>
                                 {/* {!id && (
                                     <>
@@ -780,7 +869,7 @@ export default function SupplierForm() {
                                                         variant="outline"
                                                         onClick={() =>
                                                             setIsDocsModalOpen(
-                                                                true,
+                                                                true
                                                             )
                                                         }
                                                     >
@@ -805,7 +894,11 @@ export default function SupplierForm() {
                                                         <Button
                                                             size="sm"
                                                             variant="outline"
-                                                            onClick={() => setIsAddDocModalOpen(true)}
+                                                            onClick={() =>
+                                                                setIsAddDocModalOpen(
+                                                                    true
+                                                                )
+                                                            }
                                                         >
                                                             <PlusIcon className="w-4 h-4" />
                                                             Add Document
@@ -868,13 +961,31 @@ export default function SupplierForm() {
                 className="max-w-3xl p-6 max-h-[90vh] overflow-y-auto"
             >
                 <div className="px-4 py-2">
-                    <h3 className="text-lg font-semibold mb-4">Upload Document</h3>
+                    <h3 className="text-lg font-semibold mb-4">
+                        Upload Document
+                    </h3>
                     <form onSubmit={docForm.handleSubmit(handleAddDocument)}>
-                        <DocumentFields control={docForm.control} documentVisibilityOptions={documentVisibilityOptions} />
+                        <DocumentFields
+                            control={docForm.control}
+                            documentVisibilityOptions={
+                                documentVisibilityOptions
+                            }
+                        />
 
                         <div className="mt-4 flex justify-end gap-3">
-                            <Button variant="danger" onClick={() => { setIsAddDocModalOpen(false); docForm.reset(); }} disabled={isUploadingDoc}>Cancel</Button>
-                            <Button type="submit" disabled={isUploadingDoc}>{isUploadingDoc ? "Uploading..." : "Upload"}</Button>
+                            <Button
+                                variant="danger"
+                                onClick={() => {
+                                    setIsAddDocModalOpen(false);
+                                    docForm.reset();
+                                }}
+                                disabled={isUploadingDoc}
+                            >
+                                Cancel
+                            </Button>
+                            <Button type="submit" disabled={isUploadingDoc}>
+                                {isUploadingDoc ? "Uploading..." : "Upload"}
+                            </Button>
                         </div>
                     </form>
                 </div>
@@ -885,7 +996,11 @@ export default function SupplierForm() {
                 onClose={() => setIsContactModalOpen(false)}
                 onUserCreated={(user) => {
                     toast.success(
+<<<<<<< Updated upstream
                         `User ${user?.contact?.firstname || ""} ${user?.contact?.lastname || ""} has been added!`,
+=======
+                        `Contact ${contact.firstname} ${contact.lastname} has been added!`
+>>>>>>> Stashed changes
                     );
                     refetchContacts();
                 }}

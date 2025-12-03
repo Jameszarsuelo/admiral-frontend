@@ -89,7 +89,10 @@ export default function ModuleForm() {
 
     return (
         <>
-            <PageBreadcrumb pageTitle="Module" />
+            <PageBreadcrumb
+                pageTitle={id ? "Edit Module" : "Add Module"}
+                pageBreadcrumbs={[{ title: "Modules", link: "/modules" }]}
+            />
             <ComponentCard title={id ? "Edit Module" : "Add Module"}>
                 {isLoading ? (
                     <div className="flex items-center justify-center py-12">
@@ -176,7 +179,7 @@ export default function ModuleForm() {
                                                 options={moduleOptions}
                                                 onChange={(value) =>
                                                     field.onChange(
-                                                        Number(value),
+                                                        Number(value)
                                                     )
                                                 }
                                                 placeholder="Select Parent Module"

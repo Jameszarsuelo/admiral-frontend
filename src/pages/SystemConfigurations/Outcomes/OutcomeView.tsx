@@ -9,7 +9,12 @@ import { Controller, useForm } from "react-hook-form";
 import Button from "@/components/ui/button/Button";
 import { useNavigate, useParams } from "react-router";
 import { useEffect, useState } from "react";
-import { bordereauStatuses, fetchOutcome, fetchShowOutcome, upsertOutcome } from "@/database/outcome_api";
+import {
+    bordereauStatuses,
+    fetchOutcome,
+    fetchShowOutcome,
+    upsertOutcome,
+} from "@/database/outcome_api";
 import { handleValidationErrors } from "@/helper/validationError";
 import { IOutcomeForm, OutcomeSchema } from "@/types/OutcomeSchema";
 import Can from "@/components/auth/Can";
@@ -18,8 +23,9 @@ import Select from "@/components/form/Select";
 export default function OutcomeView() {
     const { id } = useParams();
     const navigate = useNavigate();
-    const [statusesOptions, setStatusesOptions] = useState<{ value: number; label: string }[]>([]);
-
+    const [statusesOptions, setStatusesOptions] = useState<
+        { value: number; label: string }[]
+    >([]);
 
     const { handleSubmit, control, setError, reset } = useForm<IOutcomeForm>({
         defaultValues: {
@@ -27,9 +33,9 @@ export default function OutcomeView() {
             outcome_code: "",
             classification: "",
             queue: "",
-            description: ""
+            description: "",
         },
-        resolver: zodResolver(OutcomeSchema)
+        resolver: zodResolver(OutcomeSchema),
     });
 
     useEffect(() => {
@@ -48,42 +54,45 @@ export default function OutcomeView() {
                     classification: data.classification || "",
                     queue: data.queue || "",
                     description: data.description || "",
-                })
-            })
+                });
+            });
         }
     }, [id, reset]);
-
 
     const onSubmit = async (outcomeData: IOutcomeForm) => {
         try {
             // console.log(id ? true : false);
-            const payload = id ? { ...outcomeData, id: Number(id) } : outcomeData;
-            toast.promise(
-                upsertOutcome(payload), {
+            const payload = id
+                ? { ...outcomeData, id: Number(id) }
+                : outcomeData;
+            toast.promise(upsertOutcome(payload), {
                 loading: id ? "Updating Outcome..." : "Creating Outcome...",
                 success: () => {
                     setTimeout(() => {
-                        navigate(`/outcomes`)
+                        navigate(`/outcomes`);
                     }, 2000);
-                    return id ? "Outcome updated successfully" : "Outcome created successfully!";
+                    return id
+                        ? "Outcome updated successfully"
+                        : "Outcome created successfully!";
                 },
                 error: (error: unknown) => {
-                    return handleValidationErrors(error, setError)
-                }
-            }
-            )
+                    return handleValidationErrors(error, setError);
+                },
+            });
         } catch (error) {
             console.log("Error upon Submitting", error);
         }
-    }
+    };
 
     return (
         <>
-            <PageBreadcrumb pageTitle="Outcome" />
+            <PageBreadcrumb
+                pageTitle="View Outcome"
+                pageBreadcrumbs={[{ title: "Outcome", link: "/outcomes" }]}
+            />
             <ComponentCard title={"View Outcome"}>
                 <form id="form-outcome" onSubmit={handleSubmit(onSubmit)}>
                     <FieldGroup>
-
                         <div className="grid grid-cols-2 gap-6 ">
                             <div>
                                 <Controller
@@ -96,7 +105,7 @@ export default function OutcomeView() {
                                             <Label htmlFor="input">
                                                 Outcome Code
                                             </Label>
-                                             {String(field.value ?? "")}
+                                            {String(field.value ?? "")}
                                         </Field>
                                     )}
                                 />
@@ -109,10 +118,8 @@ export default function OutcomeView() {
                                         <Field
                                             data-invalid={fieldState.invalid}
                                         >
-                                            <Label htmlFor="input">
-                                                Queue
-                                            </Label>
-                                             {String(field.value ?? "")}
+                                            <Label htmlFor="input">Queue</Label>
+                                            {String(field.value ?? "")}
                                         </Field>
                                     )}
                                 />
@@ -121,22 +128,20 @@ export default function OutcomeView() {
 
                         <div className="grid grid-cols-2 gap-6 ">
                             <div>
-                               <Controller
-                                        name="status"
-                                        control={control}
-                                        render={({ field, fieldState }) => (
-                                            <Field
-                                                data-invalid={
-                                                    fieldState.invalid
-                                                }
-                                            >
-                                                <Label htmlFor="status">
-                                                    Status
-                                                </Label>
-                                                {String(field.value ?? "")}
-                                            </Field>
-                                        )}
-                                    />
+                                <Controller
+                                    name="status"
+                                    control={control}
+                                    render={({ field, fieldState }) => (
+                                        <Field
+                                            data-invalid={fieldState.invalid}
+                                        >
+                                            <Label htmlFor="status">
+                                                Status
+                                            </Label>
+                                            {String(field.value ?? "")}
+                                        </Field>
+                                    )}
+                                />
                             </div>
                             <div>
                                 <Controller
@@ -149,12 +154,11 @@ export default function OutcomeView() {
                                             <Label htmlFor="input">
                                                 Classification
                                             </Label>
-                                             {String(field.value ?? "")}
+                                            {String(field.value ?? "")}
                                         </Field>
                                     )}
                                 />
                             </div>
-                            
                         </div>
                         <div className="grid grid-cols-1 gap-6 ">
                             <div>

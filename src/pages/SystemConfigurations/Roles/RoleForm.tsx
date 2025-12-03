@@ -57,10 +57,10 @@ export default function RoleForm() {
     // Local left-side form state for adding/editing a single module-action
     const [editingIndex, setEditingIndex] = useState<number | null>(null);
     const [leftModuleId, setLeftModuleId] = useState<number | undefined>(
-        undefined,
+        undefined
     );
     const [leftActionId, setLeftActionId] = useState<number | undefined>(
-        undefined,
+        undefined
     );
     const [leftCode, setLeftCode] = useState<string>("");
 
@@ -89,7 +89,7 @@ export default function RoleForm() {
                         action: m.action,
                         code: m.code,
                     })),
-                }),
+                })
             )
             .catch(console.error);
     }, [id, reset]);
@@ -101,7 +101,7 @@ export default function RoleForm() {
     const moduleMap = useMemo(() => {
         return ((modulesQ.data as IModuleBase[] | undefined) ?? []).reduce(
             (acc, m) => ({ ...acc, [String(m.id)]: m.name }),
-            {} as Record<string, string>,
+            {} as Record<string, string>
         );
     }, [modulesQ.data]);
 
@@ -147,7 +147,7 @@ export default function RoleForm() {
             id: leftActionId,
             module_id: leftModuleId,
             action: actionsByModule[leftModuleId ?? 0]?.find(
-                (a) => a.id === leftActionId,
+                (a) => a.id === leftActionId
             )?.action,
             code: leftCode,
         };
@@ -160,7 +160,7 @@ export default function RoleForm() {
             cur[editingIndex] = { ...(cur[editingIndex] ?? {}), ...payload };
             setValue(
                 "module_actions",
-                cur as unknown as IRoleForm["module_actions"],
+                cur as unknown as IRoleForm["module_actions"]
             );
             resetLeftFields();
         }
@@ -196,7 +196,10 @@ export default function RoleForm() {
 
     return (
         <>
-            <PageBreadcrumb pageTitle="Role" />
+            <PageBreadcrumb
+                pageTitle={id ? "Edit Role" : "Add Role"}
+                pageBreadcrumbs={[{ title: "Roles", link: "/roles" }]}
+            />
             <ComponentCard title={id ? "Edit Role" : "Add Role"}>
                 <form id="form-role" onSubmit={handleSubmit(onSubmit)}>
                     <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">

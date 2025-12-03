@@ -3,9 +3,11 @@ import PageBreadcrumb from "@/components/common/PageBreadCrumb";
 import Spinner from "@/components/ui/spinner/Spinner";
 import { fetchContactById } from "@/database/contact_api";
 import { useQuery } from "@tanstack/react-query";
-import { useParams } from "react-router";
+import { useNavigate, useParams } from "react-router";
+import Button from "@/components/ui/button/Button";
 
 export default function ContactView() {
+    const navigate = useNavigate();
     const { id } = useParams();
 
     const { data: contactData, isLoading } = useQuery({
@@ -27,7 +29,12 @@ export default function ContactView() {
 
     return (
         <>
-            <PageBreadcrumb pageTitle="View Contact" />
+            <PageBreadcrumb
+                pageTitle="View Contact"
+                pageBreadcrumbs={[
+                    { title: "Contact Directory", link: "/contact-directory" },
+                ]}
+            />
             <ComponentCard title="Contact Information">
                 <div>
                     <div className="grid grid-cols-1 gap-4 lg:grid-cols-2 lg:gap-7 2xl:gap-x-32">
@@ -173,6 +180,13 @@ export default function ContactView() {
                             </div>
                         </div>
                     </div>
+                     {!isLoading && (
+                    <div className="mt-6 flex justify-end gap-3">
+                        <Button variant="primary" onClick={() => navigate(`/contact-directory`)}>
+                            Back to Contact Directory
+                        </Button>
+                    </div>
+                     )}
                 </div>
             </ComponentCard>
         </>

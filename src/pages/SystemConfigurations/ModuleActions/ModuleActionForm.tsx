@@ -9,7 +9,10 @@ import Input from "@/components/form/input/InputField";
 import Button from "@/components/ui/button/Button";
 import Spinner from "@/components/ui/spinner/Spinner";
 import { IModuleActionForm } from "@/types/ModuleActionSchema";
-import { fetchModuleActionById, upsertModuleAction } from "@/database/module_actions_api";
+import {
+    fetchModuleActionById,
+    upsertModuleAction,
+} from "@/database/module_actions_api";
 import { useQuery } from "@tanstack/react-query";
 import { fetchModuleList } from "@/database/module_api";
 import { IModuleBase } from "@/types/ModuleSchema";
@@ -22,7 +25,12 @@ export default function ModuleActionForm() {
     const [isLoading, setIsLoading] = useState(false);
 
     const { handleSubmit, control, reset } = useForm<IModuleActionForm>({
-        defaultValues: { id: undefined, action: "", code: "", module_id: undefined },
+        defaultValues: {
+            id: undefined,
+            action: "",
+            code: "",
+            module_id: undefined,
+        },
     });
 
     useEffect(() => {
@@ -35,11 +43,18 @@ export default function ModuleActionForm() {
         }
     }, [id, reset]);
 
-    const { data: moduleOptions = [] } = useQuery<IModuleBase[], unknown, { value: number; label: string }[]>({
+    const { data: moduleOptions = [] } = useQuery<
+        IModuleBase[],
+        unknown,
+        { value: number; label: string }[]
+    >({
         queryKey: ["modules-list"],
         queryFn: fetchModuleList,
         select: (modules) =>
-            (modules ?? []).map((m) => ({ value: Number(m.id), label: m.name })),
+            (modules ?? []).map((m) => ({
+                value: Number(m.id),
+                label: m.name,
+            })),
         placeholderData: [],
         staleTime: 1000 * 60 * 5,
     });
@@ -53,7 +68,8 @@ export default function ModuleActionForm() {
                     setTimeout(() => navigate("/module-actions"), 800);
                     return id ? "Action updated" : "Action created";
                 },
-                error: (e: unknown) => (e instanceof Error ? e.message : "An error occurred"),
+                error: (e: unknown) =>
+                    e instanceof Error ? e.message : "An error occurred",
             });
         } finally {
             setIsLoading(false);
@@ -62,14 +78,22 @@ export default function ModuleActionForm() {
 
     return (
         <>
-            <PageBreadcrumb pageTitle="Module Action" />
-            <ComponentCard title={id ? "Edit Module Action" : "Add Module Action"}>
+            <PageBreadcrumb
+                pageTitle={id ? "Edit Module Action" : "Add Module Action"}
+                pageBreadcrumbs={[{ title: "Module Actions", link: "/module-actions" }]}
+            />
+            <ComponentCard
+                title={id ? "Edit Module Action" : "Add Module Action"}
+            >
                 {isLoading ? (
                     <div className="flex items-center justify-center py-12">
                         <Spinner size="lg" />
                     </div>
                 ) : (
-                    <form id="form-module-action" onSubmit={handleSubmit(onSubmit)}>
+                    <form
+                        id="form-module-action"
+                        onSubmit={handleSubmit(onSubmit)}
+                    >
                         <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
                             <div>
                                 <Controller
@@ -77,8 +101,14 @@ export default function ModuleActionForm() {
                                     control={control}
                                     render={({ field }) => (
                                         <div>
-                                            <Label htmlFor="action">Action</Label>
-                                            <Input {...field} id="action" placeholder="Enter action name" />
+                                            <Label htmlFor="action">
+                                                Action
+                                            </Label>
+                                            <Input
+                                                {...field}
+                                                id="action"
+                                                placeholder="Enter action name"
+                                            />
                                         </div>
                                     )}
                                 />
@@ -90,7 +120,11 @@ export default function ModuleActionForm() {
                                     render={({ field }) => (
                                         <div>
                                             <Label htmlFor="code">Code</Label>
-                                            <Input {...field} id="code" placeholder="Unique code" />
+                                            <Input
+                                                {...field}
+                                                id="code"
+                                                placeholder="Unique code"
+                                            />
                                         </div>
                                     )}
                                 />
@@ -100,12 +134,20 @@ export default function ModuleActionForm() {
                                     name="module_id"
                                     control={control}
                                     render={({ field, fieldState }) => (
-                                        <Field data-invalid={fieldState?.invalid}>
-                                            <Label htmlFor="module_id">Module</Label>
+                                        <Field
+                                            data-invalid={fieldState?.invalid}
+                                        >
+                                            <Label htmlFor="module_id">
+                                                Module
+                                            </Label>
                                             <Combobox
                                                 value={field.value ?? undefined}
                                                 options={moduleOptions}
-                                                onChange={(value) => field.onChange(Number(value))}
+                                                onChange={(value) =>
+                                                    field.onChange(
+                                                        Number(value)
+                                                    )
+                                                }
                                                 placeholder="Select Parent Module"
                                                 searchPlaceholder="Search module..."
                                                 emptyText="No module found."

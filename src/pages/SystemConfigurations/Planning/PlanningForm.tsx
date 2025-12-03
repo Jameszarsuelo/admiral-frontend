@@ -44,10 +44,8 @@ export default function PlanningForm() {
                 reset({
                     start_time: data.start_time || "",
                     end_time: data.end_time || "",
-                    work_saturday:
-                        Number(data.work_saturday) === 1 ? "1" : "0",
-                    work_sunday:
-                        Number(data.work_sunday) === 1 ? "1" : "0",
+                    work_saturday: Number(data.work_saturday) === 1 ? "1" : "0",
+                    work_sunday: Number(data.work_sunday) === 1 ? "1" : "0",
                     forecast_horizon: data.forecast_horizon || "",
                     is_active: data.is_active || false,
                     created_at: data.created_at || "",
@@ -87,7 +85,7 @@ export default function PlanningForm() {
         const [sh, sm] = start.split(":").map(Number);
         const [eh, em] = end.split(":").map(Number);
 
-        return (eh * 60 + em) - (sh * 60 + sm);
+        return eh * 60 + em - (sh * 60 + sm);
     };
 
     // Validate active_hour based on duration
@@ -108,12 +106,14 @@ export default function PlanningForm() {
 
     return (
         <>
-            <PageBreadcrumb pageTitle="Planning" />
+            <PageBreadcrumb
+                pageTitle={id ? "Edit Planning" : "Add Planning"}
+                pageBreadcrumbs={[{ title: "Planning", link: "/planning" }]}
+            />
             <ComponentCard title={id ? "Edit Planning" : "Add Planning"}>
                 <form id="form-planning" onSubmit={handleSubmit(onSubmit)}>
                     <FieldGroup>
                         <div className="grid grid-cols-4 gap-6">
-
                             {/* START TIME */}
                             <Controller
                                 name="start_time"
@@ -122,10 +122,7 @@ export default function PlanningForm() {
                                     <Field data-invalid={fieldState.invalid}>
                                         <Label>Working Hours (Start)</Label>
                                         <div className="relative">
-                                            <Input
-                                                {...field}
-                                                type="time"
-                                            />
+                                            <Input {...field} type="time" />
                                             {fieldState.error && (
                                                 <p className="mt-1 text-sm text-error-500">
                                                     {fieldState.error.message}
@@ -145,10 +142,7 @@ export default function PlanningForm() {
                                     <Field data-invalid={fieldState.invalid}>
                                         <Label>Working Hours (End)</Label>
                                         <div className="relative">
-                                            <Input
-                                                {...field}
-                                                type="time"
-                                            />
+                                            <Input {...field} type="time" />
                                             {fieldState.error && (
                                                 <p className="mt-1 text-sm text-error-500">
                                                     {fieldState.error.message}
@@ -185,7 +179,7 @@ export default function PlanningForm() {
                                 )}
                             />
 
-                             {/* FORECAST HORIZON */}
+                            {/* FORECAST HORIZON */}
                             <Controller
                                 name="forecast_horizon"
                                 control={control}
@@ -256,7 +250,6 @@ export default function PlanningForm() {
                                                 }
                                                 label="NO"
                                                 name=""
-
                                             />
                                             <Radio
                                                 id="work_sunday_yes"
@@ -267,14 +260,11 @@ export default function PlanningForm() {
                                                 }
                                                 label="YES"
                                                 name=""
-
                                             />
                                         </div>
                                     </div>
                                 )}
                             />
-
-                           
 
                             {/* IS ACTIVE */}
                             <Controller
@@ -293,12 +283,13 @@ export default function PlanningForm() {
                                                 }
                                                 label="NO"
                                                 name=""
-                                                
                                             />
                                             <Radio
                                                 id="is_active_yes"
                                                 value="1"
-                                                checked={field.value ? true : false}
+                                                checked={
+                                                    field.value ? true : false
+                                                }
                                                 onChange={() =>
                                                     field.onChange(true)
                                                 }
@@ -331,9 +322,7 @@ export default function PlanningForm() {
                         Reset
                     </Button>
 
-                    <Can
-                        permission={id ? "planning.edit" : "planning.create"}
-                    >
+                    <Can permission={id ? "planning.edit" : "planning.create"}>
                         <Button type="submit" form="form-planning">
                             {id ? "Update" : "Submit"}
                         </Button>

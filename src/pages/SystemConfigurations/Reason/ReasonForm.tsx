@@ -1,19 +1,19 @@
-import Can from '@/components/auth/Can';
-import ComponentCard from '@/components/common/ComponentCard';
-import PageBreadcrumb from '@/components/common/PageBreadCrumb';
-import Input from '@/components/form/input/InputField';
-import Radio from '@/components/form/input/Radio';
-import Button from '@/components/ui/button/Button';
-import { Field, FieldGroup } from '@/components/ui/field';
-import { fetchReason, upsertReason } from '@/database/reason_api';
-import { handleValidationErrors } from '@/helper/validationError';
-import { IReasonForm, ReasonSchema } from '@/types/ReasonSchema';
-import { zodResolver } from '@hookform/resolvers/zod';
-import { Label } from '@radix-ui/react-label';
-import { useEffect } from 'react'
-import { Controller, useForm } from 'react-hook-form';
-import { useNavigate, useParams } from 'react-router'
-import { toast } from 'sonner';
+import Can from "@/components/auth/Can";
+import ComponentCard from "@/components/common/ComponentCard";
+import PageBreadcrumb from "@/components/common/PageBreadCrumb";
+import Input from "@/components/form/input/InputField";
+import Radio from "@/components/form/input/Radio";
+import Button from "@/components/ui/button/Button";
+import { Field, FieldGroup } from "@/components/ui/field";
+import { fetchReason, upsertReason } from "@/database/reason_api";
+import { handleValidationErrors } from "@/helper/validationError";
+import { IReasonForm, ReasonSchema } from "@/types/ReasonSchema";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { Label } from "@radix-ui/react-label";
+import { useEffect } from "react";
+import { Controller, useForm } from "react-hook-form";
+import { useNavigate, useParams } from "react-router";
+import { toast } from "sonner";
 
 const ReasonForm = () => {
     const { id } = useParams();
@@ -24,7 +24,7 @@ const ReasonForm = () => {
             reason: "",
             reason_for: "1",
         },
-        resolver: zodResolver(ReasonSchema)
+        resolver: zodResolver(ReasonSchema),
     });
 
     useEffect(() => {
@@ -35,10 +35,10 @@ const ReasonForm = () => {
                     reason_for: String(data.reason_for) as "1" | "2" | "3",
                     created_at: data.created_at || "",
                     updated_at: data.updated_at || "",
-                })
-            })
+                });
+            });
         }
-    }, [id, reset])
+    }, [id, reset]);
 
     const onSubmit = async (reasonData: IReasonForm) => {
         try {
@@ -49,32 +49,36 @@ const ReasonForm = () => {
                     setTimeout(() => {
                         navigate(`/reason`);
                     }, 2000);
-                    return id ? "Reason updated successfully" : "Reason created successfully"
+                    return id
+                        ? "Reason updated successfully"
+                        : "Reason created successfully";
                 },
                 error: (error: unknown) => {
                     return handleValidationErrors(error, setError);
-                }
-            })
+                },
+            });
         } catch (error) {
             console.log("Error upon Submitting", error);
         }
-    }
+    };
 
     return (
         <>
-            <PageBreadcrumb pageTitle="Reason" />
+            <PageBreadcrumb
+                pageTitle={id ? "Edit Reason" : "Add Reason"}
+                pageBreadcrumbs={[{ title: "Reason", link: "/reason" }]}
+            />
             <ComponentCard title={id ? "Edit Reason" : "Add Reason"}>
                 <form id="form-reason" onSubmit={handleSubmit(onSubmit)}>
                     <FieldGroup>
                         <div className="grid grid-cols-4 gap-6 ">
                             <div className="col-span-4 mt-5">
                                 <Controller
-                                    name="reason_for"                                 control={control}
+                                    name="reason_for"
+                                    control={control}
                                     render={({ field }) => (
                                         <div className="grid">
-                                            <Label>
-                                                Reason For
-                                            </Label>
+                                            <Label>Reason For</Label>
                                             <div className="flex gap-8 mt-3">
                                                 <Radio
                                                     id="reason_for_process"
@@ -96,7 +100,7 @@ const ReasonForm = () => {
                                                     label="Close"
                                                     name={""}
                                                 />
-                                                 <Radio
+                                                <Radio
                                                     id="reason_for_outcome"
                                                     value={3}
                                                     checked={field.value == "3"}
@@ -110,9 +114,7 @@ const ReasonForm = () => {
                                         </div>
                                     )}
                                 />
-                                
                             </div>
-                            
 
                             <div className="col-span-4 gap-1 mt-5">
                                 <Controller
@@ -155,15 +157,15 @@ const ReasonForm = () => {
                     <Button variant="outline" onClick={() => reset()}>
                         Reset
                     </Button>
-                    <Can permission={id ? 'reason.edit' : 'reason.create'}>
+                    <Can permission={id ? "reason.edit" : "reason.create"}>
                         <Button type="submit" form="form-reason">
-                            {id ? 'Update' : 'Submit'}
+                            {id ? "Update" : "Submit"}
                         </Button>
                     </Can>
                 </div>
             </ComponentCard>
         </>
-    )
-}
+    );
+};
 
-export default ReasonForm
+export default ReasonForm;
