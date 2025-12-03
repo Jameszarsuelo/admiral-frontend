@@ -92,9 +92,9 @@ export default function ContactView() {
                                 </p>
                                 <p className="text-md font-medium text-gray-800 dark:text-white/90">
                                     {contactData
-                                        ? contactData.type === "1"
+                                        ? contactData.type == "1"
                                             ? "Client"
-                                            : contactData.type === "2"
+                                            : contactData.type == "2"
                                             ? "Supplier"
                                             : "User"
                                         : ""}
