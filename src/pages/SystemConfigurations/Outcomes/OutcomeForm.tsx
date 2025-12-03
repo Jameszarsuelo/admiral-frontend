@@ -19,7 +19,11 @@ export default function OutcomeForm() {
     const { id } = useParams();
     const navigate = useNavigate();
     const [statusesOptions, setStatusesOptions] = useState<{ value: number; label: string }[]>([]);
-
+    
+    const queueOptions = [
+        {value: "Bordereau", label:"Bordereau"},
+        {value: "Tasks", label:"Tasks"},
+    ]
 
     const { handleSubmit, control, setError, reset } = useForm<IOutcomeForm>({
         defaultValues: {
@@ -86,42 +90,6 @@ export default function OutcomeForm() {
 
                         <div className="grid grid-cols-2 gap-6 ">
                             <div>
-                               <Controller
-                                        name="status"
-                                        control={control}
-                                        render={({ field, fieldState }) => (
-                                            <Field
-                                                data-invalid={
-                                                    fieldState.invalid
-                                                }
-                                            >
-                                                <Label htmlFor="status">
-                                                    Status
-                                                </Label>
-                                                <Select
-                                                    value={String(field.value ?? "")}
-                                                    options={statusesOptions}
-                                                    placeholder="Select Status"
-                                                    onChange={(value: string) =>
-                                                        field.onChange(value)
-                                                    }
-                                                    onBlur={field.onBlur}
-                                                    className="dark:bg-dark-900"
-                                                />
-                                                {fieldState.error && (
-                                                    <p className="mt-1 text-sm text-error-500">
-                                                        {
-                                                            fieldState.error
-                                                                .message
-                                                        }
-                                                    </p>
-                                                )}
-                                            </Field>
-                                        )}
-                                    />
-                            </div>
-
-                            <div>
                                 <Controller
                                     name="outcome_code"
                                     control={control}
@@ -148,9 +116,82 @@ export default function OutcomeForm() {
                                     )}
                                 />
                             </div>
+                            <div>
+                                {/* Bordereau, Task */}
+                                <Controller
+                                    name="queue"
+                                    control={control}
+                                    render={({ field, fieldState }) => (
+                                        <Field
+                                            data-invalid={fieldState.invalid}
+                                        >
+                                            <Label htmlFor="input">
+                                                Queue
+                                            </Label>
+                                            {/* <Input
+                                                {...field}
+                                                type="text"
+                                                id="input"
+                                                name="queue"
+                                                placeholder="Enter Queue"
+                                            /> */}
+                                            <Select
+                                                    value={String(field.value ?? "")}
+                                                    options={queueOptions}
+                                                    placeholder="Select Queue"
+                                                    onChange={(value: string) =>
+                                                        field.onChange(value)
+                                                    }
+                                                    onBlur={field.onBlur}
+                                                    className="dark:bg-dark-900"
+                                                />
+                                            {fieldState.error && (
+                                                <p className="mt-1 text-sm text-error-500">
+                                                    {fieldState.error.message}
+                                                </p>
+                                            )}
+                                        </Field>
+                                    )}
+                                />
+                            </div>
                         </div>
 
                         <div className="grid grid-cols-2 gap-6 ">
+                            <div>
+                               <Controller
+                                        name="status"
+                                        control={control}
+                                        render={({ field, fieldState }) => (
+                                            <Field
+                                                data-invalid={
+                                                    fieldState.invalid
+                                                }
+                                            >
+                                                <Label htmlFor="status">
+                                                    Bordereau / Task Terminal Status​
+                                                </Label>
+                                                <Select
+                                                    value={String(field.value ?? "")}
+                                                    options={statusesOptions}
+                                                    placeholder="Select Status"
+                                                    onChange={(value: string) =>
+                                                        field.onChange(value)
+                                                    }
+                                                    onBlur={field.onBlur}
+                                                    className="dark:bg-dark-900"
+                                                />
+                                                {fieldState.error && (
+                                                    <p className="mt-1 text-sm text-error-500">
+                                                        {
+                                                            fieldState.error
+                                                                .message
+                                                        }
+                                                    </p>
+                                                )}
+                                            </Field>
+                                        )}
+                                    />
+                            </div>
                             <div>
                                 <Controller
                                     name="classification"
@@ -178,33 +219,7 @@ export default function OutcomeForm() {
                                     )}
                                 />
                             </div>
-                            <div>
-                                <Controller
-                                    name="queue"
-                                    control={control}
-                                    render={({ field, fieldState }) => (
-                                        <Field
-                                            data-invalid={fieldState.invalid}
-                                        >
-                                            <Label htmlFor="input">
-                                                Queue
-                                            </Label>
-                                            <Input
-                                                {...field}
-                                                type="text"
-                                                id="input"
-                                                name="queue"
-                                                placeholder="Enter Queue"
-                                            />
-                                            {fieldState.error && (
-                                                <p className="mt-1 text-sm text-error-500">
-                                                    {fieldState.error.message}
-                                                </p>
-                                            )}
-                                        </Field>
-                                    )}
-                                />
-                            </div>
+                            
                         </div>
                         <div className="grid grid-cols-1 gap-6 ">
                             <div>
