@@ -18,12 +18,10 @@ import {
     ISupplierFormSchema,
     SupplierFormSchema,
 } from "@/types/SupplierSchema";
-import Select from "@/components/form/Select";
-import Switch from "@/components/form/switch/Switch";
 import { useAuth } from "@/hooks/useAuth";
 import { fetchDocumentVisibilityList } from "@/database/document_visibility_api";
 import { fetchContactList } from "@/database/contact_api";
-import ContactFormModal from "@/components/modal/ContactFormModal";
+import SupplierUserModal from "@/components/modal/SupplierUserModal";
 import { Modal } from "@/components/ui/modal";
 import { useQuery } from "@tanstack/react-query";
 import { PlusIcon } from "lucide-react";
@@ -36,14 +34,6 @@ import { IDocumentFormSchema } from "@/types/DocumentSchema";
 import { upsertDocument } from "@/database/document_api";
 import { useForm as useLocalForm } from "react-hook-form";
 
-// const countries = [
-//     { code: "UK", label: "+44" },
-//     { code: "PH", label: "+63" },
-// ];
-const twofaTypeOptions = [
-    { value: 0, label: "SMS" },
-    { value: 1, label: "Email" },
-];
 
 interface DocumentVisibilityOption {
     value: number;
@@ -122,10 +112,6 @@ export default function SupplierForm() {
     const { handleSubmit, control, setError, reset } =
         useForm<ISupplierFormSchema>({
             defaultValues: {
-                two_fa_enabled: false,
-                two_fa_type: 0,
-                sso_provider: "",
-                sso_sub: "",
                 name: "",
                 address_line_1: "",
                 address_line_2: "",
@@ -141,7 +127,6 @@ export default function SupplierForm() {
                 preferred_payment_day: "",
                 priority: 5,
                 contact_id: undefined,
-                created_by: user?.id,
                 document: {
                     name: "",
                     revision: "",
@@ -290,7 +275,7 @@ export default function SupplierForm() {
                                                 }
                                             >
                                                 <Label htmlFor="bordereau_query_email">
-                                                    Invoice Query Email
+                                                    Bordereau Query Email
                                                 </Label>
                                                 <Input
                                                     {...field}
@@ -756,78 +741,8 @@ export default function SupplierForm() {
                                             </Field>
                                         )}
                                     />
-
-                                    <div>
-                                        <Controller
-                                            name="two_fa_type"
-                                            control={control}
-                                            render={({ field, fieldState }) => (
-                                                <Field
-                                                    data-invalid={
-                                                        fieldState.invalid
-                                                    }
-                                                >
-                                                    <Label htmlFor="two_fa_type">
-                                                        2FA Type
-                                                    </Label>
-                                                    <Select
-                                                        value={String(
-                                                            field.value ?? "",
-                                                        )}
-                                                        options={
-                                                            twofaTypeOptions
-                                                        }
-                                                        placeholder="Select 2FA Type"
-                                                        onChange={(
-                                                            value: string,
-                                                        ) =>
-                                                            field.onChange(
-                                                                Number(value),
-                                                            )
-                                                        }
-                                                        onBlur={field.onBlur}
-                                                        className="dark:bg-dark-900"
-                                                    />
-                                                    {fieldState.error && (
-                                                        <p className="mt-1 text-sm text-error-500">
-                                                            {
-                                                                fieldState.error
-                                                                    .message
-                                                            }
-                                                        </p>
-                                                    )}
-                                                </Field>
-                                            )}
-                                        />
-                                    </div>
-
-                                    <div>
-                                        <Controller
-                                            name="two_fa_enabled"
-                                            control={control}
-                                            render={({ field, fieldState }) => (
-                                                <Field
-                                                    data-invalid={
-                                                        fieldState.invalid
-                                                    }
-                                                >
-                                                    <Label htmlFor="input">
-                                                        Multi-factor
-                                                        authentication
-                                                    </Label>
-                                                    <Switch
-                                                        checked={field.value}
-                                                        onCheckedChange={
-                                                            field.onChange
-                                                        }
-                                                        label="Enable multi-factor authentication to secure your account."
-                                                    />
-                                                </Field>
-                                            )}
-                                        />
-                                    </div>
                                 </div>
-                                {!id && (
+                                {/* {!id && (
                                     <>
                                         <div className="col-span-full">
                                             <Separator className="my-4" />
@@ -849,7 +764,7 @@ export default function SupplierForm() {
                                             }
                                         />
                                     </>
-                                )}
+                                )} */}
 
                                 {id && (
                                     <div className="col-span-full">
@@ -965,15 +880,13 @@ export default function SupplierForm() {
                 </div>
             </Modal>
 
-            <ContactFormModal
+            <SupplierUserModal
                 isOpen={isContactModalOpen}
                 onClose={() => setIsContactModalOpen(false)}
-                onContactCreated={(contact) => {
-                    console.log("Contact created:", contact);
+                onUserCreated={(user) => {
                     toast.success(
-                        `Contact ${contact.firstname} ${contact.lastname} has been added!`,
+                        `User ${user?.contact?.firstname || ""} ${user?.contact?.lastname || ""} has been added!`,
                     );
-                    // Refetch contacts to update the dropdown
                     refetchContacts();
                 }}
             />

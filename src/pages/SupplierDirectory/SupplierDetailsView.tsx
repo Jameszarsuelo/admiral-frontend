@@ -2,6 +2,13 @@ import Spinner from "@/components/ui/spinner/Spinner";
 import { dateFormat } from "@/helper/dateFormat";
 import SupplierContactsTable from "./SupplierContactsTable/SupplierContactTable";
 import { ISupplierStatisticsSchema } from "@/types/SupplierSchema";
+import {
+    CalendarDaysIcon,
+    DocumentCheckIcon,
+    DocumentCurrencyPoundIcon,
+    DocumentMagnifyingGlassIcon,
+    DocumentTextIcon,
+} from "@heroicons/react/24/outline";
 
 export default function SupplierDetailsView({
     isLoading,
@@ -12,53 +19,66 @@ export default function SupplierDetailsView({
     supplier: ISupplierStatisticsSchema | null;
     id?: string;
 }) {
-
     const supplierDetails = [
         {
-            label: "Invoices Received",
-            value: String(supplier?.bordereau?.length ?? 0),
+            label: "Bordereau Received",
+            value: String(
+                supplier?.bordereau?.filter(
+                    (b) => b.bordereau_status_id! <= 3,
+                ).length ?? 0,
+            ),
+            icon: <DocumentTextIcon className="h-6 w-6 text-cyan-600" />,
         },
         {
-            label: "Invoices Processed",
-            // b.bordereau_status_id !== [1, 2, 3]
+            label: "Bordereau Processed",
             value: String(
                 supplier?.bordereau?.filter(
                     (b) => [1, 2, 3].includes(b.bordereau_status_id!) === false,
                 ).length ?? 0,
             ),
+            icon: <DocumentCheckIcon className="h-6 w-6 text-cyan-600" />,
         },
         {
-            label: "Invoices Paid",
+            label: "Bordereau Paid",
             value: String(
-                supplier?.bordereau?.filter((b) => b.bordereau_status_id === 9)
+                supplier?.bordereau?.filter((b) => [9, 11].includes(b.bordereau_status_id!))
                     .length ?? 0,
+            ),
+            icon: (
+                <DocumentCurrencyPoundIcon className="h-6 w-6 text-cyan-600" />
             ),
         },
         {
-            label: "Invoices Queuried",
+            label: "Bordereau Queuried",
             value: String(
-                supplier?.bordereau?.filter((b) => b.bordereau_status_id === 3)
+                supplier?.bordereau?.filter((b) => [6, 7].includes(b.bordereau_status_id!))
                     .length ?? 0,
+            ),
+            icon: (
+                <DocumentMagnifyingGlassIcon className="h-6 w-6 text-cyan-600" />
             ),
         },
         {
-            label: "Average Payment Days",
+            label: "Average process Days",
             value: "0",
+            icon: <CalendarDaysIcon className="h-6 w-6 text-cyan-600" />,
         },
         {
-            label: "Target Payment Days",
+            label: "Target process Days",
             value: String(supplier?.target_payment_days ?? 0),
+            icon: <CalendarDaysIcon className="h-6 w-6 text-cyan-600" />,
         },
         {
-            label: "Max Payment Days",
+            label: "Max process Days",
             value: String(supplier?.max_payment_days ?? 0),
+            icon: <CalendarDaysIcon className="h-6 w-6 text-cyan-600" />,
         },
         {
-            label: "IPC Avg Handle Time",
+            label: "BPC AHT",
             value: "0",
+            icon: <CalendarDaysIcon className="h-6 w-6 text-cyan-600" />,
         },
     ];
-
 
     return (
         <div className="min-w-full xl:min-w-full px-2">
@@ -77,29 +97,7 @@ export default function SupplierDetailsView({
                                         >
                                             <div className="flex-shrink-0">
                                                 <div className="h-12 w-12 rounded-full bg-cyan-50 dark:bg-cyan-900 flex items-center justify-center">
-                                                    <svg
-                                                        width="20"
-                                                        height="20"
-                                                        viewBox="0 0 24 24"
-                                                        fill="none"
-                                                        xmlns="http://www.w3.org/2000/svg"
-                                                        className="text-cyan-600"
-                                                    >
-                                                        <path
-                                                            d="M12 2L12 22"
-                                                            stroke="#0891B2"
-                                                            strokeWidth="1.5"
-                                                            strokeLinecap="round"
-                                                            strokeLinejoin="round"
-                                                        />
-                                                        <path
-                                                            d="M5 7H19"
-                                                            stroke="#0891B2"
-                                                            strokeWidth="1.5"
-                                                            strokeLinecap="round"
-                                                            strokeLinejoin="round"
-                                                        />
-                                                    </svg>
+                                                    {card.icon}
                                                 </div>
                                             </div>
 

@@ -82,7 +82,7 @@ export default function ContactForm() {
             loading: id ? "Updating Contact..." : "Creating Contact...",
             success: () => {
                 setTimeout(() => {
-                    navigate("/contact-directory");
+                    navigate(-1);
                 }, 2000);
                 return id
                     ? "Contact updated successfully!"

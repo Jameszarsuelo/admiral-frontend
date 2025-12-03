@@ -1,6 +1,11 @@
 import { z } from "zod";
-import { UserBaseSchema, UserCreateSchema } from "./UserSchema";
-import { DocumentBaseSchema, DocumentCreateSchema, DocumentTypeBaseSchema, DocumentVisibilityBaseSchema } from "./DocumentSchema";
+import { UserBaseSchema } from "./UserSchema";
+import {
+    DocumentBaseSchema,
+    DocumentCreateSchema,
+    DocumentTypeBaseSchema,
+    DocumentVisibilityBaseSchema,
+} from "./DocumentSchema";
 import { ContactBaseSchema } from "./ContactSchema";
 import { BordereauBaseSchema } from "./BordereauSchema";
 
@@ -14,9 +19,8 @@ export const EmailString = z.string().email();
 
 export const SupplierBaseSchema = z.object({
     id: z.number().int().positive(),
-    user_id: z.number().int().optional(),
+    // user_id: z.number().int().optional(),
     name: NonEmptyString,
-    vat_number: z.string().nullable().optional(),
     address_line_1: z.string().nullable().optional(),
     address_line_2: z.string().nullable().optional(),
     address_line_3: z.string().nullable().optional(),
@@ -25,25 +29,49 @@ export const SupplierBaseSchema = z.object({
     country: z.string().default("United Kingdom"),
     postcode: z.string().nullable().optional(),
     phone: z.string().nullable().optional(),
-    invoice_query_email: EmailString.nullable().optional(),
-    contact_id: z.number().int().optional(),
+    bordereau_query_email: EmailString.nullable().optional(),
     max_payment_days: z.number().int().nonnegative().default(30),
     target_payment_days: z.number().int().nonnegative().default(7),
     preferred_payment_day: z.string().nullable().optional(),
     priority: z.number().int().default(5),
     contact: ContactBaseSchema.optional(),
+    contact_id: z.number({ message: "Contact is required" }).int(),
+    created_by: z.number().int().optional(),
+    updated_by: z.number().int().optional(),
     created_at: z.string().datetime(),
     updated_at: z.string().datetime(),
     deleted_at: z.string().datetime().nullable().optional(),
 });
 
-export const SupplierFormSchema = UserCreateSchema.omit({
-    contact_id: true,
-    user_profile_id: true,
-    user_type_id: true,
-    is_active: true,
-    email: true
-}).extend({
+// export const SupplierFormSchema = UserCreateSchema.omit({
+//     contact_id: true,
+//     user_profile_id: true,
+//     user_type_id: true,
+//     is_active: true,
+//     email: true
+// }).extend({
+//     id: z.number().int().optional(),
+//     name: NonEmptyString,
+//     address_line_1: z.string().optional(),
+//     address_line_2: z.string().optional(),
+//     address_line_3: z.string().optional(),
+//     city: z.string().optional(),
+//     county: z.string().optional(),
+//     country: z.string().optional(),
+//     postcode: z.string().optional(),
+//     phone: z.string().optional(),
+//     bordereau_query_email: EmailString.optional(),
+//     contact_id: z.number({ message: "Contact is required" }).int(),
+//     max_payment_days: z.number().int().nonnegative().optional(),
+//     target_payment_days: z.number().int().nonnegative().optional(),
+//     preferred_payment_day: z.string().optional(),
+//     priority: z.number().int().optional(),
+//     created_by: z.number().int().optional(),
+//     updated_by: z.number().int().optional(),
+//     document: DocumentCreateSchema.optional(),
+// });
+
+export const SupplierFormSchema = z.object({
     id: z.number().int().optional(),
     name: NonEmptyString,
     address_line_1: z.string().optional(),
@@ -91,10 +119,7 @@ export const SupplierStatisticsSchema = SupplierBaseSchema.pick({
     bordereau_query_email: true,
     bordereau: z.lazy(() => BordereauBaseSchema.array().optional()),
     contact: ContactBaseSchema.optional(),
-    user: UserBaseSchema.optional(),
 });
-
-
 
 export const SupplierDocumentSchema = DocumentBaseSchema.omit({
     supplier: true,
@@ -110,7 +135,9 @@ export const SupplierDocumentSchema = DocumentBaseSchema.omit({
 export type ISupplierSchema = z.infer<typeof SupplierBaseSchema>;
 export type ISupplierFormSchema = z.infer<typeof SupplierFormSchema>;
 // export type ISupplierUpdateSchema = z.infer<typeof SupplierUpdateSchema>;
-export type ISupplierStatisticsSchema = z.infer<typeof SupplierStatisticsSchema>;
+export type ISupplierStatisticsSchema = z.infer<
+    typeof SupplierStatisticsSchema
+>;
 export type ISupplierDocumentSchema = z.infer<typeof SupplierDocumentSchema>;
 
 // export const SupplierInfoBaseSchema = z.object({

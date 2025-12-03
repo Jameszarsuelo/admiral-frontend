@@ -16,6 +16,8 @@ import {
     BuildingOffice2Icon,
     ChartBarIcon,
     ClipboardDocumentIcon,
+    Cog8ToothIcon,
+    ComputerDesktopIcon,
     EnvelopeIcon,
     ExclamationTriangleIcon,
     ListBulletIcon,
@@ -41,7 +43,7 @@ const iconMap: Record<string, React.ReactNode> = {
     upload_exceptions: <ExclamationTriangleIcon />,
     email_templates: <EnvelopeIcon />,
     template_a: <EnvelopeIcon />,
-    configuration: <BoxCubeIcon />,
+    configuration: <Cog8ToothIcon />,
     ipc: <BoxCubeIcon />,
     outcomes: <BoxCubeIcon />,
     planning: <BoxCubeIcon />,
@@ -51,6 +53,7 @@ const iconMap: Record<string, React.ReactNode> = {
     reports: <ChartBarIcon />,
     document_management: <ArchiveBoxIcon />,
     bordereau_query_management: <QuestionMarkCircleIcon />,
+    workplace: <ComputerDesktopIcon />,
 };
 
 const AppSidebar: React.FC = () => {

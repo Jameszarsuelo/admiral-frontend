@@ -113,7 +113,7 @@ const UserForm = () => {
                 loading: id ? "Updating User..." : "Creating User...",
                 success: () => {
                     setTimeout(() => {
-                        navigate("/users");
+                        navigate(-1);
                     }, 2000);
                     return id
                         ? "User updated successfully"

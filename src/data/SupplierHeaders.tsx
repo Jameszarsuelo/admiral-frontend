@@ -46,7 +46,7 @@ export const getSupplierHeaders = (
         accessorFn: (row) => row.contact?.email,
         header: () => <div className="ml-4">Primary Contact Email</div>,
         cell: ({ row }) => (
-            <div className="capitalize dark:text-white ml-4">
+            <div className=" dark:text-white ml-4">
                 {row.getValue("primary_contact_email")}
             </div>
         ),

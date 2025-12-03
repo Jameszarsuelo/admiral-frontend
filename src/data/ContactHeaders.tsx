@@ -1,6 +1,6 @@
 import Button from "@/components/ui/button/Button";
 import { Button as CustomButton } from "@/components/ui/button";
-import { IContactCreateSchema } from "@/types/ContactSchema";
+import { IContactHeaderSchema } from "@/types/ContactSchema";
 import { ColumnDef } from "@tanstack/react-table";
 import { ArrowUpDown, BadgeCheckIcon } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
@@ -10,7 +10,7 @@ export const getContactHeaders = (
     navigate: (path: string) => void,
     handleDeleteClick: (id: number) => void,
     refetch: () => void,
-): ColumnDef<IContactCreateSchema>[] => [
+): ColumnDef<IContactHeaderSchema>[] => [
     {
         accessorKey: "salutation",
         accessorFn: (row) => row.salutation,
@@ -104,9 +104,17 @@ export const getContactHeaders = (
         header: () => <div>Actions</div>,
         cell: ({ row }) => {
             const bpc = row.original;
+            const type = row.original.type;
+            const userId = row.original.user?.id;
 
             const handleEdit = (id: number) => {
-                navigate(`/contact-directory/edit/${id}`);
+                if (Number(type) === 1) {
+                    navigate(`/contact-directory/edit/${id}`);
+                } else if(Number(type) === 2) {
+                    navigate(`/supplier-users/edit/${userId}`);
+                } else {
+                    navigate(`/users/edit/${userId}`);
+                }
             };
 
             const onDelete = (id: number) => {

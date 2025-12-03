@@ -1,37 +1,37 @@
-import { useState } from "react";
+import { DataTable } from "@/components/ui/DataTable";
 import { useNavigate } from "react-router";
 import PageBreadcrumb from "@/components/common/PageBreadCrumb";
-import { useQuery } from "@tanstack/react-query";
-import { deleteSupplier, fetchSupplierList } from "@/database/supplier_api";
-import { DataTable } from "@/components/ui/DataTable";
-import { getSupplierHeaders } from "@/data/SupplierHeaders";
 import Button from "@/components/ui/button/Button";
-import { Modal } from "@/components/ui/modal";
+import { useQuery } from "@tanstack/react-query";
+import {
+    deleteUser,
+    fetchSupplierUserList,
+} from "@/database/user_api";
 import Spinner from "@/components/ui/spinner/Spinner";
-import SupplierContactsTable from "./SupplierContactsTable/SupplierContactTable";
-import SupplierDocumentsTable from "./SupplierDocumentTable/SupplierDocumentsTable";
+import { useState } from "react";
+import { Modal } from "@/components/ui/modal";
+import { getSupplierUserHeaders } from "@/data/SupplierUserHeaders";
 
-export default function SupplierIndex() {
+export default function SupplierUserIndex() {
     const navigate = useNavigate();
     const [isModalOpen, setIsModalOpen] = useState(false);
-    const [isStaffModalOpen, setIsStaffModelOpen] = useState(false);
-    const [isContactModalOpen, setIsContactModalOpen] = useState(false);
     const [selectedId, setSelectedId] = useState<number | null>(null);
     const [isDeleting, setIsDeleting] = useState(false);
 
     const {
-        data: supplierData,
+        data: userData,
         isLoading,
+        // error,
         refetch,
     } = useQuery({
-        queryKey: ["supplier-data"],
+        queryKey: ["user-data"],
         queryFn: async () => {
-            return await fetchSupplierList();
+            return await fetchSupplierUserList();
         },
         refetchInterval: 1000 * 60 * 5, // 5 minutes
         refetchIntervalInBackground: true,
-        // staleTime: 500,
-        // gcTime: 20000,
+        staleTime: 500,
+        gcTime: 20000,
     });
 
     const handleDeleteClick = (id: number) => {
@@ -44,8 +44,7 @@ export default function SupplierIndex() {
 
         setIsDeleting(true);
         try {
-            // await deleteIpc(selectedId);
-            await deleteSupplier(selectedId);
+            await deleteUser(selectedId);
             await refetch();
             setIsModalOpen(false);
             setSelectedId(null);
@@ -63,57 +62,42 @@ export default function SupplierIndex() {
         }
     };
 
-    const handleStaffModal = (id: number) => {
-        setSelectedId(id);
-        setIsStaffModelOpen((prev) => !prev);
-    };
-
-    const handleContactModal = (id: number) => {
-        setSelectedId(id);
-        setIsContactModalOpen((prev) => !prev);
-    };
-
-    const columns = getSupplierHeaders(
+    const columns = getSupplierUserHeaders(
         navigate,
         handleDeleteClick,
         refetch,
-        handleStaffModal,
-        handleContactModal
     );
 
     return (
         <>
-            <PageBreadcrumb pageTitle="Suppliers" />
+            <PageBreadcrumb pageTitle="Supplier Users" />
             <div className="w-full">
                 <div className="rounded-2xl border border-gray-200 bg-white px-5 pb-5 pt-5 dark:border-gray-800 dark:bg-white/[0.03] sm:px-6 sm:pt-6">
                     <div className="flex flex-col gap-5 mb-6 sm:flex-row sm:justify-between">
                         <div className="w-full">
                             <h3 className="text-lg font-semibold text-gray-800 dark:text-white/90">
-                                Suppliers
+                                Supplier Users
                             </h3>
                             <p className="mt-1 text-gray-500 text-theme-sm dark:text-gray-400">
-                                List of all Suppliers and their details.
+                                List of all Supplier Users and their details.
                             </p>
                         </div>
                         <div className="flex shrink-0 items-center gap-2">
                             <Button
                                 size="sm"
                                 onClick={() =>
-                                    navigate("/supplier-directory/create")
+                                    navigate("/supplier-users/create")
                                 }
                             >
-                                Add New Supplier
+                                Add New User
                             </Button>
                         </div>
                     </div>
 
                     <div className="max-w-full overflow-x-auto custom-scrollbar">
                         <div className="min-w-[1000px] xl:min-w-full px-2">
-                            {!isLoading && supplierData ? (
-                                <DataTable
-                                    columns={columns}
-                                    data={supplierData}
-                                />
+                            {!isLoading && userData ? (
+                                <DataTable columns={columns} data={userData} />
                             ) : (
                                 <div className="flex items-center justify-center py-12">
                                     <Spinner size="lg" />
@@ -134,7 +118,7 @@ export default function SupplierIndex() {
                             Delete Confirmation
                         </h4>
                         <p className="mb-6 text-sm text-gray-500 dark:text-gray-400 lg:mb-7">
-                            Are you sure to delete this Supplier?
+                            Are you sure to delete this User?
                         </p>
                         <Button
                             size="sm"
@@ -143,33 +127,6 @@ export default function SupplierIndex() {
                         >
                             {isDeleting ? "Deleting..." : "Confirm Delete"}
                         </Button>
-                    </div>
-                </div>
-            </Modal>
-
-            <Modal
-                isOpen={isStaffModalOpen}
-                onClose={() => setIsStaffModelOpen((prev) => !prev)}
-                className="w-auto! m-4"
-            >
-                <div className="relative w-full p-4 overflow-y-auto bg-white rounded-3xl dark:bg-gray-900 lg:p-11">
-                    <div className="px-2">
-                        {selectedId && (
-                            <SupplierContactsTable supplierId={selectedId!} />
-                        )}
-                    </div>
-                </div>
-            </Modal>
-
-            <Modal isOpen={isContactModalOpen}
-                onClose={() => setIsContactModalOpen((prev) => !prev)}
-                className="w-auto! m-4"
-            >
-                <div className="relative w-full p-4 overflow-y-auto bg-white rounded-3xl dark:bg-gray-900 lg:p-11">
-                    <div className="px-2">
-                        {selectedId && (
-                            <SupplierDocumentsTable supplierId={selectedId!} />
-                        )}
                     </div>
                 </div>
             </Modal>
