@@ -50,6 +50,7 @@ const OutcomeIndex = lazy(
 const OutcomeForm = lazy(
     () => import("../pages/SystemConfigurations/Outcomes/OutcomeForm"),
 );
+const OutcomeView = lazy(() => import("../pages/SystemConfigurations/Outcomes/OutcomeView"),);
 const ContactIndex = lazy(
     () => import("../pages/ContactDirectory/ContactIndex"),
 );
@@ -182,7 +183,7 @@ export const modulePageMap: Record<string, ModuleComponents> = {
         main: OutcomeIndex,
         create: OutcomeForm,
         edit: OutcomeForm,
-        view: OutcomeIndex,
+        view: OutcomeView,
     },
     reason: {
         main: ReasonIndex,
