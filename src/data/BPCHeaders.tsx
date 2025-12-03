@@ -15,7 +15,7 @@ export const getBPCHeaders = (
         header: () => <div className="ml-4">Salutation</div>,
         cell: ({ row }) => (
             <div className="capitalize dark:text-white ml-4">
-                {row.getValue("salutation")}.
+                {row.getValue("salutation") }.
             </div>
         ),
     },

@@ -569,6 +569,17 @@ export default function Workplace() {
                                             00
                                         </span>
                                         <span className="text-xs text-gray-500 dark:text-gray-400">
+                                            Minutes
+                                        </span>
+                                    </div>
+                                    <span className="mx-2 text-2xl font-semibold text-gray-600 dark:text-gray-300">
+                                        :
+                                    </span>
+                                    <div className="flex flex-col items-center">
+                                        <span className="text-4xl font-bold text-gray-800 dark:text-white">
+                                            00
+                                        </span>
+                                        <span className="text-xs text-gray-500 dark:text-gray-400">
                                             Seconds
                                         </span>
                                     </div>
