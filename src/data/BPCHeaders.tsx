@@ -9,16 +9,16 @@ export const getBPCHeaders = (
     handleDeleteClick: (id: number) => void,
     refetch: () => void,
 ): ColumnDef<IBPCSchema>[] => [
-    {
-        accessorKey: "salutation",
-        accessorFn: (row) => row.contact.salutation,
-        header: () => <div className="ml-4">Salutation</div>,
-        cell: ({ row }) => (
-            <div className="capitalize dark:text-white ml-4">
-                {row.getValue("salutation") }.
-            </div>
-        ),
-    },
+    // {
+    //     accessorKey: "salutation",
+    //     accessorFn: (row) => row.contact.salutation,
+    //     header: () => <div className="ml-4">Salutation</div>,
+    //     cell: ({ row }) => (
+    //         <div className="capitalize dark:text-white ml-4">
+    //             {row.getValue("salutation")}.
+    //         </div>
+    //     ),
+    // },
     {
         accessorKey: "firstname",
         accessorFn: (row) => row.contact.firstname,
