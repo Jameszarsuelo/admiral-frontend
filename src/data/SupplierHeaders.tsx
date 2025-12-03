@@ -23,7 +23,7 @@ export const getSupplierHeaders = (
     {
         accessorKey: "organisation",
         accessorFn: (row) => row.contact?.organisation,
-        header: () => <div className="ml-4">Organisation</div>,
+        header: () => <div className="ml-4">Supplie</div>,
         cell: ({ row }) => (
             <div className="capitalize dark:text-white ml-4">
                 {row.getValue("organisation")}
@@ -123,7 +123,7 @@ export const getSupplierHeaders = (
                     <Can permission="supplier_directory.view_documents">
                         <Button
                             onClick={() => handleContactModal(supplier.id!)}
-                            variant="secondary"
+                            variant="outline"
                             size="xs"
                         >
                             View Documents
