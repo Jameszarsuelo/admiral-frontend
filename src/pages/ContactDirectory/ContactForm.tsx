@@ -96,7 +96,12 @@ export default function ContactForm() {
 
     return (
         <>
-            <PageBreadcrumb pageTitle="Contact" />
+            <PageBreadcrumb
+                pageTitle={id ? "Edit Contact" : "Add Contact"}
+                pageBreadcrumbs={[
+                    { title: "Contact Directory", link: "/contact-directory" },
+                ]}
+            />
             <ComponentCard title={id ? "Edit Contact" : "Add Contact"}>
                 {isLoading ? (
                     <div className="flex items-center justify-center py-12">
