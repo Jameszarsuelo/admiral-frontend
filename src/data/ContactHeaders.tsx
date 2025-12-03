@@ -85,19 +85,21 @@ export const getContactHeaders = (
         accessorKey: "type",
         accessorFn: (row) => row.type,
         header: () => <div className="ml-4">Contact Type</div>,
-        cell: ({ row }) => (
-            <Badge
-                variant="secondary"
-                className="ml-4 inline-flex items-center"
-            >
-                <BadgeCheckIcon className="mr-1 inline-block" />
-                {row.getValue("type") === 1
-                    ? "Contact"
-                    : row.getValue("type") === 2
-                    ? "Supplier"
-                    : "User"}
-            </Badge>
-        ),
+        cell: ({ row }) => {
+            const type = row.getValue("type") as number;
+            const bgColor = type === 1 ? "#97e3ff" : type === 2 ? "#ffbbf7" : "#92D050";
+            // const textColor = type === 2 ? "#000000" : "#FFFFFF";
+
+            return (
+                <Badge 
+                    className="ml-4 inline-flex items-center"
+                    style={{ backgroundColor: bgColor, color: "#000000" }}
+                >
+                    <BadgeCheckIcon className="mr-1 inline-block" />
+                    {type === 1 ? "Contact" : type === 2 ? "Supplier" : "User"}
+                </Badge>
+            );
+        },
     },
     {
         id: "actions",
@@ -131,7 +133,7 @@ export const getContactHeaders = (
                     <Can permission="contact_directory.edit">
                         <Button
                             onClick={() => handleEdit(bpc.id!)}
-                            variant="primary"
+                            variant="warning"
                             size="sm"
                         >
                             Edit
