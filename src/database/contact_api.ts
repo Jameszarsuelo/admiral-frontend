@@ -1,4 +1,4 @@
-import { IContactCreateSchema, IContactHeaderSchema, IContactSchema } from "@/types/ContactSchema";
+import { IContactCreateSchema, IContactSchema } from "@/types/ContactSchema";
 import api from "./api";
 import { AxiosError } from "axios";
 

@@ -92,3 +92,18 @@ export async function changeBpcStatus(
         throw error;
     }
 }
+
+export async function fetchBpcTimerToday(bpcId: number): Promise<{
+    daily?: any;
+    open?: { id: number; status_id: number; started_at: string; duration_seconds: number } | null;
+}> {
+    try {
+        const response = await api.get(`/bpc/${bpcId}/timer/today`);
+        return response.data;
+    } catch (error) {
+        if (error instanceof AxiosError && error.response?.data) {
+            throw error.response.data;
+        }
+        throw error;
+    }
+}

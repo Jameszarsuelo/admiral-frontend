@@ -22,6 +22,7 @@ import {
 import { changeBpcStatus } from "@/database/bpc_api";
 import BordereauDetailsView from "../BordereauDetail/BordereauDetailsView";
 import useBpcNotifications from "@/hooks/useBpcNotifications";
+import useBpcTimer from "@/hooks/useBpcTimer";
 import Button from "@/components/ui/button/Button";
 
 export default function Workplace() {
@@ -276,9 +277,12 @@ export default function Workplace() {
 
     const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
     const [isLoggingOut, setIsLoggingOut] = useState(false);
+    // timer state moved to hook
 
     const isRefetchingBordereau =
         useIsFetching({ queryKey: ["current-bordereau", bpcUser?.id] }) > 0;
+
+    const { currentFmt, totalFmt } = useBpcTimer(bpcUser?.id, selectedStatusId);
 
     // fetch outcomes for dropdown
     useEffect(() => {
@@ -555,7 +559,7 @@ export default function Workplace() {
                                 <div className="flex items-center gap-3">
                                     <div className="flex flex-col items-center">
                                         <span className="text-4xl font-bold text-gray-800 dark:text-white">
-                                            00
+                                            {currentFmt.hh}
                                         </span>
                                         <span className="text-xs text-gray-500 dark:text-gray-400">
                                             Hours
@@ -566,7 +570,7 @@ export default function Workplace() {
                                     </span>
                                     <div className="flex flex-col items-center">
                                         <span className="text-4xl font-bold text-gray-800 dark:text-white">
-                                            00
+                                            {currentFmt.mm}
                                         </span>
                                         <span className="text-xs text-gray-500 dark:text-gray-400">
                                             Minutes
@@ -577,13 +581,16 @@ export default function Workplace() {
                                     </span>
                                     <div className="flex flex-col items-center">
                                         <span className="text-4xl font-bold text-gray-800 dark:text-white">
-                                            00
+                                            {currentFmt.ss}
                                         </span>
                                         <span className="text-xs text-gray-500 dark:text-gray-400">
                                             Seconds
                                         </span>
                                     </div>
                                 </div>
+                            </div>
+                            <div className="mt-5 text-center text-sm text-gray-600 dark:text-gray-300">
+                                Total today: {totalFmt.hh}:{totalFmt.mm}:{totalFmt.ss}
                             </div>
                         </div>
                     </div>

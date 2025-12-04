@@ -13,7 +13,7 @@ import Spinner from "@/components/ui/spinner/Spinner";
 import Select from "@/components/form/Select";
 import DatePicker from "@/components/form/date-picker";
 import Label from "@/components/form/Label";
-import { ArrowUpIcon, GroupIcon } from "@/icons";
+// import { ArrowUpIcon, GroupIcon } from "@/icons";
 import Badge from "@/components/ui/badge/Badge";
 import { ArrowRight } from "lucide-react";
 import Can from "@/components/auth/Can";
@@ -37,7 +37,7 @@ export default function BordereauIndex() {
     const [isCsvModalOpen, setIsCsvModalOpen] = useState(false);
     const [activeId, setActiveId] = useState<number | null>(null);
     const [bordereauSelected, setBordereauSelected] = useState<IBordereauIndex>(
-        {} as IBordereauIndex
+        {} as IBordereauIndex,
     );
     const [globalModalOpen, setGlobalModalOpen] = useState({
         assignModal: false,
@@ -196,7 +196,7 @@ export default function BordereauIndex() {
             <div className="w-full">
                 <div className="grid grid-cols-12 gap-4 md:gap-6">
                     <div className="col-span-12 space-y-6 xl:col-span-9">
-                        <div className="rounded-2xl border border-gray-200 bg-white px-5 py-5 dark:border-gray-800 dark:bg-white/[0.03] sm:px-6 mb-6">
+                        <div className="rounded-2xl border border-gray-200 bg-white px-5 py-5 dark:border-gray-800 dark:bg-white/3 sm:px-6 mb-6">
                             <div className="grid grid-cols-4 gap-3">
                                 {[
                                     { k: "Overdue", v: "Overdue" },
@@ -222,7 +222,7 @@ export default function BordereauIndex() {
                                 ].map((s) => (
                                     <div
                                         key={s.k}
-                                        className="mb-4 rounded-2xl border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-white/[0.03] "
+                                        className="mb-4 rounded-2xl border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-white/3 "
                                     >
                                         <div className="flex items-end justify-between ">
                                             <div>
@@ -243,7 +243,7 @@ export default function BordereauIndex() {
                         </div>
                     </div>
                     <div className="col-span-12 space-y-6 xl:col-span-3">
-                        <div className="rounded-2xl border border-gray-200 bg-white px-5 py-5 dark:border-gray-800 dark:bg-white/[0.03] sm:px-6 mb-6">
+                        <div className="rounded-2xl border border-gray-200 bg-white px-5 py-5 dark:border-gray-800 dark:bg-white/3 sm:px-6 mb-6">
                             <h1 className="text-xl font-bold mb-5">
                                 Add Bordereau / Workload
                             </h1>
@@ -267,7 +267,7 @@ export default function BordereauIndex() {
             </div>
             <div className="w-full">
                 {/* Invoice Table Section */}
-                <div className="rounded-2xl border border-gray-200 bg-white px-5 pb-5 pt-5 dark:border-gray-800 dark:bg-white/[0.03] sm:px-6 sm:pt-6">
+                <div className="rounded-2xl border border-gray-200 bg-white px-5 pb-5 pt-5 dark:border-gray-800 dark:bg-white/3 sm:px-6 sm:pt-6">
                     <div className="flex flex-col gap-5 mb-6 sm:flex-row sm:justify-between">
                         <div className="w-full">
                             <h3 className="text-lg font-semibold text-gray-800 dark:text-white/90">
@@ -544,7 +544,7 @@ export default function BordereauIndex() {
                                 const file = data.document;
                                 if (!file) {
                                     toast.error(
-                                        "Please choose a CSV file to upload"
+                                        "Please choose a CSV file to upload",
                                     );
                                     return;
                                 }
@@ -554,7 +554,7 @@ export default function BordereauIndex() {
                                     try {
                                         await uploadBordereauCsv(data);
                                         toast.success(
-                                            "CSV uploaded successfully"
+                                            "CSV uploaded successfully",
                                         );
                                         setIsCsvModalOpen(false);
                                         resetCsv();
@@ -564,7 +564,7 @@ export default function BordereauIndex() {
                                         } catch (err) {
                                             console.warn(
                                                 "Refetch after upload failed",
-                                                err
+                                                err,
                                             );
                                         }
                                     } catch (err) {
@@ -574,7 +574,7 @@ export default function BordereauIndex() {
                                 } catch (err) {
                                     console.error(err);
                                     toast.error(
-                                        "Upload failed (network error)"
+                                        "Upload failed (network error)",
                                     );
                                 } finally {
                                     setIsUploading(false);
@@ -599,7 +599,7 @@ export default function BordereauIndex() {
                                                 searchPlaceholder="Search supplier..."
                                                 onChange={(value) =>
                                                     field.onChange(
-                                                        Number(value)
+                                                        Number(value),
                                                     )
                                                 }
                                             />
@@ -632,7 +632,7 @@ export default function BordereauIndex() {
                                                 searchPlaceholder="Search types..."
                                                 onChange={(value) =>
                                                     field.onChange(
-                                                        Number(value)
+                                                        Number(value),
                                                     )
                                                 }
                                             />
@@ -739,7 +739,7 @@ export default function BordereauIndex() {
                                               .firstname +
                                               " " +
                                               bordereauSelected?.bpc?.contact
-                                                  .lastname
+                                                  .lastname,
                                       )
                                     : "No BPC Assigned"
                             }
@@ -762,7 +762,7 @@ export default function BordereauIndex() {
                                                     options={bpcData}
                                                     onChange={(value) =>
                                                         field.onChange(
-                                                            Number(value)
+                                                            Number(value),
                                                         )
                                                     }
                                                     placeholder="Select BPC..."
@@ -805,7 +805,7 @@ export default function BordereauIndex() {
                                                         bpc_id: data.bpcId,
                                                         bordereau_id:
                                                             bordereauSelected.id,
-                                                    }
+                                                    },
                                                 );
                                                 toast.success("BPC assigned");
                                                 setGlobalModalOpen((prev) => ({
@@ -819,13 +819,13 @@ export default function BordereauIndex() {
                                                 } catch (err) {
                                                     console.warn(
                                                         "Refetch after assign failed",
-                                                        err
+                                                        err,
                                                     );
                                                 }
                                             } catch (err) {
                                                 console.error(err);
                                                 toast.error(
-                                                    "Failed to assign BPC"
+                                                    "Failed to assign BPC",
                                                 );
                                             } finally {
                                                 setIsUploading(false);
@@ -902,7 +902,7 @@ export default function BordereauIndex() {
                                                     options={bpcData}
                                                     onChange={(value) =>
                                                         field.onChange(
-                                                            Number(value)
+                                                            Number(value),
                                                         )
                                                     }
                                                     placeholder="Select BPC..."
@@ -950,7 +950,7 @@ export default function BordereauIndex() {
                                         handleProcessSubmit(async (data) => {
                                             if (!bordereauSelected?.id) {
                                                 toast.error(
-                                                    "No bordereau selected"
+                                                    "No bordereau selected",
                                                 );
                                                 return;
                                             }
@@ -969,10 +969,10 @@ export default function BordereauIndex() {
                                                         instructions:
                                                             data.instructions ??
                                                             null,
-                                                    }
+                                                    },
                                                 );
                                                 toast.success(
-                                                    "Bordereau queued for processing"
+                                                    "Bordereau queued for processing",
                                                 );
                                                 setGlobalModalOpen((prev) => ({
                                                     ...prev,
@@ -985,13 +985,13 @@ export default function BordereauIndex() {
                                                 } catch (err) {
                                                     console.warn(
                                                         "Refetch after process failed",
-                                                        err
+                                                        err,
                                                     );
                                                 }
                                             } catch (err) {
                                                 console.error(err);
                                                 toast.error(
-                                                    "Failed to queue bordereau"
+                                                    "Failed to queue bordereau",
                                                 );
                                             } finally {
                                                 setIsUploading(false);
@@ -1106,7 +1106,7 @@ export default function BordereauIndex() {
                                         handleCloseSubmit(async (data) => {
                                             if (!bordereauSelected?.id) {
                                                 toast.error(
-                                                    "No bordereau selected"
+                                                    "No bordereau selected",
                                                 );
                                                 return;
                                             }
@@ -1121,10 +1121,10 @@ export default function BordereauIndex() {
                                                             data.reason ?? null,
                                                         notes:
                                                             data.notes ?? null,
-                                                    }
+                                                    },
                                                 );
                                                 toast.success(
-                                                    "Bordereau closed"
+                                                    "Bordereau closed",
                                                 );
                                                 setGlobalModalOpen((prev) => ({
                                                     ...prev,
@@ -1137,13 +1137,13 @@ export default function BordereauIndex() {
                                                 } catch (err) {
                                                     console.warn(
                                                         "Refetch after close failed",
-                                                        err
+                                                        err,
                                                     );
                                                 }
                                             } catch (err) {
                                                 console.error(err);
                                                 toast.error(
-                                                    "Failed to close bordereau"
+                                                    "Failed to close bordereau",
                                                 );
                                             } finally {
                                                 setIsUploading(false);
