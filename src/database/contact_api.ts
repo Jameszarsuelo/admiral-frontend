@@ -18,9 +18,22 @@ export async function upsertContact(
     }
 }
 
-export async function fetchContactList(): Promise<IContactCreateSchema[]> {
+export async function fetchContactList(filter: string): Promise<IContactCreateSchema[]> {
     try {
-        const response = await api.get("/contact");
+        // const response = await api.get(`/contact`);
+        const response = await api.get(`/contact-list/${filter}`);
+        return response.data;
+    } catch (error) {
+        if (error instanceof AxiosError && error.response?.data) {
+            throw error.response.data;
+        }
+        throw error;
+    }
+}
+
+export async function fetchContactListSupplier(): Promise<IContactCreateSchema[]> {
+    try {
+        const response = await api.get(`/contact`);
         return response.data;
     } catch (error) {
         if (error instanceof AxiosError && error.response?.data) {

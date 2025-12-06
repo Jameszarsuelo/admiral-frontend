@@ -46,6 +46,22 @@ export async function fetchOutcome(id: string): Promise<IOutcomeForm> {
     }
 }
 
+
+export async function fetchShowOutcome(id: string): Promise<IOutcomeForm> {
+    try {
+        const response = await api.get(`/outcome-show/${id}`);
+        console.log(response);
+        return response.data;
+    } catch (error) {
+        if (error instanceof AxiosError && error.response?.data) {
+            throw error.response.data;
+        }
+        throw error;
+    }
+}
+
+
+
 // export async function deleteOutcome(id: number){
 //     try {
 //         await api.delete(`/outcome/${id}`);

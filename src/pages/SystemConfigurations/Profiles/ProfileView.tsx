@@ -49,7 +49,12 @@ const ProfileView = () => {
 
     return (
         <>
-            <PageBreadcrumb pageTitle="View Members" />
+            <PageBreadcrumb
+                pageTitle="View Members"
+                pageBreadcrumbs={[
+                    { title: "Profiles", link: "/profiles" },
+                ]}
+            />
             <div className="w-full">
                 <div className="rounded-2xl border border-gray-200 bg-white px-5 pb-5 pt-5 dark:border-gray-800 dark:bg-white/[0.03] sm:px-6 sm:pt-6">
                     <div className="flex flex-col gap-5 mb-6 sm:flex-row sm:justify-between">
@@ -66,7 +71,7 @@ const ProfileView = () => {
                                 size="sm"
                                 onClick={() => navigate(`/profiles`)}
                             >
-                                Back
+                                Back to Profiles
                             </Button>
                         </div>
                     </div>

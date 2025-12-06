@@ -22,6 +22,10 @@ export default function SupplierContactsTable({
         refetchIntervalInBackground: true,
     });
 
+    // const removeContacts = (id: number) => {
+
+    // };
+
     const columns = getSupplierContactHeaders();
 
     return (

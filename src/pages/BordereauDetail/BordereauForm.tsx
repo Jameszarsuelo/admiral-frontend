@@ -110,7 +110,10 @@ export default function BordereauForm() {
 
     return (
         <>
-            <PageBreadcrumb pageTitle="Bordereau Detail" />
+            <PageBreadcrumb 
+                pageTitle={id ? "Edit Bordereau Detail" : "Add Bordereau Detail"}
+                pageBreadcrumbs={[{ title: "Bordereau Detail", link: "/bordereau-detail" }]}
+            />
             <ComponentCard title={id ? "Edit Bordereau" : "Add Bordereau"}>
                 {isLoading ? (
                     <div className="flex items-center justify-center py-12">

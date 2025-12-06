@@ -154,14 +154,44 @@ export async function fetchSupplierDocuments(
     }
 }
 
-export async function downloadSupplierDocument(
-    id: number,
-): Promise<Blob> {
+export async function downloadSupplierDocument(id: number): Promise<Blob> {
     try {
         const response = await api.get(`/supplier-documents/${id}/download`, {
             responseType: "blob",
         });
         return response.data;
+    } catch (error) {
+        if (error instanceof AxiosError && error.response?.data) {
+            throw error.response.data;
+        }
+        throw error;
+    }
+}
+
+// export async function removeSupplierContact(
+//     supplierId: number | string,
+//     contactId: number,
+// ): Promise<void> {
+//     try {
+//         await api.delete(`/supplier/${supplierId}/remove-contact/`, {
+//             data: { contact_id: contactId },
+//         });
+//     } catch (error) {
+//         if (error instanceof AxiosError && error.response?.data) {
+//             throw error.response.data;
+//         }
+//         throw error;
+//     }
+// }
+
+export async function removeSupplierDocument(
+    documentId: number,
+    supplierId: number,
+): Promise<void> {
+    try {
+        await api.post(`/supplier/${supplierId}/remove-document/`, {
+            document_id: documentId,
+        });
     } catch (error) {
         if (error instanceof AxiosError && error.response?.data) {
             throw error.response.data;

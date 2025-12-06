@@ -1,4 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useState } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 import api, { ensureCsrfCookie } from "@/database/api";
 import {
     AuthContext,
@@ -11,6 +12,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
 }) => {
     const [user, setUser] = useState<AuthUser | null>(null);
     const [loading, setLoading] = useState(true);
+    const queryClient = useQueryClient();
 
     const fetchUser = useCallback(async () => {
         try {
@@ -56,8 +58,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
             await api.post("/logout");
         } finally {
             setUser(null);
+            try {
+                queryClient.removeQueries({ queryKey: ["bpc-status-list"] });
+                queryClient.removeQueries({ queryKey: ["current-bordereau"] });
+            } catch (e) {
+                console.error("Error clearing queries on logout:", e);
+            }
         }
-    }, []);
+    }, [queryClient]);
 
     const value = useMemo<AuthContextType>(
         () => ({

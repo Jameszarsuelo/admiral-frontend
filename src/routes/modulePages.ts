@@ -36,20 +36,32 @@ const UserForm = lazy(
     () => import("../pages/SystemConfigurations/Users/UserForm"),
 );
 
+const SupplierUserIndex = lazy(
+    () => import("../pages/SystemConfigurations/SupplierUsers/SupplierUserIndex"),
+);
+const SupplierUserForm = lazy(
+    () => import("../pages/SystemConfigurations/SupplierUsers/SupplierUserForm"),
+);
+
 const PlanningIndex = lazy(
     () => import("../pages/SystemConfigurations/Planning/PlanningIndex"),
 );
 const PlanningForm = lazy(
     () => import("../pages/SystemConfigurations/Planning/PlanningForm"),
 );
-const ReasonIndex = lazy(() => import("../pages/SystemConfigurations/Reason/ReasonIndex"));
-const ReasonForm = lazy(() => import("../pages/SystemConfigurations/Reason/ReasonForm"));
+const ReasonIndex = lazy(
+    () => import("../pages/SystemConfigurations/Reason/ReasonIndex"),
+);
+const ReasonForm = lazy(
+    () => import("../pages/SystemConfigurations/Reason/ReasonForm"),
+);
 const OutcomeIndex = lazy(
     () => import("../pages/SystemConfigurations/Outcomes/OutcomeIndex"),
 );
 const OutcomeForm = lazy(
     () => import("../pages/SystemConfigurations/Outcomes/OutcomeForm"),
 );
+const OutcomeView = lazy(() => import("../pages/SystemConfigurations/Outcomes/OutcomeView"),);
 const ContactIndex = lazy(
     () => import("../pages/ContactDirectory/ContactIndex"),
 );
@@ -182,7 +194,7 @@ export const modulePageMap: Record<string, ModuleComponents> = {
         main: OutcomeIndex,
         create: OutcomeForm,
         edit: OutcomeForm,
-        view: OutcomeIndex,
+        view: OutcomeView,
     },
     reason: {
         main: ReasonIndex,
@@ -218,5 +230,11 @@ export const modulePageMap: Record<string, ModuleComponents> = {
     },
     not_found: {
         main: NotFound,
+    },
+    supplier_users: {
+        main: SupplierUserIndex,
+        create: SupplierUserForm,
+        edit: SupplierUserForm,
+        view: SupplierUserIndex,
     },
 };

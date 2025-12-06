@@ -2,7 +2,7 @@ import { ReactNode } from "react";
 
 interface ButtonProps {
     children: ReactNode; // Button text or content
-    size?: "xs" | "sm" | "md"; // Button size
+    size?: "xs" | "sm" | "md" | "lg"; // Button size
     variant?:
         | "primary"
         | "secondary"
@@ -39,6 +39,7 @@ const Button: React.FC<ButtonProps> = ({
         sm: "px-4 py-3 text-sm",
         md: "px-5 py-3.5 text-sm",
         xs: "px-3 py-2 text-xs",
+        lg: "px-3 py-3 text-md",
     };
 
     // Variant Classes

@@ -1,6 +1,7 @@
 import { IBPCForm, IBPCSchema } from "@/types/BPCSchema";
 import api from "./api";
 import { AxiosError } from "axios";
+import { TimerSegmentToday } from "@/types/TimerSegment";
 
 export async function upsertBpc(bpcData: IBPCForm): Promise<void> {
     try {
@@ -84,6 +85,18 @@ export async function changeBpcStatus(
         const response = await api.post(`/bpc/${bpcId}/status`, {
             bpc_status_id: statusId,
         });
+        return response.data;
+    } catch (error) {
+        if (error instanceof AxiosError && error.response?.data) {
+            throw error.response.data;
+        }
+        throw error;
+    }
+}
+
+export async function fetchBpcTimerToday(bpcId: number): Promise<TimerSegmentToday> {
+    try {
+        const response = await api.get(`/bpc/${bpcId}/timer/today`);
         return response.data;
     } catch (error) {
         if (error instanceof AxiosError && error.response?.data) {

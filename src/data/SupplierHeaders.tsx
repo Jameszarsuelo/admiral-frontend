@@ -22,8 +22,8 @@ export const getSupplierHeaders = (
     },
     {
         accessorKey: "organisation",
-        accessorFn: (row) => row.contact?.organisation,
-        header: () => <div className="ml-4">Organisation</div>,
+        accessorFn: (row) => row.name,
+        header: () => <div className="ml-4">Supplier</div>,
         cell: ({ row }) => (
             <div className="capitalize dark:text-white ml-4">
                 {row.getValue("organisation")}
@@ -46,7 +46,7 @@ export const getSupplierHeaders = (
         accessorFn: (row) => row.contact?.email,
         header: () => <div className="ml-4">Primary Contact Email</div>,
         cell: ({ row }) => (
-            <div className="capitalize dark:text-white ml-4">
+            <div className=" dark:text-white ml-4">
                 {row.getValue("primary_contact_email")}
             </div>
         ),
@@ -123,7 +123,8 @@ export const getSupplierHeaders = (
                     <Can permission="supplier_directory.view_documents">
                         <Button
                             onClick={() => handleContactModal(supplier.id!)}
-                            variant="secondary"
+                            variant="outline"
+                            className="bg-[#00B0F0]! text-white!"
                             size="xs"
                         >
                             View Documents

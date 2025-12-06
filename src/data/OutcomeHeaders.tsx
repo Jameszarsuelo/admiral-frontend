@@ -8,18 +8,18 @@ export const getOutcomeHeaders = (
     handleDeleteClick: (id: number) => void,
     refetch: () => void,
 ): ColumnDef<IOutcomeHeaders>[] => [
-    {
-        accessorKey: "id",
-        accessorFn: (row) => row.id,
-        header: "Outcome ID",
-        cell: ({ row }) => (
-            <div className="capitalize">{row.getValue("id")}</div>
-        ),
-    },
+    // {
+    //     accessorKey: "id",
+    //     accessorFn: (row) => row.id,
+    //     header: "Outcome ID",
+    //     cell: ({ row }) => (
+    //         <div className="capitalize">{row.getValue("id")}</div>
+    //     ),
+    // },
     {
         accessorKey: "outcome_code",
         accessorFn: (row) => row.outcome_code,
-        header: "Terminal",
+        header: "Outcome Code",
         cell: ({ row }) => (
             <div className="capitalize">{row.getValue("outcome_code")}</div>
         ),
@@ -27,17 +27,9 @@ export const getOutcomeHeaders = (
     {
         accessorKey: "queue",
         accessorFn: (row) => row.queue,
-        header: "Task",
+        header: "Queue",
         cell: ({ row }) => (
             <div className="capitalize">{row.getValue("queue")}</div>
-        ),
-    },
-    {
-        accessorKey: "description",
-        accessorFn: (row) => row.description,
-        header: "Description",
-        cell: ({ row }) => (
-            <div className="capitalize">{row.getValue("description")}</div>
         ),
     },
     {
@@ -48,6 +40,15 @@ export const getOutcomeHeaders = (
             <div className="capitalize">{row.getValue("status")}</div>
         ),
     },
+    {
+        accessorKey: "description",
+        accessorFn: (row) => row.description,
+        header: "Description",
+        cell: ({ row }) => (
+            <div className="capitalize">{row.getValue("description")}</div>
+        ),
+    },
+    
     // {
     //     accessorKey: "status",
     //     accessorFn: (row) => row.status,
@@ -84,6 +85,10 @@ export const getOutcomeHeaders = (
                 refetch();
             };
 
+            const handleView = (id: number) => {
+                navigate(`/outcomes/view/${id}`);
+            };
+
             return (
                 <div className="flex gap-2">
                     <Can permission="outcomes.view">
@@ -92,7 +97,7 @@ export const getOutcomeHeaders = (
                             variant="primary"
                             size="sm"
                         >
-                            View
+                            Edit
                         </Button>
                     </Can>
                     <Can permission="outcomes.delete">
@@ -102,6 +107,15 @@ export const getOutcomeHeaders = (
                             size="sm"
                         >
                             Delete
+                        </Button>
+                    </Can>
+                    <Can permission="contact_directory.view">
+                        <Button
+                            onClick={() => handleView(outcomeData.id!)}
+                            variant="info"
+                            size="sm"
+                        >
+                            View
                         </Button>
                     </Can>
                 </div>
