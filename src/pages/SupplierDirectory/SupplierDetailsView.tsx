@@ -95,7 +95,7 @@ export default function SupplierDetailsView({
                                             key={i}
                                             className="flex items-center gap-4 rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 p-4 shadow-md"
                                         >
-                                            <div className="flex-shrink-0">
+                                            <div className="shrink-0">
                                                 <div className="h-12 w-12 rounded-full bg-cyan-50 dark:bg-cyan-900 flex items-center justify-center">
                                                     {card.icon}
                                                 </div>
@@ -180,7 +180,7 @@ export default function SupplierDetailsView({
 
                                     <div>
                                         <p className="mb-2 text-xs leading-normal text-gray-500 dark:text-gray-400">
-                                            Bordereau Query Email​
+                                            Bordereau Query Email
                                         </p>
                                         <p className="text-sm font-medium text-gray-800 dark:text-white/90">
                                             {supplier?.contact?.email ?? "-"}
@@ -241,7 +241,7 @@ export default function SupplierDetailsView({
 
                                     <div>
                                         <p className="mb-2 text-xs leading-normal text-gray-500 dark:text-gray-400">
-                                            Max / Contract Process Days​
+                                            Max / Contract Process Days
                                         </p>
                                         <p className="text-sm font-medium text-gray-800 dark:text-white/90">
                                             30
@@ -263,7 +263,7 @@ export default function SupplierDetailsView({
 
                                     <div>
                                         <p className="mb-2 text-xs leading-normal text-gray-500 dark:text-gray-400">
-                                            Primary Contact Email​
+                                            Primary Contact Email
                                         </p>
                                         <p className="text-sm font-medium text-gray-800 dark:text-white/90">
                                             {supplier?.contact?.email
@@ -304,7 +304,7 @@ export default function SupplierDetailsView({
 
                                     <div>
                                         <p className="mb-2 text-xs leading-normal text-gray-500 dark:text-gray-400">
-                                            Primary Contact Mobile​
+                                            Primary Contact Mobile
                                         </p>
                                         <p className="text-sm font-medium text-gray-800 dark:text-white/90">
                                             {supplier?.phone ?? "-"}

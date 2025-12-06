@@ -20,7 +20,7 @@ import {
 } from "@/types/SupplierSchema";
 import { useAuth } from "@/hooks/useAuth";
 import { fetchDocumentVisibilityList } from "@/database/document_visibility_api";
-import { fetchContactList } from "@/database/contact_api";
+import { fetchContactListSupplier } from "@/database/contact_api";
 import SupplierUserModal from "@/components/modal/SupplierUserModal";
 import { Modal } from "@/components/ui/modal";
 import { useQuery } from "@tanstack/react-query";
@@ -91,7 +91,7 @@ export default function SupplierForm() {
     // Fetch contacts for dropdown
     const { data: contacts = [], refetch: refetchContacts } = useQuery({
         queryKey: ["contacts"],
-        queryFn: fetchContactList,
+        queryFn: fetchContactListSupplier
     });
 
     // Fetch current supplier data if editing
@@ -757,79 +757,6 @@ export default function SupplierForm() {
                                             </Field>
                                         )}
                                     />
-<<<<<<< Updated upstream
-=======
-
-                                    <div>
-                                        <Controller
-                                            name="two_fa_type"
-                                            control={control}
-                                            render={({ field, fieldState }) => (
-                                                <Field
-                                                    data-invalid={
-                                                        fieldState.invalid
-                                                    }
-                                                >
-                                                    <Label htmlFor="two_fa_type">
-                                                        2FA Type
-                                                    </Label>
-                                                    <Select
-                                                        value={String(
-                                                            field.value ?? ""
-                                                        )}
-                                                        options={
-                                                            twofaTypeOptions
-                                                        }
-                                                        placeholder="Select 2FA Type"
-                                                        onChange={(
-                                                            value: string
-                                                        ) =>
-                                                            field.onChange(
-                                                                Number(value)
-                                                            )
-                                                        }
-                                                        onBlur={field.onBlur}
-                                                        className="dark:bg-dark-900"
-                                                    />
-                                                    {fieldState.error && (
-                                                        <p className="mt-1 text-sm text-error-500">
-                                                            {
-                                                                fieldState.error
-                                                                    .message
-                                                            }
-                                                        </p>
-                                                    )}
-                                                </Field>
-                                            )}
-                                        />
-                                    </div>
-
-                                    <div>
-                                        <Controller
-                                            name="two_fa_enabled"
-                                            control={control}
-                                            render={({ field, fieldState }) => (
-                                                <Field
-                                                    data-invalid={
-                                                        fieldState.invalid
-                                                    }
-                                                >
-                                                    <Label htmlFor="input">
-                                                        Multi-factor
-                                                        authentication
-                                                    </Label>
-                                                    <Switch
-                                                        checked={field.value}
-                                                        onCheckedChange={
-                                                            field.onChange
-                                                        }
-                                                        label="Enable multi-factor authentication to secure your account."
-                                                    />
-                                                </Field>
-                                            )}
-                                        />
-                                    </div>
->>>>>>> Stashed changes
                                 </div>
                                 {/* {!id && (
                                     <>
@@ -996,11 +923,7 @@ export default function SupplierForm() {
                 onClose={() => setIsContactModalOpen(false)}
                 onUserCreated={(user) => {
                     toast.success(
-<<<<<<< Updated upstream
                         `User ${user?.contact?.firstname || ""} ${user?.contact?.lastname || ""} has been added!`,
-=======
-                        `Contact ${contact.firstname} ${contact.lastname} has been added!`
->>>>>>> Stashed changes
                     );
                     refetchContacts();
                 }}

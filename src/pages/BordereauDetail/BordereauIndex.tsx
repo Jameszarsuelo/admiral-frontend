@@ -247,20 +247,28 @@ export default function BordereauIndex() {
                             <h1 className="text-xl font-bold mb-5">
                                 Add Bordereau / Workload
                             </h1>
-                            <Button
-                                className="mb-5 w-full"
-                                size="lg"
-                                variant="outline"
-                            >
-                                Bulk Upload (CSV)
-                            </Button>
-                            <Button
-                                className="mb-5 w-full"
-                                size="lg"
-                                variant="primary"
-                            >
-                                Add Single Bordereau
-                            </Button>
+                            <Can permission="bordereau_detail.create">
+                                <Button
+                                    className="mb-5 w-full"
+                                    size="lg"
+                                    variant="outline"
+                                    onClick={() => setIsCsvModalOpen(true)}
+                                >
+                                    Bulk Upload (CSV)
+                                </Button>
+                            </Can>
+                            <Can permission="bordereau_detail.create">
+                                <Button
+                                    className="mb-5 w-full"
+                                    size="lg"
+                                    variant="primary"
+                                    onClick={() =>
+                                        navigate("/bordereau-detail/create")
+                                    }
+                                >
+                                    Add Single Bordereau
+                                </Button>
+                            </Can>
                         </div>
                     </div>
                 </div>
@@ -480,27 +488,6 @@ export default function BordereauIndex() {
                                     Reset
                                 </Button>
                             </div>
-                        </div>
-                        <div className="flex shrink-0 items-center gap-2">
-                            <Can permission="bordereau_detail.create">
-                                <Button
-                                    size="sm"
-                                    onClick={() =>
-                                        navigate("/bordereau-detail/create")
-                                    }
-                                >
-                                    Add Invoice
-                                </Button>
-                            </Can>
-                            <Can permission="bordereau_detail.create">
-                                <Button
-                                    size="sm"
-                                    variant="outline"
-                                    onClick={() => setIsCsvModalOpen(true)}
-                                >
-                                    Upload CSV
-                                </Button>
-                            </Can>
                         </div>
                     </div>
                     <div className="max-w-full overflow-x-auto custom-scrollbar">

@@ -64,7 +64,7 @@ const UserForm = () => {
                 address_line_3: "",
                 city: "",
                 county: "",
-                country: "",
+                country: "United Kingdom",
                 postcode: "",
                 organisation: "",
             },
@@ -259,7 +259,7 @@ const UserForm = () => {
                                                 }
                                             >
                                                 <Label htmlFor="input">
-                                                    Email
+                                                    Email (username)
                                                 </Label>
                                                 <Input
                                                     {...field}
