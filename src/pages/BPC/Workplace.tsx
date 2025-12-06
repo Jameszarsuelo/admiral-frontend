@@ -22,11 +22,11 @@ import {
 import { changeBpcStatus } from "@/database/bpc_api";
 import BordereauDetailsView from "../BordereauDetail/BordereauDetailsView";
 import useBpcNotifications from "@/hooks/useBpcNotifications";
+import useBpcTimer from "@/hooks/useBpcTimer";
 import Button from "@/components/ui/button/Button";
-import { getActivePlanning } from "@/database/planning_api";
 
 export default function Workplace() {
-    const { user } = useAuth();
+    const { user, logout } = useAuth();
 
     const { data: bpcStatusData } = useQuery({
         queryKey: ["bpc-status-list"],
@@ -43,17 +43,6 @@ export default function Workplace() {
         enabled: !!user,
     });
 
-    const { data: activePlanning } = useQuery({
-        queryKey: ["active-planning"],
-        queryFn: async () => {
-            return await getActivePlanning();
-        },
-        retry: false,
-    });
-
-
-    console.log(activePlanning);
-    
     const [selectedStatusId, setSelectedStatusId] = useState<string>("");
     const [isUpdatingStatus, setIsUpdatingStatus] = useState(false);
 
@@ -62,7 +51,7 @@ export default function Workplace() {
         const currentId = Number(selectedStatusId);
 
         // Start with all statuses except 3 and 4 (these should not be selectable).
-        let opts = list
+        let opts: { value: string; label: string; disabled?: boolean }[] = list
             .filter((s) => typeof s.id === "number" && s.id !== 3 && s.id !== 4)
             .map((s) => ({ value: String(s.id), label: s.status }));
 
@@ -73,16 +62,30 @@ export default function Workplace() {
             // Ensure the current status (3 or 4) is visible so the Select can display it.
             const cur = list.find((s) => s.id === currentId);
             if (cur) {
-                opts = [{ value: String(cur.id), label: cur.status + " (current)" }, ...opts];
+                // show current status but mark it disabled so user cannot pick it
+                opts = [
+                    {
+                        value: String(cur.id),
+                        label: cur.status + " (current)",
+                        disabled: true,
+                    },
+                    ...opts,
+                ];
             } else {
-                opts = [{ value: String(currentId), label: `Status ${currentId} (current)` }, ...opts];
+                opts = [
+                    {
+                        value: String(currentId),
+                        label: `Status ${currentId} (current)`,
+                        disabled: true,
+                    },
+                    ...opts,
+                ];
             }
         }
 
         return opts;
     }, [bpcStatusData, selectedStatusId]);
 
-    
     const [newCommentText, setNewCommentText] = useState("");
 
     const { data: bordereauDetails, isLoading } =
@@ -111,6 +114,28 @@ export default function Workplace() {
         const list = (bpcStatusData || []) as IBPCStatus[];
         return list.find((s) => String(s.id) === selectedStatusId);
     }, [bpcStatusData, selectedStatusId]);
+
+    // Map specific status IDs to fixed hex colors.
+    // If a status id is not listed here (e.g. 1), we fall back to the
+    // previous behavior (using `wfm` to pick emerald vs gray).
+    const statusColorHex = useMemo(() => {
+        const id = Number(selectedStatus?.id ?? selectedStatusId ?? NaN);
+        if (Number.isNaN(id)) return undefined;
+        switch (id) {
+            case 3:
+                return "#00B0F0"; // light blue
+            case 4:
+                return "#002060"; // dark blue
+            case 2:
+                return "#00B050"; // green
+            case 5:
+            case 6:
+            case 7:
+                return "#FF0000"; // red
+            default:
+                return undefined; // keep current behavior (status 1 etc.)
+        }
+    }, [selectedStatusId, selectedStatus]);
 
     // subscribe to notifications and update caches / status
     useBpcNotifications(bpcUser?.id, {
@@ -250,8 +275,14 @@ export default function Workplace() {
         onSettled: () => setIsUpdatingStatus(false),
     });
 
+    const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
+    const [isLoggingOut, setIsLoggingOut] = useState(false);
+    // timer state moved to hook
+
     const isRefetchingBordereau =
         useIsFetching({ queryKey: ["current-bordereau", bpcUser?.id] }) > 0;
+
+    const { currentFmt, totalFmt } = useBpcTimer(bpcUser?.id, selectedStatusId);
 
     // fetch outcomes for dropdown
     useEffect(() => {
@@ -418,10 +449,11 @@ export default function Workplace() {
     return (
         <>
             <div className="grid grid-cols-12 gap-4 md:gap-6">
-                <div className="col-span-12 space-y-10 xl:col-span-10">
-                    <div className="grid grid-cols-1 gap-4 sm:grid-cols-1 md:gap-6">
-                        <div className="rounded-2xl overflow-hidden shadow-md">
-                            <div className=" text-black px-6 py-6 sm:px-8 sm:py-8">
+                {/* Use flex and min-h-full to ensure equal height for all columns */}
+                <div className="col-span-12 xl:col-span-6 flex flex-col h-full">
+                    <div className="grid grid-cols-1 gap-4 sm:grid-cols-1 md:gap-6 flex-1">
+                        <div className="rounded-2xl overflow-hidden shadow-md h-full flex flex-col">
+                            <div className="text-black px-6 py-6 sm:px-8 sm:py-8">
                                 <div className="flex items-start justify-between gap-4">
                                     <div className="flex items-start gap-4">
                                         <div className="w-14 h-14 rounded-lg bg-black/20 flex items-center justify-center">
@@ -450,10 +482,10 @@ export default function Workplace() {
                                 </div>
                             </div>
 
-                                <div className="bg-white dark:bg-gray-900 px-6 py-5 sm:px-8 sm:py-6">
-                                    <div className="flex items-center justify-between gap-4">
-                                        <div className="flex-1">
-                                            <div className="flex items-center">
+                            <div className="bg-white dark:bg-gray-900 px-6 py-5 sm:px-8 sm:py-6 mt-auto">
+                                <div className="flex items-center justify-between gap-4">
+                                    <div className="flex-1">
+                                        <div className="flex items-center">
                                             {bordereauDetails && (
                                                 <Button
                                                     size="sm"
@@ -470,52 +502,103 @@ export default function Workplace() {
                                                     </span>
                                                 </Button>
                                             )}
-
-                                            </div>
-                                        </div>
-
-                                        <div className="flex flex-col items-end">
-                                            {bordereauDetails && (
-                                                <div
-                                                    className={
-                                                        cooldownSeconds !== null
-                                                            ? "w-56 opacity-60 pointer-events-none"
-                                                            : "w-56"
-                                                    }
-                                                >
-                                                    <Select
-                                                        options={outcomes}
-                                                        placeholder="Select outcome"
-                                                        value={""}
-                                                        onChange={(val: string) => {
-                                                            const id = Number(val);
-                                                            const found =
-                                                                outcomes.find(
-                                                                    (o) =>
-                                                                        o.id === id,
-                                                                );
-                                                            if (!found) return;
-                                                            setOutcomeToConfirm({
-                                                                id: found.id,
-                                                                label: found.label,
-                                                            });
-                                                            setShowOutcomeConfirm(
-                                                                true,
-                                                            );
-                                                        }}
-                                                    />
-                                                </div>
-                                            )}
                                         </div>
                                     </div>
+
+                                    <div className="flex flex-col items-end">
+                                        {bordereauDetails && (
+                                            <div
+                                                className={
+                                                    cooldownSeconds !== null
+                                                        ? "w-56 opacity-60 pointer-events-none"
+                                                        : "w-56"
+                                                }
+                                            >
+                                                <Select
+                                                    options={outcomes}
+                                                    placeholder="Select outcome"
+                                                    value={""}
+                                                    onChange={(val: string) => {
+                                                        const id = Number(val);
+                                                        const found =
+                                                            outcomes.find(
+                                                                (o) =>
+                                                                    o.id === id,
+                                                            );
+                                                        if (!found) return;
+                                                        setOutcomeToConfirm({
+                                                            id: found.id,
+                                                            label: found.label,
+                                                        });
+                                                        setShowOutcomeConfirm(
+                                                            true,
+                                                        );
+                                                    }}
+                                                />
+                                            </div>
+                                        )}
+                                    </div>
                                 </div>
+                            </div>
                         </div>
                     </div>
                 </div>
 
-                <div className="col-span-12 xl:col-span-2">
-                    <div className="sticky top-20 space-y-4">
-                        <div className="rounded-2xl border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-white/[0.03] sm:p-6">
+                {/* Add h-full and flex-col to both side columns for equal height */}
+                <div className="col-span-12 xl:col-span-3 flex flex-col h-full">
+                    <div className="sticky top-20 space-y-4 flex-1 flex flex-col">
+                        <div className="rounded-2xl border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-white/3 sm:p-6 flex-1 flex flex-col">
+                            <h3 className="text-lg font-semibold text-gray-800 dark:text-white/90">
+                                Time in Current status
+                            </h3>
+                            <p className="mt-1 text-gray-500 text-theme-sm dark:text-gray-400">
+                                Overview of your current bordereau status.
+                            </p>
+
+                            <div className="mt-6 flex justify-center flex-1 items-center">
+                                <div className="flex items-center gap-3">
+                                    <div className="flex flex-col items-center">
+                                        <span className="text-4xl font-bold text-gray-800 dark:text-white">
+                                            {currentFmt.hh}
+                                        </span>
+                                        <span className="text-xs text-gray-500 dark:text-gray-400">
+                                            Hours
+                                        </span>
+                                    </div>
+                                    <span className="mx-2 text-2xl font-semibold text-gray-600 dark:text-gray-300">
+                                        :
+                                    </span>
+                                    <div className="flex flex-col items-center">
+                                        <span className="text-4xl font-bold text-gray-800 dark:text-white">
+                                            {currentFmt.mm}
+                                        </span>
+                                        <span className="text-xs text-gray-500 dark:text-gray-400">
+                                            Minutes
+                                        </span>
+                                    </div>
+                                    <span className="mx-2 text-2xl font-semibold text-gray-600 dark:text-gray-300">
+                                        :
+                                    </span>
+                                    <div className="flex flex-col items-center">
+                                        <span className="text-4xl font-bold text-gray-800 dark:text-white">
+                                            {currentFmt.ss}
+                                        </span>
+                                        <span className="text-xs text-gray-500 dark:text-gray-400">
+                                            Seconds
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div className="mt-5 text-center text-sm text-gray-600 dark:text-gray-300">
+                                Total today: {totalFmt.hh}:{totalFmt.mm}:{totalFmt.ss}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div className="col-span-12 xl:col-span-3 flex flex-col h-full">
+                    <div className="sticky top-20 space-y-4 flex-1 flex flex-col">
+                        <div className="rounded-2xl border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-white/3 sm:p-6 flex-1 flex flex-col">
                             <h3 className="text-lg font-semibold text-gray-800 dark:text-white/90">
                                 Current Status
                             </h3>
@@ -531,6 +614,14 @@ export default function Workplace() {
                                                 ? "bg-emerald-500"
                                                 : "bg-gray-300"
                                         }`}
+                                        style={
+                                            statusColorHex
+                                                ? {
+                                                      backgroundColor:
+                                                          statusColorHex,
+                                                  }
+                                                : undefined
+                                        }
                                     />
                                     <div className="ml-2 text-sm font-medium">
                                         {selectedStatus
@@ -560,6 +651,12 @@ export default function Workplace() {
                                             const id = Number(val);
                                             setSelectedStatusId(val);
 
+                                            // If selecting status 1 => ask for logout confirmation
+                                            if (id === 1) {
+                                                setShowLogoutConfirm(true);
+                                                return;
+                                            }
+
                                             // If there is a current bordereau assigned, confirm first
                                             if (bordereauDetails) {
                                                 setPendingStatusId(id);
@@ -584,6 +681,15 @@ export default function Workplace() {
 
                 <div className="col-span-full">
                     <div className="grid grid-cols-1 gap-4 bg-white p-6 rounded-2xl shadow-md dark:bg-gray-900">
+                        {isLoggingOut && (
+                            <div className="fixed inset-0 z-50 flex items-center justify-center">
+                                <div className="bg-black/40 absolute inset-0" />
+                                <div className="relative z-10 flex items-center gap-3 bg-white dark:bg-gray-800 rounded-md px-4 py-3 shadow">
+                                    <div className="w-6 h-6 border-4 border-t-transparent border-gray-300 rounded-full animate-spin" />
+                                    <div className="text-sm">Logging out…</div>
+                                </div>
+                            </div>
+                        )}
                         {cooldownSeconds !== null && (
                             <div className="mb-4 p-4 rounded-md bg-yellow-50 dark:bg-yellow-900/20">
                                 <div className="flex items-center justify-between">
@@ -607,6 +713,12 @@ export default function Workplace() {
                                                     cooldownTotal) *
                                                 100
                                             }%`,
+                                            ...(statusColorHex
+                                                ? {
+                                                      backgroundColor:
+                                                          statusColorHex,
+                                                  }
+                                                : {}),
                                         }}
                                     />
                                 </div>
@@ -714,7 +826,7 @@ export default function Workplace() {
                         <Modal
                             isOpen={showSupplierModal}
                             onClose={() => setShowSupplierModal(false)}
-                            className="!w-auto m-4"
+                            className="w-auto! m-4"
                         >
                             <div className="p-6">
                                 <h3 className="text-lg font-semibold mb-4">
@@ -733,7 +845,7 @@ export default function Workplace() {
                                 setShowStatusConfirm(false);
                                 setPendingStatusId(null);
                             }}
-                            className="!w-auto m-4"
+                            className="w-auto! m-4"
                         >
                             <div className="p-6">
                                 <h3 className="text-lg font-semibold mb-4">
@@ -777,6 +889,73 @@ export default function Workplace() {
                             </div>
                         </Modal>
 
+                        {/* Logout confirmation modal - shown when user selects status 1 */}
+                        <Modal
+                            isOpen={showLogoutConfirm}
+                            onClose={() => setShowLogoutConfirm(false)}
+                            className="w-auto! m-4"
+                        >
+                            <div className="p-6">
+                                <h3 className="text-lg font-semibold mb-4">
+                                    Confirm Logout
+                                </h3>
+                                <p className="my-8">
+                                    You are about to set your status to{" "}
+                                    <strong>Log Off</strong>. Are you sure you
+                                    want to proceed?
+                                </p>
+                                <div className="flex items-center justify-end gap-3">
+                                    <button
+                                        className="px-4 py-2 rounded-md bg-gray-100 hover:bg-gray-200"
+                                        onClick={() =>
+                                            setShowLogoutConfirm(false)
+                                        }
+                                    >
+                                        Cancel
+                                    </button>
+                                    <button
+                                        className="px-4 py-2 rounded-md bg-rose-600 text-white hover:bg-rose-700 disabled:opacity-60"
+                                        disabled={isLoggingOut}
+                                        onClick={async () => {
+                                            setIsLoggingOut(true);
+                                            // keep the modal open briefly while spinner shows
+                                            try {
+                                                if (bpcUser?.id) {
+                                                    await changeStatusMutation.mutateAsync(
+                                                        {
+                                                            bpcId: bpcUser.id,
+                                                            statusId: 1,
+                                                        },
+                                                    );
+                                                }
+                                            } catch (err) {
+                                                console.error(
+                                                    "Failed to set status to 1",
+                                                    err,
+                                                );
+                                            }
+
+                                            try {
+                                                await logout();
+                                            } catch (err) {
+                                                console.error(
+                                                    "Logout failed",
+                                                    err,
+                                                );
+                                            } finally {
+                                                setIsLoggingOut(false);
+                                                setShowLogoutConfirm(false);
+                                            }
+                                        }}
+                                    >
+                                        {isLoggingOut
+                                            ? "Logging out..."
+                                            : "Confirm"}
+                                    </button>
+                                </div>
+                            </div>
+                        </Modal>
+
                         {/* Outcome confirmation modal */}
                         <Modal
                             isOpen={!!outcomeToConfirm && showOutcomeConfirm}
@@ -784,7 +963,7 @@ export default function Workplace() {
                                 setShowOutcomeConfirm(false);
                                 setOutcomeToConfirm(null);
                             }}
-                            className="!w-auto m-4"
+                            className="w-auto! m-4"
                         >
                             <div className="p-6">
                                 <h3 className="text-lg font-semibold mb-4">

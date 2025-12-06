@@ -82,7 +82,7 @@ export default function ContactForm() {
             loading: id ? "Updating Contact..." : "Creating Contact...",
             success: () => {
                 setTimeout(() => {
-                    navigate("/contact-directory");
+                    navigate(-1);
                 }, 2000);
                 return id
                     ? "Contact updated successfully!"
@@ -96,7 +96,12 @@ export default function ContactForm() {
 
     return (
         <>
-            <PageBreadcrumb pageTitle="Contact" />
+            <PageBreadcrumb
+                pageTitle={id ? "Edit Contact" : "Add Contact"}
+                pageBreadcrumbs={[
+                    { title: "Contact Directory", link: "/contact-directory" },
+                ]}
+            />
             <ComponentCard title={id ? "Edit Contact" : "Add Contact"}>
                 {isLoading ? (
                     <div className="flex items-center justify-center py-12">

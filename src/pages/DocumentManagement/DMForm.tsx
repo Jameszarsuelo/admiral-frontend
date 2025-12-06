@@ -20,27 +20,27 @@ import { fetchSupplierList } from "@/database/supplier_api";
 import { IDocumentFormSchema } from "@/types/DocumentSchema";
 import { fetchDocumentById, upsertDocument } from "@/database/document_api";
 
-
 export default function DMForm() {
     const navigate = useNavigate();
     const { id } = useParams();
     const [isLoading, setIsLoading] = useState(false);
 
-    const { handleSubmit, control, reset, setError } = useForm<IDocumentFormSchema>({
-        defaultValues: {
-            id: undefined,
-            name: "",
-            revision: "",
-            description: "",
-            document_type_id: undefined,
-            expiry_date: undefined,
-            location: "",
-            document_visibility_id: undefined,
-            supplier_id: undefined
-        },
-    });
+    const { handleSubmit, control, reset, setError } =
+        useForm<IDocumentFormSchema>({
+            defaultValues: {
+                id: undefined,
+                name: "",
+                revision: "",
+                description: "",
+                document_type_id: undefined,
+                expiry_date: undefined,
+                location: "",
+                document_visibility_id: undefined,
+                supplier_id: undefined,
+            },
+        });
 
-     useEffect(() => {
+    useEffect(() => {
         if (id) {
             setIsLoading(true);
             fetchDocumentById(id)
@@ -65,8 +65,10 @@ export default function DMForm() {
         queryKey: ["document-type-list"],
         queryFn: fetchDocumentTypeList,
         select: (document_type) =>
-            (document_type ?? [])
-                .map((dt) => ({ value: Number(dt.id), label: dt.type })),
+            (document_type ?? []).map((dt) => ({
+                value: Number(dt.id),
+                label: dt.type,
+            })),
         placeholderData: [],
         staleTime: 1000 * 60 * 5,
     });
@@ -76,8 +78,10 @@ export default function DMForm() {
         queryKey: ["document-visibility-list"],
         queryFn: fetchDocumentVisibilityList,
         select: (document_visibility) =>
-            (document_visibility ?? [])
-                .map((dv) => ({ value: Number(dv.id), label: dv.name })),
+            (document_visibility ?? []).map((dv) => ({
+                value: Number(dv.id),
+                label: dv.name,
+            })),
         placeholderData: [],
         staleTime: 1000 * 60 * 5,
     });
@@ -87,8 +91,10 @@ export default function DMForm() {
         queryKey: ["supplier-list"],
         queryFn: fetchSupplierList,
         select: (document_visibility) =>
-            (document_visibility ?? [])
-                .map((dv) => ({ value: Number(dv.id), label: dv.name })),
+            (document_visibility ?? []).map((dv) => ({
+                value: Number(dv.id),
+                label: dv.name,
+            })),
         placeholderData: [],
         staleTime: 1000 * 60 * 5,
     });
@@ -110,25 +116,31 @@ export default function DMForm() {
         });
     }
 
-     function onError(errors: unknown) {
+    function onError(errors: unknown) {
         console.log("Form validation errors:", errors);
         toast.error("Please fix the errors in the form");
     }
 
-
     return (
         <>
-            <PageBreadcrumb pageTitle="Document Management" />
+            <PageBreadcrumb
+                pageTitle={
+                    id ? "Edit Document Management" : "Add Document Management"
+                }
+                pageBreadcrumbs={[
+                    { title: "Document Management", link: "/document-management" },
+                ]}
+            />
             <ComponentCard title={id ? "Edit Document" : "Add Document"}>
-            {/* <ComponentCard title="Document Management"> */}
+                {/* <ComponentCard title="Document Management"> */}
                 {isLoading ? (
                     <div className="flex items-center justify-center py-12">
                         <Spinner size="lg" />
                     </div>
                 ) : (
                     <form
-                    id="document-form"
-                    onSubmit={handleSubmit(onSubmit, onError)}
+                        id="document-form"
+                        onSubmit={handleSubmit(onSubmit, onError)}
                     >
                         <div className="grid grid-cols-12 gap-4 md:gap-6">
                             <div className="col-span-12 space-y-6 xl:col-span-6">
@@ -137,20 +149,30 @@ export default function DMForm() {
                                         name="name"
                                         control={control}
                                         render={({ field, fieldState }) => (
-                                            <Field data-invalid={fieldState.invalid}>
+                                            <Field
+                                                data-invalid={
+                                                    fieldState.invalid
+                                                }
+                                            >
                                                 <Label>Document Name</Label>
                                                 <FileInput
                                                     onChange={(e) => {
-                                                        const file = e.target.files?.[0];
+                                                        const file =
+                                                            e.target.files?.[0];
                                                         if (file) {
-                                                            field.onChange(file);
+                                                            field.onChange(
+                                                                file
+                                                            );
                                                         }
                                                     }}
                                                     className="custom-class"
                                                 />
                                                 {fieldState.error && (
                                                     <p className="mt-1 text-sm text-error-500">
-                                                        {fieldState.error.message}
+                                                        {
+                                                            fieldState.error
+                                                                .message
+                                                        }
                                                     </p>
                                                 )}
                                             </Field>
@@ -165,9 +187,13 @@ export default function DMForm() {
                                         control={control}
                                         render={({ field, fieldState }) => (
                                             <Field
-                                                data-invalid={fieldState.invalid}
+                                                data-invalid={
+                                                    fieldState.invalid
+                                                }
                                             >
-                                                <Label htmlFor="name">Revision</Label>
+                                                <Label htmlFor="name">
+                                                    Revision
+                                                </Label>
                                                 <Input
                                                     {...field}
                                                     id="revision"
@@ -185,19 +211,36 @@ export default function DMForm() {
                                         name="document_type_id"
                                         control={control}
                                         render={({ field, fieldState }) => (
-                                            <Field data-invalid={fieldState?.invalid}>
-                                                <Label htmlFor="document_type_id">Document Type</Label>
+                                            <Field
+                                                data-invalid={
+                                                    fieldState?.invalid
+                                                }
+                                            >
+                                                <Label htmlFor="document_type_id">
+                                                    Document Type
+                                                </Label>
                                                 <Combobox
-                                                    value={field.value ?? undefined}
-                                                    options={documentTypeOptions}
-                                                    onChange={(value) => field.onChange(Number(value))}
+                                                    value={
+                                                        field.value ?? undefined
+                                                    }
+                                                    options={
+                                                        documentTypeOptions
+                                                    }
+                                                    onChange={(value) =>
+                                                        field.onChange(
+                                                            Number(value)
+                                                        )
+                                                    }
                                                     placeholder="Select Document Type"
                                                     searchPlaceholder="Search document type..."
                                                     emptyText="No document type found."
                                                 />
                                                 {fieldState?.error && (
                                                     <p className="mt-1 text-sm text-error-500">
-                                                        {fieldState.error.message}
+                                                        {
+                                                            fieldState.error
+                                                                .message
+                                                        }
                                                     </p>
                                                 )}
                                             </Field>
@@ -212,9 +255,13 @@ export default function DMForm() {
                                         control={control}
                                         render={({ field, fieldState }) => (
                                             <Field
-                                                data-invalid={fieldState.invalid}
+                                                data-invalid={
+                                                    fieldState.invalid
+                                                }
                                             >
-                                                <Label htmlFor="expiry_date">Expiry Date</Label>
+                                                <Label htmlFor="expiry_date">
+                                                    Expiry Date
+                                                </Label>
                                                 <DatePicker
                                                     {...field}
                                                     id="expiry_date"
@@ -233,9 +280,13 @@ export default function DMForm() {
                                         control={control}
                                         render={({ field, fieldState }) => (
                                             <Field
-                                                data-invalid={fieldState.invalid}
+                                                data-invalid={
+                                                    fieldState.invalid
+                                                }
                                             >
-                                                <Label htmlFor="location">Location</Label>
+                                                <Label htmlFor="location">
+                                                    Location
+                                                </Label>
                                                 <Input
                                                     {...field}
                                                     id="revision"
@@ -253,19 +304,36 @@ export default function DMForm() {
                                         name="document_visibility_id"
                                         control={control}
                                         render={({ field, fieldState }) => (
-                                            <Field data-invalid={fieldState?.invalid}>
-                                                <Label htmlFor="document_visibility_id">Document Visibility</Label>
+                                            <Field
+                                                data-invalid={
+                                                    fieldState?.invalid
+                                                }
+                                            >
+                                                <Label htmlFor="document_visibility_id">
+                                                    Document Visibility
+                                                </Label>
                                                 <Combobox
-                                                    value={field.value ?? undefined}
-                                                    options={documentVisibilityOptions}
-                                                    onChange={(value) => field.onChange(Number(value))}
+                                                    value={
+                                                        field.value ?? undefined
+                                                    }
+                                                    options={
+                                                        documentVisibilityOptions
+                                                    }
+                                                    onChange={(value) =>
+                                                        field.onChange(
+                                                            Number(value)
+                                                        )
+                                                    }
                                                     placeholder="Select Document Visibility"
                                                     searchPlaceholder="Search document visibility..."
                                                     emptyText="No document visibility found."
                                                 />
                                                 {fieldState?.error && (
                                                     <p className="mt-1 text-sm text-error-500">
-                                                        {fieldState.error.message}
+                                                        {
+                                                            fieldState.error
+                                                                .message
+                                                        }
                                                     </p>
                                                 )}
                                             </Field>
@@ -279,19 +347,34 @@ export default function DMForm() {
                                         name="supplier_id"
                                         control={control}
                                         render={({ field, fieldState }) => (
-                                            <Field data-invalid={fieldState?.invalid}>
-                                                <Label htmlFor="supplier_id">Supplier</Label>
+                                            <Field
+                                                data-invalid={
+                                                    fieldState?.invalid
+                                                }
+                                            >
+                                                <Label htmlFor="supplier_id">
+                                                    Supplier
+                                                </Label>
                                                 <Combobox
-                                                    value={field.value ?? undefined}
+                                                    value={
+                                                        field.value ?? undefined
+                                                    }
                                                     options={supplierOptions}
-                                                    onChange={(value) => field.onChange(Number(value))}
+                                                    onChange={(value) =>
+                                                        field.onChange(
+                                                            Number(value)
+                                                        )
+                                                    }
                                                     placeholder="Select Supplier"
                                                     searchPlaceholder="Search supplier..."
                                                     emptyText="No supplier found."
                                                 />
                                                 {fieldState?.error && (
                                                     <p className="mt-1 text-sm text-error-500">
-                                                        {fieldState.error.message}
+                                                        {
+                                                            fieldState.error
+                                                                .message
+                                                        }
                                                     </p>
                                                 )}
                                             </Field>
@@ -306,9 +389,13 @@ export default function DMForm() {
                                         control={control}
                                         render={({ field, fieldState }) => (
                                             <Field
-                                                data-invalid={fieldState.invalid}
+                                                data-invalid={
+                                                    fieldState.invalid
+                                                }
                                             >
-                                                <Label htmlFor="name">Description</Label>
+                                                <Label htmlFor="name">
+                                                    Description
+                                                </Label>
                                                 <Input
                                                     {...field}
                                                     id="description"
@@ -323,7 +410,10 @@ export default function DMForm() {
                         </div>
                         {!isLoading && (
                             <div className="mt-6 flex justify-end gap-3">
-                                <Button variant="danger" onClick={() => navigate(-1)}>
+                                <Button
+                                    variant="danger"
+                                    onClick={() => navigate(-1)}
+                                >
                                     Cancel
                                 </Button>
                                 <Button type="submit" form="document-form">

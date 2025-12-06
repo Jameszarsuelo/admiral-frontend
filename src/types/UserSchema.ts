@@ -31,7 +31,7 @@ export const UserBaseSchema = z.object({
     created_at: z.string().datetime(),
     updated_at: z.string().datetime(),
     deleted_at: z.string().datetime().nullable().optional(),
-    contact: ContactBaseSchema.optional(),
+    contact: z.lazy(() => ContactBaseSchema.optional()),
     user_type: UserTypeSchema.optional(),
 });
 

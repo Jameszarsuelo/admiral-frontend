@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { UserBaseSchema } from "./UserSchema";
 
 export const NonEmptyString = z.string().min(1);
 export const OptionalString = z.string().trim().min(1).optional();
@@ -21,6 +22,7 @@ export const ContactBaseSchema = z.object({
     county: z.string().nullable().optional(),
     country: z.string().default("United Kingdom"),
     postcode: z.string().nullable().optional(),
+    supplier_id: z.number().int().positive().nullable().optional(),
     type: z.string().refine((val) => ["1", "2", "3"].includes(val), {
         message: "Type must be '1', '2', or '3'",
     }),
@@ -61,6 +63,14 @@ export const ContactCreateSchema = z.object({
 //   id: z.number().int().positive(),
 // });
 
+export const ContactHeaderSchema = ContactBaseSchema.extend({
+    user: z.lazy(() => UserBaseSchema.omit({
+        contact: true,
+        user_type: true,
+    })),
+});
+
 export type IContactSchema = z.infer<typeof ContactBaseSchema>;
 export type IContactCreateSchema = z.infer<typeof ContactCreateSchema>;
+export type IContactHeaderSchema = z.infer<typeof ContactHeaderSchema>;
 // export type IContactUpdateSchema = z.infer<typeof ContactUpdateSchema>;

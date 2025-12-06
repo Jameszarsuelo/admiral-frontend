@@ -13,7 +13,7 @@ import Spinner from "@/components/ui/spinner/Spinner";
 import Select from "@/components/form/Select";
 import DatePicker from "@/components/form/date-picker";
 import Label from "@/components/form/Label";
-import { ArrowUpIcon, GroupIcon } from "@/icons";
+// import { ArrowUpIcon, GroupIcon } from "@/icons";
 import Badge from "@/components/ui/badge/Badge";
 import { ArrowRight } from "lucide-react";
 import Can from "@/components/auth/Can";
@@ -30,6 +30,7 @@ import api from "@/database/api";
 import { Field } from "@/components/ui/field";
 import Combobox from "@/components/form/Combobox";
 import Input from "@/components/form/input/InputField";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 
 export default function BordereauIndex() {
     const navigate = useNavigate();
@@ -191,140 +192,37 @@ export default function BordereauIndex() {
 
     return (
         <>
-            <PageBreadcrumb pageTitle="Invoice Detail" />
+            <PageBreadcrumb pageTitle="Bordereau Detail" />
             <div className="w-full">
-                {/* Filter + Summary Row */}
-                <div className="rounded-2xl border border-gray-200 bg-white px-5 py-5 dark:border-gray-800 dark:bg-white/[0.03] sm:px-6 mb-6">
-                    <div className="flex flex-col gap-4 lg:flex-row">
-                        {/* Left: Filters (3/4) */}
-                        <div className="w-full lg:w-3/5">
-                            <h3 className="text-lg font-semibold text-gray-800 dark:text-white/90 mb-3">
-                                Filter
-                            </h3>
-                            <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-                                <div className="md:col-span-1">
-                                    <Label htmlFor="filter-status">
-                                        Invoice Status
-                                    </Label>
-                                    <Select
-                                        options={[
-                                            {
-                                                value: "",
-                                                label: "-Select Invoice Status-",
-                                            },
-                                            {
-                                                value: "in_progress",
-                                                label: "In Progress",
-                                            },
-                                            {
-                                                value: "queued",
-                                                label: "Queued",
-                                            },
-                                            { value: "query", label: "Query" },
-                                            {
-                                                value: "closed",
-                                                label: "Closed (Paid)",
-                                            },
-                                        ]}
-                                        value={""}
-                                        onChange={() => {}}
-                                        placeholder="-Select Invoice Status-"
-                                    />
-                                </div>
-
-                                <div className="md:col-span-1">
-                                    <Label htmlFor="filter-supplier">
-                                        Supplier
-                                    </Label>
-                                    <Select
-                                        options={[
-                                            {
-                                                value: "",
-                                                label: "-Select Supplier-",
-                                            },
-                                            {
-                                                value: "supplier_a",
-                                                label: "Supplier A",
-                                            },
-                                            {
-                                                value: "supplier_b",
-                                                label: "Supplier B",
-                                            },
-                                        ]}
-                                        value={""}
-                                        onChange={() => {}}
-                                        placeholder="-Select Supplier-"
-                                    />
-                                </div>
-                            </div>
-
-                            <div className="mt-4 grid grid-cols-1 gap-4 md:grid-cols-2">
-                                <div>
-                                    <Label>Date From</Label>
-                                    <DatePicker
-                                        id="filter-date-from"
-                                        placement="top"
-                                        placeholder="Date from"
-                                    />
-                                </div>
-                                <div>
-                                    <Label>Date To</Label>
-                                    <DatePicker
-                                        id="filter-date-to"
-                                        placement="top"
-                                        placeholder="Date to"
-                                    />
-                                </div>
-                            </div>
-
-                            <div className="mt-4 flex gap-3">
-                                <Button size="sm">Filter</Button>
-                                <Button size="sm" variant="outline">
-                                    Reset
-                                </Button>
-                            </div>
-                        </div>
-
-                        <div className="w-full lg:w-2/5">
-                            <div className="mb-4 text-center rounded-2xl border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-white/[0.03] md:p-6">
-                                <div className="flex items-center justify-center w-12 h-12 bg-gray-100 rounded-xl dark:bg-gray-800">
-                                    <GroupIcon className="text-gray-800 size-6 dark:text-white/90" />
-                                </div>
-
-                                <div className="flex items-end justify-between mt-5">
-                                    <div>
-                                        <span className="text-sm text-gray-500 dark:text-gray-400">
-                                            Customers
-                                        </span>
-                                        <h4 className="font-bold text-gray-800 text-title-sm dark:text-white/90">
-                                            3,782
-                                        </h4>
-                                    </div>
-                                    <Badge color="success">
-                                        <ArrowUpIcon />
-                                        11.01%
-                                    </Badge>
-                                </div>
-                            </div>
-
-                            <div className="grid grid-cols-2 gap-3">
+                <div className="grid grid-cols-12 gap-4 md:gap-6">
+                    <div className="col-span-12 space-y-6 xl:col-span-9">
+                        <div className="rounded-2xl border border-gray-200 bg-white px-5 py-5 dark:border-gray-800 dark:bg-white/3 sm:px-6 mb-6">
+                            <div className="grid grid-cols-4 gap-3">
                                 {[
-                                    { k: "In Progress", v: "In Progress" },
-                                    { k: "Queued", v: "Queued" },
-                                    { k: "Query", v: "Query" },
+                                    { k: "Overdue", v: "Overdue" },
+                                    {
+                                        k: "MaxPayment",
+                                        v: "Max Payment Day Tomorrow",
+                                    },
                                     {
                                         k: "TargetDay",
                                         v: "Target Day Tomorrow",
                                     },
                                     {
-                                        k: "MaxPayment",
-                                        v: "Max Payment Day Tomorrow",
+                                        k: "OverdueMaxPaymentTargetWorkload",
+                                        v: "Overdue / MaxPayment / TargetWorkload",
                                     },
-                                    { k: "Overdue", v: "Overdue" },
+                                    { k: "Queued", v: "Queued" },
+                                    { k: "In Progress", v: "In Progress" },
+                                    { k: "Query", v: "Query" },
+                                    {
+                                        k: "QueuedWorkload",
+                                        v: "Queued Workload",
+                                    },
                                 ].map((s) => (
                                     <div
                                         key={s.k}
-                                        className="mb-4 rounded-2xl border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-white/[0.03] "
+                                        className="mb-4 rounded-2xl border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-white/3 "
                                     >
                                         <div className="flex items-end justify-between ">
                                             <div>
@@ -344,36 +242,252 @@ export default function BordereauIndex() {
                             </div>
                         </div>
                     </div>
-                </div>
-
-                {/* Invoice Table Section */}
-                <div className="rounded-2xl border border-gray-200 bg-white px-5 pb-5 pt-5 dark:border-gray-800 dark:bg-white/[0.03] sm:px-6 sm:pt-6">
-                    <div className="flex flex-col gap-5 mb-6 sm:flex-row sm:justify-between">
-                        <div className="w-full">
-                            <h3 className="text-lg font-semibold text-gray-800 dark:text-white/90">
-                                List of Invoices
-                            </h3>
-                        </div>
-                        <div className="flex shrink-0 items-center gap-2">
+                    <div className="col-span-12 space-y-6 xl:col-span-3">
+                        <div className="rounded-2xl border border-gray-200 bg-white px-5 py-5 dark:border-gray-800 dark:bg-white/3 sm:px-6 mb-6">
+                            <h1 className="text-xl font-bold mb-5">
+                                Add Bordereau / Workload
+                            </h1>
                             <Can permission="bordereau_detail.create">
                                 <Button
-                                    size="sm"
+                                    className="mb-5 w-full"
+                                    size="lg"
+                                    variant="outline"
+                                    onClick={() => setIsCsvModalOpen(true)}
+                                >
+                                    Bulk Upload (CSV)
+                                </Button>
+                            </Can>
+                            <Can permission="bordereau_detail.create">
+                                <Button
+                                    className="mb-5 w-full"
+                                    size="lg"
+                                    variant="primary"
                                     onClick={() =>
                                         navigate("/bordereau-detail/create")
                                     }
                                 >
-                                    Add Invoice
+                                    Add Single Bordereau
                                 </Button>
                             </Can>
-                            <Can permission="bordereau_detail.create">
-                                <Button
-                                    size="sm"
-                                    variant="outline"
-                                    onClick={() => setIsCsvModalOpen(true)}
-                                >
-                                    Upload CSV
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div className="w-full">
+                {/* Invoice Table Section */}
+                <div className="rounded-2xl border border-gray-200 bg-white px-5 pb-5 pt-5 dark:border-gray-800 dark:bg-white/3 sm:px-6 sm:pt-6">
+                    <div className="flex flex-col gap-5 mb-6 sm:flex-row sm:justify-between">
+                        <div className="w-full">
+                            <h3 className="text-lg font-semibold text-gray-800 dark:text-white/90">
+                                List of Bordereau
+                            </h3>
+                            {/* Filter + Summary Row */}
+                            <h3 className="text-md text-gray-800 dark:text-white/90 mt-2">
+                                Select Filters, then click on "Filter" to create
+                                list
+                            </h3>
+                            <div className="grid grid-cols-12 gap-4 md:gap-6 my-3">
+                                <div className="col-span-12 space-y-6 xl:col-span-9">
+                                    <div className="grid grid-cols-12 gap-4 md:gap-6 my-3">
+                                        <div className="col-span-12 space-y-6 xl:col-span-4">
+                                            <Label htmlFor="filter-status">
+                                                Invoice Status
+                                            </Label>
+                                            <Select
+                                                options={[
+                                                    {
+                                                        value: "",
+                                                        label: "-Select Invoice Status-",
+                                                    },
+                                                    {
+                                                        value: "in_progress",
+                                                        label: "In Progress",
+                                                    },
+                                                    {
+                                                        value: "queued",
+                                                        label: "Queued",
+                                                    },
+                                                    {
+                                                        value: "query",
+                                                        label: "Query",
+                                                    },
+                                                    {
+                                                        value: "closed",
+                                                        label: "Closed (Paid)",
+                                                    },
+                                                ]}
+                                                value={""}
+                                                onChange={() => {}}
+                                                placeholder="-Select Invoice Status-"
+                                            />
+                                        </div>
+                                        <div className="col-span-12 space-y-6 xl:col-span-4">
+                                            <Label htmlFor="filter-supplier">
+                                                Supplier
+                                            </Label>
+                                            <Select
+                                                options={[
+                                                    {
+                                                        value: "",
+                                                        label: "-Select Supplier-",
+                                                    },
+                                                    {
+                                                        value: "supplier_a",
+                                                        label: "Supplier A",
+                                                    },
+                                                    {
+                                                        value: "supplier_b",
+                                                        label: "Supplier B",
+                                                    },
+                                                ]}
+                                                value={""}
+                                                onChange={() => {}}
+                                                placeholder="-Select Supplier-"
+                                            />
+                                        </div>
+                                        <div className="col-span-12 space-y-6 xl:col-span-4">
+                                            <Label htmlFor="bpc">
+                                                Bordereau Processing Clerk
+                                            </Label>
+                                            <Select
+                                                options={[
+                                                    {
+                                                        value: "",
+                                                        label: "-Select BPC-",
+                                                    },
+                                                    {
+                                                        value: "bpc_a",
+                                                        label: "BPC A",
+                                                    },
+                                                    {
+                                                        value: "bpc_b",
+                                                        label: "BPC B",
+                                                    },
+                                                ]}
+                                                value={""}
+                                                onChange={() => {}}
+                                                placeholder="-Select BPC-"
+                                            />
+                                        </div>
+                                        <div className="col-span-12 space-y-6 xl:col-span-4">
+                                            <div>
+                                                <Label>Date From</Label>
+                                                <DatePicker
+                                                    id="filter-date-from"
+                                                    placement="top"
+                                                    placeholder="Date from"
+                                                />
+                                            </div>
+                                        </div>
+                                        <div className="col-span-12 space-y-6 xl:col-span-4">
+                                            <div>
+                                                <Label>Date To</Label>
+                                                <DatePicker
+                                                    id="filter-date-to"
+                                                    placement="top"
+                                                    placeholder="Date to"
+                                                />
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div className="col-span-12 space-y-6 xl:col-span-3">
+                                    <div className="grid grid-cols-12 gap-4 md:gap-6 my-3">
+                                        <div className="col-span-12 space-y-6 xl:col-span-6">
+                                            <h3 className="text-md font-semibold mb-4">
+                                                Date Type
+                                            </h3>
+                                            <RadioGroup defaultValue="initial-upload">
+                                                <div className="flex items-center space-x-2">
+                                                    <RadioGroupItem
+                                                        value="initial-upload"
+                                                        id="initial-upload"
+                                                    />
+                                                    <Label
+                                                        htmlFor="initial-upload"
+                                                        className="mb-0"
+                                                    >
+                                                        Initial Upload
+                                                    </Label>
+                                                </div>
+                                                <div className="flex items-center space-x-2">
+                                                    <RadioGroupItem
+                                                        value="target-process-by"
+                                                        id="target-process-by"
+                                                    />
+                                                    <Label
+                                                        htmlFor="target-process-by"
+                                                        className="mb-0"
+                                                    >
+                                                        Target Process By
+                                                    </Label>
+                                                </div>
+                                                <div className="flex items-center space-x-2">
+                                                    <RadioGroupItem
+                                                        value="overdue"
+                                                        id="overdue"
+                                                    />
+                                                    <Label
+                                                        htmlFor="overdue"
+                                                        className="mb-0"
+                                                    >
+                                                        Max Pay / Overdue
+                                                    </Label>
+                                                </div>
+                                            </RadioGroup>
+                                        </div>
+                                        <div className="col-span-12 space-y-6 xl:col-span-6">
+                                            <h3 className="text-md font-semibold mb-4">
+                                                Bordereau Status
+                                            </h3>
+                                            <RadioGroup defaultValue="queued">
+                                                <div className="flex items-center space-x-2">
+                                                    <RadioGroupItem
+                                                        value="queued"
+                                                        id="queued"
+                                                    />
+                                                    <Label
+                                                        htmlFor="queued"
+                                                        className="mb-0"
+                                                    >
+                                                        Queued
+                                                    </Label>
+                                                </div>
+                                                <div className="flex items-center space-x-2">
+                                                    <RadioGroupItem
+                                                        value="in-progress"
+                                                        id="in-progress"
+                                                    />
+                                                    <Label
+                                                        htmlFor="in-progress"
+                                                        className="mb-0"
+                                                    >
+                                                        In Progress
+                                                    </Label>
+                                                </div>
+                                                <div className="flex items-center space-x-2">
+                                                    <RadioGroupItem
+                                                        value="processed"
+                                                        id="processed"
+                                                    />
+                                                    <Label
+                                                        htmlFor="processed"
+                                                        className="mb-0"
+                                                    >
+                                                        Processed
+                                                    </Label>
+                                                </div>
+                                            </RadioGroup>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div className="mt-4 flex gap-3">
+                                <Button size="sm">Filter</Button>
+                                <Button size="sm" variant="outline">
+                                    Reset
                                 </Button>
-                            </Can>
+                            </div>
                         </div>
                     </div>
                     <div className="max-w-full overflow-x-auto custom-scrollbar">

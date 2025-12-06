@@ -12,6 +12,7 @@ import { useEffect, useState } from "react";
 import {
     bordereauStatuses,
     fetchOutcome,
+    fetchShowOutcome,
     upsertOutcome,
 } from "@/database/outcome_api";
 import { handleValidationErrors } from "@/helper/validationError";
@@ -19,17 +20,12 @@ import { IOutcomeForm, OutcomeSchema } from "@/types/OutcomeSchema";
 import Can from "@/components/auth/Can";
 import Select from "@/components/form/Select";
 
-export default function OutcomeForm() {
+export default function OutcomeView() {
     const { id } = useParams();
     const navigate = useNavigate();
     const [statusesOptions, setStatusesOptions] = useState<
         { value: number; label: string }[]
     >([]);
-
-    const queueOptions = [
-        { value: "Bordereau", label: "Bordereau" },
-        { value: "Tasks", label: "Tasks" },
-    ];
 
     const { handleSubmit, control, setError, reset } = useForm<IOutcomeForm>({
         defaultValues: {
@@ -50,7 +46,7 @@ export default function OutcomeForm() {
         fetchStatuses();
 
         if (id) {
-            fetchOutcome(id).then((data) => {
+            fetchShowOutcome(id).then((data) => {
                 console.log("Fetched outcome data:", data);
                 reset({
                     status: data.status || "",
@@ -91,14 +87,10 @@ export default function OutcomeForm() {
     return (
         <>
             <PageBreadcrumb
-                pageTitle={
-                    id ? "Edit Outcome" : "Add Outcome"
-                }
-                pageBreadcrumbs={[
-                    { title: "Outcome", link: "/outcomes" },
-                ]}
+                pageTitle="View Outcome"
+                pageBreadcrumbs={[{ title: "Outcome", link: "/outcomes" }]}
             />
-            <ComponentCard title={id ? "Edit Outcome" : "Add Outcome"}>
+            <ComponentCard title={"View Outcome"}>
                 <form id="form-outcome" onSubmit={handleSubmit(onSubmit)}>
                     <FieldGroup>
                         <div className="grid grid-cols-2 gap-6 ">
@@ -113,24 +105,12 @@ export default function OutcomeForm() {
                                             <Label htmlFor="input">
                                                 Outcome Code
                                             </Label>
-                                            <Input
-                                                {...field}
-                                                type="text"
-                                                id="input"
-                                                name="outcome_code"
-                                                placeholder="Enter Outcome Code"
-                                            />
-                                            {fieldState.error && (
-                                                <p className="mt-1 text-sm text-error-500">
-                                                    {fieldState.error.message}
-                                                </p>
-                                            )}
+                                            {String(field.value ?? "")}
                                         </Field>
                                     )}
                                 />
                             </div>
                             <div>
-                                {/* Bordereau, Task */}
                                 <Controller
                                     name="queue"
                                     control={control}
@@ -139,30 +119,7 @@ export default function OutcomeForm() {
                                             data-invalid={fieldState.invalid}
                                         >
                                             <Label htmlFor="input">Queue</Label>
-                                            {/* <Input
-                                                {...field}
-                                                type="text"
-                                                id="input"
-                                                name="queue"
-                                                placeholder="Enter Queue"
-                                            /> */}
-                                            <Select
-                                                value={String(
-                                                    field.value ?? ""
-                                                )}
-                                                options={queueOptions}
-                                                placeholder="Select Queue"
-                                                onChange={(value: string) =>
-                                                    field.onChange(value)
-                                                }
-                                                onBlur={field.onBlur}
-                                                className="dark:bg-dark-900"
-                                            />
-                                            {fieldState.error && (
-                                                <p className="mt-1 text-sm text-error-500">
-                                                    {fieldState.error.message}
-                                                </p>
-                                            )}
+                                            {String(field.value ?? "")}
                                         </Field>
                                     )}
                                 />
@@ -179,26 +136,9 @@ export default function OutcomeForm() {
                                             data-invalid={fieldState.invalid}
                                         >
                                             <Label htmlFor="status">
-                                                Bordereau / Task Terminal
-                                                Status​
+                                                Status
                                             </Label>
-                                            <Select
-                                                value={String(
-                                                    field.value ?? ""
-                                                )}
-                                                options={statusesOptions}
-                                                placeholder="Select Status"
-                                                onChange={(value: string) =>
-                                                    field.onChange(value)
-                                                }
-                                                onBlur={field.onBlur}
-                                                className="dark:bg-dark-900"
-                                            />
-                                            {fieldState.error && (
-                                                <p className="mt-1 text-sm text-error-500">
-                                                    {fieldState.error.message}
-                                                </p>
-                                            )}
+                                            {String(field.value ?? "")}
                                         </Field>
                                     )}
                                 />
@@ -214,18 +154,7 @@ export default function OutcomeForm() {
                                             <Label htmlFor="input">
                                                 Classification
                                             </Label>
-                                            <Input
-                                                {...field}
-                                                type="text"
-                                                id="input"
-                                                name="classification"
-                                                placeholder="Enter Classification"
-                                            />
-                                            {fieldState.error && (
-                                                <p className="mt-1 text-sm text-error-500">
-                                                    {fieldState.error.message}
-                                                </p>
-                                            )}
+                                            {String(field.value ?? "")}
                                         </Field>
                                     )}
                                 />
@@ -243,18 +172,7 @@ export default function OutcomeForm() {
                                             <Label htmlFor="input">
                                                 Description
                                             </Label>
-                                            <Input
-                                                {...field}
-                                                type="text"
-                                                id="input"
-                                                name="description"
-                                                placeholder="Enter Description"
-                                            />
-                                            {fieldState.error && (
-                                                <p className="mt-1 text-sm text-error-500">
-                                                    {fieldState.error.message}
-                                                </p>
-                                            )}
+                                            {String(field.value ?? "")}
                                         </Field>
                                     )}
                                 />
@@ -262,23 +180,6 @@ export default function OutcomeForm() {
                         </div>
                     </FieldGroup>
                 </form>
-
-                <div className="mt-6 flex justify-end gap-3">
-                    <Button
-                        variant="danger"
-                        onClick={() => navigate("/outcomes")}
-                    >
-                        Cancel
-                    </Button>
-                    <Button variant="outline" onClick={() => reset()}>
-                        Reset
-                    </Button>
-                    <Can permission={id ? "outcomes.create" : "outcomes.edit"}>
-                        <Button type="submit" form="form-outcome">
-                            {id ? "Update" : "Submit"}
-                        </Button>
-                    </Can>
-                </div>
             </ComponentCard>
         </>
     );

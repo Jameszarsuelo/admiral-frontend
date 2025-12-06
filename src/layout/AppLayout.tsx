@@ -19,7 +19,6 @@ const LayoutContent: React.FC = () => {
             return await fetchBpcByUserId(user!.id);
         },
         enabled: !!user,
-        retry: false,
     });
 
     // mount notifications globally for this BPC

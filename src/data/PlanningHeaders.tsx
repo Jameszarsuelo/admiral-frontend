@@ -62,6 +62,16 @@ export const getPlanningHeaders = (
         ),
     },
     {
+        accessorKey: "active_hour",
+        accessorFn: (row) => row?.active_hour,
+        header: () => <div className="ml-4">Processing Hours Per Day</div>,
+        cell: ({ row }) => (
+            <div className="capitalize dark:text-white ml-4">
+                {row.getValue("active_hour")}
+            </div>
+        ),
+    },
+    {
         accessorKey: "is_active",
         accessorFn: (row) => row?.is_active,
         header: "Is Active",

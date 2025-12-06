@@ -114,7 +114,10 @@ export default function BPCForm() {
 
     return (
         <>
-            <PageBreadcrumb pageTitle="Bordereau Payment Clerk" />
+            <PageBreadcrumb 
+                pageTitle={id ? "Edit BPC" : "Add BPC"}
+                pageBreadcrumbs={[{ title: "Bordereau Payment Clerk", link: "/invoice-payment-clerk" }]}
+            />
             <ComponentCard title={id ? "Edit BPC" : "Add BPC"}>
                 {isLoading ? (
                     <div className="flex items-center justify-center py-12">

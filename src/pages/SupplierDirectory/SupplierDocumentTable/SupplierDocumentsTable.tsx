@@ -3,16 +3,19 @@ import { useQuery } from "@tanstack/react-query";
 import Spinner from "@/components/ui/spinner/Spinner";
 import { fetchSupplierDocuments } from "@/database/supplier_api";
 import { getSupplierDocumentHeaders } from "./SupplierDocumentHeaders";
+import { useAuth } from "@/hooks/useAuth";
 
 export default function SupplierDocumentsTable({
     supplierId,
 }: {
     supplierId: number | string | undefined;
 }) {
+    const { user } = useAuth();
+
     const {
         data: supplierDocumentData,
         isLoading,
-        // refetch,
+        refetch,
     } = useQuery({
         queryKey: ["supplier-documents", supplierId],
         queryFn: async () => {
@@ -22,7 +25,11 @@ export default function SupplierDocumentsTable({
         refetchIntervalInBackground: true,
     });
 
-    const columns = getSupplierDocumentHeaders();
+    const columns = getSupplierDocumentHeaders(
+        supplierId as number,
+        refetch,
+        user?.user_type_id !== 3,
+    );
 
     return (
         <div className="max-w-full overflow-x-auto custom-scrollbar">

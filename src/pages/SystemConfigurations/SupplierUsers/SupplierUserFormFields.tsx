@@ -1,14 +1,21 @@
-import { Controller, Control, FieldErrors } from "react-hook-form";
+import { Controller, Control } from "react-hook-form";
 import Label from "@/components/form/Label";
-import { Field, FieldGroup } from "@/components/ui/field";
 import Input from "@/components/form/input/InputField";
-import Select from "@/components/form/Select";
+import { Field, FieldGroup } from "@/components/ui/field";
 import PhoneInput from "@/components/form/group-input/PhoneInput";
-import { IContactCreateSchema } from "@/types/ContactSchema";
+import Select from "@/components/form/Select";
+import Switch from "@/components/form/switch/Switch";
+import { Separator } from "@/components/ui/separator";
+import { IUserCreate } from "@/types/UserSchema";
 
 const countries = [
     { code: "UK", label: "+44" },
-    { code: "PH", label: "+63" },
+    { code: "PH", label: "+63 " },
+];
+
+const twofaTypeOptions = [
+    { value: 0, label: "SMS" },
+    { value: 1, label: "Email" },
 ];
 
 const salutationOptions = [
@@ -18,49 +25,17 @@ const salutationOptions = [
     { value: "dr", label: "Dr." },
 ];
 
-// const contactTypeOptions = [
-//     { value: "1", label: "Contact" },
-//     { value: "2", label: "Supplier" },
-//     { value: "3", label: "User" },
-// ];
+type Props = {
+    control: Control<IUserCreate>;
+};
 
-interface ContactFormFieldsProps {
-    control: Control<IContactCreateSchema>;
-    errors: FieldErrors<IContactCreateSchema>;
-}
-
-export default function ContactFormFields({ control }: ContactFormFieldsProps) {
+export default function SupplierUserFormFields({ control }: Props) {
     return (
         <FieldGroup>
-            <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
-                <div className="space-y-6">
-                    {/* <Controller
-                        name="type"
-                        control={control}
-                        render={({ field, fieldState }) => (
-                            <Field data-invalid={fieldState.invalid}>
-                                <Label htmlFor="type">Contact Type</Label>
-                                <Select
-                                    value={field.value}
-                                    options={contactTypeOptions}
-                                    placeholder="Select Type"
-                                    onChange={(value: string) =>
-                                        field.onChange(value)
-                                    }
-                                    onBlur={field.onBlur}
-                                    className="dark:bg-dark-900"
-                                />
-                                {fieldState.error && (
-                                    <p className="mt-1 text-sm text-error-500">
-                                        {fieldState.error.message}
-                                    </p>
-                                )}
-                            </Field>
-                        )}
-                    /> */}
-
+            <div className="grid grid-cols-2 gap-6 ">
+                <div>
                     <Controller
-                        name="salutation"
+                        name="contact.salutation"
                         control={control}
                         render={({ field, fieldState }) => (
                             <Field data-invalid={fieldState.invalid}>
@@ -83,138 +58,21 @@ export default function ContactFormFields({ control }: ContactFormFieldsProps) {
                             </Field>
                         )}
                     />
+                </div>
 
+                <div>
                     <Controller
-                        name="firstname"
+                        name="contact.firstname"
                         control={control}
                         render={({ field, fieldState }) => (
                             <Field data-invalid={fieldState.invalid}>
-                                <Label htmlFor="firstname">First Name</Label>
+                                <Label htmlFor="input">First Name</Label>
                                 <Input
                                     {...field}
                                     type="text"
-                                    id="firstname"
+                                    id="input"
                                     name="firstname"
-                                    placeholder="Enter First Name"
-                                />
-                                {fieldState.error && (
-                                    <p className="mt-1 text-sm text-error-500">
-                                        {fieldState.error.message}
-                                    </p>
-                                )}
-                            </Field>
-                        )}
-                    />
-
-                    <Controller
-                        name="lastname"
-                        control={control}
-                        render={({ field, fieldState }) => (
-                            <Field data-invalid={fieldState.invalid}>
-                                <Label htmlFor="lastname">Last Name</Label>
-                                <Input
-                                    {...field}
-                                    type="text"
-                                    id="lastname"
-                                    name="lastname"
-                                    placeholder="Enter Last Name"
-                                />
-                                {fieldState.error && (
-                                    <p className="mt-1 text-sm text-error-500">
-                                        {fieldState.error.message}
-                                    </p>
-                                )}
-                            </Field>
-                        )}
-                    />
-
-                    <div>
-                        <Controller
-                            name="mobile"
-                            control={control}
-                            render={({ field, fieldState }) => (
-                                <Field data-invalid={fieldState.invalid}>
-                                    <Label htmlFor="mobile">Mobile</Label>
-                                    <PhoneInput
-                                        value={field.value}
-                                        countries={countries}
-                                        selectPosition="start"
-                                        placeholder="+44 7123 456789"
-                                        onChange={(phoneNumber: string) => {
-                                            field.onChange(phoneNumber);
-                                        }}
-                                        onBlur={field.onBlur}
-                                    />
-                                    {fieldState.error && (
-                                        <p className="mt-1 text-sm text-error-500">
-                                            {fieldState.error.message}
-                                        </p>
-                                    )}
-                                </Field>
-                            )}
-                        />
-                    </div>
-
-                    <div>
-                        <Controller
-                            name="phone"
-                            control={control}
-                            render={({ field, fieldState }) => (
-                                <Field data-invalid={fieldState.invalid}>
-                                    <Label htmlFor="phone">Phone</Label>
-                                    <Input
-                                        {...field}
-                                        type="text"
-                                        id="phone"
-                                        name="phone"
-                                        placeholder="Enter phone number"
-                                    />
-                                    {fieldState.error && (
-                                        <p className="mt-1 text-sm text-error-500">
-                                            {fieldState.error.message}
-                                        </p>
-                                    )}
-                                </Field>
-                            )}
-                        />
-                    </div>
-
-                    <Controller
-                        name="email"
-                        control={control}
-                        render={({ field, fieldState }) => (
-                            <Field data-invalid={fieldState.invalid}>
-                                <Label htmlFor="email">Email</Label>
-                                <Input
-                                    {...field}
-                                    type="text"
-                                    id="email"
-                                    name="email"
-                                    placeholder="e.g. john@test.com"
-                                />
-                                {fieldState.error && (
-                                    <p className="mt-1 text-sm text-error-500">
-                                        {fieldState.error.message}
-                                    </p>
-                                )}
-                            </Field>
-                        )}
-                    />
-
-                    <Controller
-                        name="organisation"
-                        control={control}
-                        render={({ field, fieldState }) => (
-                            <Field data-invalid={fieldState.invalid}>
-                                <Label htmlFor="organisation">
-                                    Organisation
-                                </Label>
-                                <Input
-                                    {...field}
-                                    type="text"
-                                    id="organisation"
-                                    name="organisation"
-                                    placeholder="Enter Organisation"
+                                    placeholder="Enter first name"
                                 />
                                 {fieldState.error && (
                                     <p className="mt-1 text-sm text-error-500">
@@ -226,16 +84,182 @@ export default function ContactFormFields({ control }: ContactFormFieldsProps) {
                     />
                 </div>
 
-                {/* RIGHT COLUMN: Address Info */}
-                <div className="space-y-6">
+                <div>
                     <Controller
-                        name="address_line_1"
+                        name="contact.lastname"
                         control={control}
                         render={({ field, fieldState }) => (
                             <Field data-invalid={fieldState.invalid}>
-                                <Label htmlFor="address_line_1">
-                                    Address Line 1
-                                </Label>
+                                <Label htmlFor="lastname">Last Name</Label>
+                                <Input
+                                    {...field}
+                                    type="text"
+                                    id="lastname"
+                                    name="lastname"
+                                    placeholder="Enter last name"
+                                />
+                                {fieldState.error && (
+                                    <p className="mt-1 text-sm text-error-500">
+                                        {fieldState.error.message}
+                                    </p>
+                                )}
+                            </Field>
+                        )}
+                    />
+                </div>
+
+                <div>
+                    <Controller
+                        name="email"
+                        control={control}
+                        render={({ field, fieldState }) => (
+                            <Field data-invalid={fieldState.invalid}>
+                                <Label htmlFor="input">Email</Label>
+                                <Input
+                                    {...field}
+                                    type="text"
+                                    id="input"
+                                    name="email"
+                                    placeholder="e.g. john@test.com"
+                                />
+                                {fieldState.error && (
+                                    <p className="mt-1 text-sm text-error-500">
+                                        {fieldState.error.message}
+                                    </p>
+                                )}
+                            </Field>
+                        )}
+                    />
+                </div>
+
+                <div>
+                    <Controller
+                        name="contact.mobile"
+                        control={control}
+                        render={({ field, fieldState }) => (
+                            <Field data-invalid={fieldState.invalid}>
+                                <Label htmlFor="input">Mobile</Label>
+                                <PhoneInput
+                                    value={field.value}
+                                    countries={countries}
+                                    selectPosition="start"
+                                    placeholder="+1 (555) 000-0000"
+                                    onChange={(phoneNumber: string) => {
+                                        field.onChange(phoneNumber);
+                                    }}
+                                    onBlur={field.onBlur}
+                                />
+                                {fieldState.error && (
+                                    <p className="mt-1 text-sm text-error-500">
+                                        {fieldState.error.message}
+                                    </p>
+                                )}
+                            </Field>
+                        )}
+                    />
+                </div>
+
+                <div>
+                    <Controller
+                        name="contact.phone"
+                        control={control}
+                        render={({ field, fieldState }) => (
+                            <Field data-invalid={fieldState.invalid}>
+                                <Label htmlFor="phone">Phone</Label>
+                                <Input
+                                    {...field}
+                                    type="text"
+                                    id="phone"
+                                    name="phone"
+                                    placeholder="Enter phone number"
+                                />
+                                {fieldState.error && (
+                                    <p className="mt-1 text-sm text-error-500">
+                                        {fieldState.error.message}
+                                    </p>
+                                )}
+                            </Field>
+                        )}
+                    />
+                </div>
+
+                <div>
+                    <Controller
+                        name="two_fa_enabled"
+                        control={control}
+                        render={({ field, fieldState }) => (
+                            <Field data-invalid={fieldState.invalid}>
+                                <Label htmlFor="input">Multi-factor authentication</Label>
+                                <Switch
+                                    checked={field.value}
+                                    onCheckedChange={field.onChange}
+                                    label="Enable multi-factor authentication to secure your account."
+                                />
+                            </Field>
+                        )}
+                    />
+                </div>
+
+                <div>
+                    <Controller
+                        name="two_fa_type"
+                        control={control}
+                        render={({ field, fieldState }) => (
+                            <Field data-invalid={fieldState.invalid}>
+                                <Label htmlFor="two_fa_type">2FA Type</Label>
+                                <Select
+                                    value={String(field.value ?? "")}
+                                    options={twofaTypeOptions}
+                                    placeholder="Select 2FA Type"
+                                    onChange={(value: string) =>
+                                        field.onChange(Number(value))
+                                    }
+                                    onBlur={field.onBlur}
+                                    className="dark:bg-dark-900"
+                                />
+                                {fieldState.error && (
+                                    <p className="mt-1 text-sm text-error-500">
+                                        {fieldState.error.message}
+                                    </p>
+                                )}
+                            </Field>
+                        )}
+                    />
+                </div>
+
+                <div className="col-span-full">
+                    <Separator className="my-4" />
+                </div>
+
+                <Controller
+                    name="contact.organisation"
+                    control={control}
+                    render={({ field, fieldState }) => (
+                        <Field data-invalid={fieldState.invalid}>
+                            <Label htmlFor="organisation">Organisation</Label>
+                            <Input
+                                {...field}
+                                type="text"
+                                id="organisation"
+                                name="organisation"
+                                placeholder="Enter Organisation"
+                            />
+                            {fieldState.error && (
+                                <p className="mt-1 text-sm text-error-500">
+                                    {fieldState.error.message}
+                                </p>
+                            )}
+                        </Field>
+                    )}
+                />
+
+                <div>
+                    <Controller
+                        name="contact.address_line_1"
+                        control={control}
+                        render={({ field, fieldState }) => (
+                            <Field data-invalid={fieldState.invalid}>
+                                <Label htmlFor="address_line_1">Address Line 1</Label>
                                 <Input
                                     {...field}
                                     type="text"
@@ -251,15 +275,15 @@ export default function ContactFormFields({ control }: ContactFormFieldsProps) {
                             </Field>
                         )}
                     />
+                </div>
 
+                <div>
                     <Controller
-                        name="address_line_2"
+                        name="contact.address_line_2"
                         control={control}
                         render={({ field, fieldState }) => (
                             <Field data-invalid={fieldState.invalid}>
-                                <Label htmlFor="address_line_2">
-                                    Address Line 2
-                                </Label>
+                                <Label htmlFor="address_line_2">Address Line 2</Label>
                                 <Input
                                     {...field}
                                     type="text"
@@ -275,15 +299,15 @@ export default function ContactFormFields({ control }: ContactFormFieldsProps) {
                             </Field>
                         )}
                     />
+                </div>
 
+                <div>
                     <Controller
-                        name="address_line_3"
+                        name="contact.address_line_3"
                         control={control}
                         render={({ field, fieldState }) => (
                             <Field data-invalid={fieldState.invalid}>
-                                <Label htmlFor="address_line_3">
-                                    Address Line 3
-                                </Label>
+                                <Label htmlFor="address_line_3">Address Line 3</Label>
                                 <Input
                                     {...field}
                                     type="text"
@@ -299,13 +323,15 @@ export default function ContactFormFields({ control }: ContactFormFieldsProps) {
                             </Field>
                         )}
                     />
+                </div>
 
+                <div>
                     <Controller
-                        name="city"
+                        name="contact.city"
                         control={control}
                         render={({ field, fieldState }) => (
                             <Field data-invalid={fieldState.invalid}>
-                                <Label htmlFor="city">City / Town</Label>
+                                <Label htmlFor="city">City</Label>
                                 <Input
                                     {...field}
                                     type="text"
@@ -321,9 +347,11 @@ export default function ContactFormFields({ control }: ContactFormFieldsProps) {
                             </Field>
                         )}
                     />
+                </div>
 
+                <div>
                     <Controller
-                        name="county"
+                        name="contact.county"
                         control={control}
                         render={({ field, fieldState }) => (
                             <Field data-invalid={fieldState.invalid}>
@@ -343,9 +371,11 @@ export default function ContactFormFields({ control }: ContactFormFieldsProps) {
                             </Field>
                         )}
                     />
+                </div>
 
+                <div>
                     <Controller
-                        name="country"
+                        name="contact.country"
                         control={control}
                         render={({ field, fieldState }) => (
                             <Field data-invalid={fieldState.invalid}>
@@ -365,9 +395,11 @@ export default function ContactFormFields({ control }: ContactFormFieldsProps) {
                             </Field>
                         )}
                     />
+                </div>
 
+                <div>
                     <Controller
-                        name="postcode"
+                        name="contact.postcode"
                         control={control}
                         render={({ field, fieldState }) => (
                             <Field data-invalid={fieldState.invalid}>

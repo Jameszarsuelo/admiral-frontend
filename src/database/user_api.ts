@@ -41,6 +41,18 @@ export async function fetchUserList(): Promise<IUserBase[]> {
     }
 }
 
+export async function fetchSupplierUserList(): Promise<IUserBase[]> {
+    try {
+        const response = await api.get(`/fetchSupplierUsers`);
+        return response.data;
+    } catch (error) {
+        if (error instanceof AxiosError && error.response?.data) {
+            throw error.response.data;
+        }
+        throw error;
+    }
+}
+
 export async function deleteUser(id: number): Promise<void> {
     try {
         await api.delete(`/users/${id}`);

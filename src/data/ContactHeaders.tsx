@@ -1,6 +1,6 @@
 import Button from "@/components/ui/button/Button";
 import { Button as CustomButton } from "@/components/ui/button";
-import { IContactCreateSchema } from "@/types/ContactSchema";
+import { IContactHeaderSchema } from "@/types/ContactSchema";
 import { ColumnDef } from "@tanstack/react-table";
 import { ArrowUpDown, BadgeCheckIcon } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
@@ -10,7 +10,7 @@ export const getContactHeaders = (
     navigate: (path: string) => void,
     handleDeleteClick: (id: number) => void,
     refetch: () => void,
-): ColumnDef<IContactCreateSchema>[] => [
+): ColumnDef<IContactHeaderSchema>[] => [
     {
         accessorKey: "salutation",
         accessorFn: (row) => row.salutation,
@@ -85,28 +85,38 @@ export const getContactHeaders = (
         accessorKey: "type",
         accessorFn: (row) => row.type,
         header: () => <div className="ml-4">Contact Type</div>,
-        cell: ({ row }) => (
-            <Badge
-                variant="secondary"
-                className="ml-4 inline-flex items-center"
-            >
-                <BadgeCheckIcon className="mr-1 inline-block" />
-                {row.getValue("type") === 1
-                    ? "Contact"
-                    : row.getValue("type") === 2
-                    ? "Supplier"
-                    : "User"}
-            </Badge>
-        ),
+        cell: ({ row }) => {
+            const type = row.getValue("type") as number;
+            const bgColor = type === 1 ? "#97e3ff" : type === 2 ? "#ffbbf7" : "#92D050";
+            // const textColor = type === 2 ? "#000000" : "#FFFFFF";
+
+            return (
+                <Badge 
+                    className="ml-4 inline-flex items-center"
+                    style={{ backgroundColor: bgColor, color: "#000000" }}
+                >
+                    <BadgeCheckIcon className="mr-1 inline-block" />
+                    {type === 1 ? "Contact" : type === 2 ? "Supplier" : "User"}
+                </Badge>
+            );
+        },
     },
     {
         id: "actions",
         header: () => <div>Actions</div>,
         cell: ({ row }) => {
             const bpc = row.original;
+            const type = row.original.type;
+            const userId = row.original.user?.id;
 
             const handleEdit = (id: number) => {
-                navigate(`/contact-directory/edit/${id}`);
+                if (Number(type) === 1) {
+                    navigate(`/contact-directory/edit/${id}`);
+                } else if(Number(type) === 2) {
+                    navigate(`/supplier-users/edit/${userId}`);
+                } else {
+                    navigate(`/users/edit/${userId}`);
+                }
             };
 
             const onDelete = (id: number) => {
@@ -123,7 +133,7 @@ export const getContactHeaders = (
                     <Can permission="contact_directory.edit">
                         <Button
                             onClick={() => handleEdit(bpc.id!)}
-                            variant="primary"
+                            variant="warning"
                             size="sm"
                         >
                             Edit

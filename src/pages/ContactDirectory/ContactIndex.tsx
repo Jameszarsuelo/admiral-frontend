@@ -9,21 +9,23 @@ import Spinner from "@/components/ui/spinner/Spinner";
 import { fetchContactList } from "@/database/contact_api";
 import { getContactHeaders } from "@/data/ContactHeaders";
 import Can from "@/components/auth/Can";
+import Radio from "@/components/form/input/Radio";
 
 export default function ContactIndex() {
     const navigate = useNavigate();
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [selectedId, setSelectedId] = useState<number | null>(null);
     const [isDeleting, setIsDeleting] = useState(false);
+    const [selectedSearch, setSelectedSearch] = useState<string>("0"); // default "All"
 
     const {
         data: contactData,
         isLoading,
         refetch,
     } = useQuery({
-        queryKey: ["contact-data"],
+        queryKey: ["contact-data", selectedSearch],
         queryFn: async () => {
-            return await fetchContactList();
+            return await fetchContactList(selectedSearch);
         },
         refetchInterval: 1000 * 60 * 5, // 5 minutes
         refetchIntervalInBackground: true,
@@ -63,7 +65,9 @@ export default function ContactIndex() {
 
     return (
         <>
-            <PageBreadcrumb pageTitle="Contact Directory" />
+            <PageBreadcrumb
+                pageTitle="Contact Directory"
+            />
             <div className="w-full">
                 <div className="rounded-2xl border border-gray-200 bg-white px-5 pb-5 pt-5 dark:border-gray-800 dark:bg-white/[0.03] sm:px-6 sm:pt-6">
                     <div className="flex flex-col gap-5 mb-6 sm:flex-row sm:justify-between">
@@ -90,6 +94,46 @@ export default function ContactIndex() {
                     </div>
 
                     <div className="max-w-full overflow-x-auto custom-scrollbar">
+                        <div className="grid">
+                            <div className="flex justify-center-safe gap-8">
+                                <Radio
+                                    id="search_all"
+                                    value="0"
+                                    checked={selectedSearch === "0"}
+                                    onChange={() => setSelectedSearch("0")}
+                                    label="All"
+                                    name="search_filter"
+                                />
+
+                                <Radio
+                                    id="search_contact"
+                                    value="1"
+                                    checked={selectedSearch === "1"}
+                                    onChange={() => setSelectedSearch("1")}
+                                    label="Contact"
+                                    name="search_filter"
+                                />
+
+                                <Radio
+                                    id="search_supplier"
+                                    value="2"
+                                    checked={selectedSearch === "2"}
+                                    onChange={() => setSelectedSearch("2")}
+                                    label="Supplier"
+                                    name="search_filter"
+                                />
+
+                                <Radio
+                                    id="search_user"
+                                    value="4"
+                                    checked={selectedSearch === "4"}
+                                    onChange={() => setSelectedSearch("4")}
+                                    label="User"
+                                    name="search_filter"
+                                />
+
+                            </div>
+                        </div>
                         <div className="min-w-[1000px] xl:min-w-full px-2">
                             {!isLoading && contactData ? (
                                 <DataTable
