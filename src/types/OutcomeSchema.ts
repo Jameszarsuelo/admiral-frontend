@@ -4,13 +4,37 @@ export const OutcomeSchema = z.object({
     id: z.number().optional(),
     // status: z.union([z.boolean(), z.number().int().refine(val => val === 0 || val === 1)]).optional(),
     status: z.string(),
-    outcome_code: z.string().nonempty("Outcome Code is required"),
-    classification: z.string().nonempty("Classification is required"),
+    // Outcome code (free text) - not required per spec
+    outcome_code: z.string(),
+    // Outcome Code Heading - dropdown: Successful, Redirect, Query, Unsuccessful
+    outcome_code_heading: z.string().optional(),
+    // Classification - optional free text
+    classification: z.string().optional(),
+    // Queue - keep required (Bordereau or Tasks)
     queue: z.string().nonempty("Queue is required"),
-    description: z.string().nonempty("Description is required"),
+    // Platform action: optional string value
+    platform_action: z.string().optional(),
+    // Description - optional unless comment_mandatory === true
+    description: z.string().optional(),
+    // Comment mandatory: boolean (true means description required)
+    comment_mandatory: z.boolean().optional(),
     created_at: z.string().optional(),
     updated_at: z.string().optional(),
 });
+
+// Ensure description is present when comment_mandatory === true
+export const OutcomeSchemaWithConditional = OutcomeSchema.refine(
+    (data) => {
+        if (data.comment_mandatory === true) {
+            return typeof data.description === "string" && data.description.trim() !== "";
+        }
+        return true;
+    },
+    {
+        message: "Description is required when Comment Mandatory is enabled",
+        path: ["description"],
+    }
+);
 
 export const OutComeDelete = z.object({
     id: z.number().optional(),

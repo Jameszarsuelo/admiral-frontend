@@ -34,10 +34,11 @@ export const BordereauBaseSchema = z.object({
 
     supplier_id: z.number().nullable(),
     bordereau_status_id: z.number().nullable(),
+    flags: z.string().nullable(),
     bpc_id: z.number().nullable(),
     bordereau_outcome_id: z.number().nullable(),
 
-    bordereau_file: z.string().nullable(),
+    bordereau: z.string().nullable(),
     claim_number: z.string().nullable(),
     name: z.string().nullable(),
     supplier_ref: z.string().nullable(),
@@ -71,6 +72,15 @@ export const BordereauBaseSchema = z.object({
     admiral_invoice_type: z.number().int(),
     group_hire_rate: z.number().nullable(),
     amount_banked: z.number().nullable(),
+    task_type: z.string().nullable(),
+
+    rejection_reasons: z.string().nullable(),
+    additional_information: z.string().nullable(),
+    make_and_model: z.string().nullable(),
+    postcode: z.string().nullable(),
+    date: z.string().nullable(), // ISO date
+    cat: z.string().nullable(),
+    value: z.number().nullable(),
 
     created_by: z.number().nullable(),
     updated_by: z.number().nullable(),
@@ -109,6 +119,7 @@ export const BordereauFormSchema = BordereauBaseSchema.pick({
     supplier_ref: true,
     registration_number: true,
     invoice_date: true,
+    lot_number: true,
     invoice_number: true,
     branch_name: true,
     out_of_hours: true,
@@ -130,14 +141,22 @@ export const BordereauFormSchema = BordereauBaseSchema.pick({
     group_hire_rate: true,
     admiral_invoice_type: true,
     amount_banked: true,
-    bordereau_file: true,
+    bordereau: true,
+    task_type: true,
+    rejection_reasons: true,
+    additional_information: true,
+    make_and_model: true,
+    postcode: true,
+    date: true,
+    cat: true,
+    value: true,
 }).extend({
     comment: z.string().nullable(),
 });
 
 export const BordereauIndexSchema = BordereauBaseSchema.pick({
     id: true,
-    bordereau_file: true,
+    bordereau: true,
     supplier_id: true,
     claim_number: true,
     name: true,

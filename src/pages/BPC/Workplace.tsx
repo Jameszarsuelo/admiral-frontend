@@ -345,7 +345,7 @@ export default function Workplace() {
                 queryClient.refetchQueries({
                     queryKey: ["current-bordereau", bpcUser?.id],
                 });
-            }, 10000) as unknown as number;
+            }, 2000) as unknown as number;
         }
 
         return () => {
@@ -752,12 +752,10 @@ export default function Workplace() {
                             return (
                                 <div className="p-8 rounded-2xl border border-dashed border-gray-200 dark:border-gray-800 text-center relative">
                                     <div className="text-3xl font-semibold mb-2 text-gray-700 dark:text-white/90">
-                                        No bordereau available
+                                        Waiting for next bordereau
                                     </div>
                                     <div className="text-sm text-gray-500 dark:text-gray-400">
-                                        There are currently no bordereaux in the
-                                        queue. You'll be assigned one when it
-                                        becomes available.
+                                        Please wait whilst I fetch the next bordereau line item for you to process.
                                     </div>
                                     {/* <div className="flex items-center justify-center">
                                         <button

@@ -15,7 +15,11 @@ import {
     upsertOutcome,
 } from "@/database/outcome_api";
 import { handleValidationErrors } from "@/helper/validationError";
-import { IOutcomeForm, OutcomeSchema } from "@/types/OutcomeSchema";
+import {
+    IOutcomeForm,
+    OutcomeSchemaWithConditional,
+} from "@/types/OutcomeSchema";
+import Radio from "@/components/form/input/Radio";
 import Can from "@/components/auth/Can";
 import Select from "@/components/form/Select";
 
@@ -31,15 +35,34 @@ export default function OutcomeForm() {
         { value: "Tasks", label: "Tasks" },
     ];
 
+    const outcomeCodeHeadingOptions = [
+        { value: "Successful", label: "Successful" },
+        { value: "Redirect", label: "Redirect" },
+        { value: "Query", label: "Query" },
+        { value: "Unsuccessful", label: "Unsuccessful" },
+    ];
+
+    const platformActionOptions = [
+        { value: "Terminal", label: "Terminal" },
+        { value: "Query", label: "Query" },
+        { value: "Query Redirect", label: "Query Redirect" },
+        { value: "Query Fraud", label: "Query Fraud" },
+        { value: "Queue Sensitive", label: "Queue Sensitive" },
+        { value: "Queue Staff", label: "Queue Staff" },
+    ];
+
     const { handleSubmit, control, setError, reset } = useForm<IOutcomeForm>({
         defaultValues: {
             status: "",
             outcome_code: "",
+            outcome_code_heading: "",
+            platform_action: "",
             classification: "",
             queue: "",
             description: "",
+            comment_mandatory: false,
         },
-        resolver: zodResolver(OutcomeSchema),
+        resolver: zodResolver(OutcomeSchemaWithConditional),
     });
 
     useEffect(() => {
@@ -53,11 +76,14 @@ export default function OutcomeForm() {
             fetchOutcome(id).then((data) => {
                 console.log("Fetched outcome data:", data);
                 reset({
-                    status: data.status || "",
+                    status: String(data.status) || "",
                     outcome_code: data.outcome_code || "",
+                    outcome_code_heading: data.outcome_code_heading || "",
+                    platform_action: data.platform_action || "",
                     classification: data.classification || "",
                     queue: data.queue || "",
                     description: data.description || "",
+                    comment_mandatory: data.comment_mandatory ?? false,
                 });
             });
         }
@@ -91,17 +117,47 @@ export default function OutcomeForm() {
     return (
         <>
             <PageBreadcrumb
-                pageTitle={
-                    id ? "Edit Outcome" : "Add Outcome"
-                }
-                pageBreadcrumbs={[
-                    { title: "Outcome", link: "/outcomes" },
-                ]}
+                pageTitle={id ? "Edit Outcome" : "Add Outcome"}
+                pageBreadcrumbs={[{ title: "Outcome", link: "/outcomes" }]}
             />
             <ComponentCard title={id ? "Edit Outcome" : "Add Outcome"}>
                 <form id="form-outcome" onSubmit={handleSubmit(onSubmit)}>
                     <FieldGroup>
                         <div className="grid grid-cols-2 gap-6 ">
+                            <div>
+                                <Controller
+                                    name="outcome_code_heading"
+                                    control={control}
+                                    render={({ field, fieldState }) => (
+                                        <Field
+                                            data-invalid={fieldState.invalid}
+                                        >
+                                            <Label htmlFor="outcome_code_heading">
+                                                Outcome Code Heading
+                                            </Label>
+                                            <Select
+                                                value={String(
+                                                    field.value ?? "",
+                                                )}
+                                                options={
+                                                    outcomeCodeHeadingOptions
+                                                }
+                                                placeholder="Select Outcome Code Heading"
+                                                onChange={(value: string) =>
+                                                    field.onChange(value)
+                                                }
+                                                onBlur={field.onBlur}
+                                                className="dark:bg-dark-900"
+                                            />
+                                            {fieldState.error && (
+                                                <p className="mt-1 text-sm text-error-500">
+                                                    {fieldState.error.message}
+                                                </p>
+                                            )}
+                                        </Field>
+                                    )}
+                                />
+                            </div>
                             <div>
                                 <Controller
                                     name="outcome_code"
@@ -139,16 +195,9 @@ export default function OutcomeForm() {
                                             data-invalid={fieldState.invalid}
                                         >
                                             <Label htmlFor="input">Queue</Label>
-                                            {/* <Input
-                                                {...field}
-                                                type="text"
-                                                id="input"
-                                                name="queue"
-                                                placeholder="Enter Queue"
-                                            /> */}
                                             <Select
                                                 value={String(
-                                                    field.value ?? ""
+                                                    field.value ?? "",
                                                 )}
                                                 options={queueOptions}
                                                 placeholder="Select Queue"
@@ -167,9 +216,70 @@ export default function OutcomeForm() {
                                     )}
                                 />
                             </div>
+                            <div>
+                                <Controller
+                                    name="comment_mandatory"
+                                    control={control}
+                                    render={({ field }) => (
+                                        <Field>
+                                            <Label>Comment Mandatory</Label>
+                                            <div className="flex items-center gap-6">
+                                                <Radio
+                                                    id="comment-yes"
+                                                    name="comment_mandatory"
+                                                    value={true}
+                                                    checked={field.value === true}
+                                                    label={"Yes"}
+                                                    onChange={(val) =>
+                                                        field.onChange(val as boolean)
+                                                    }
+                                                />
+                                                <Radio
+                                                    id="comment-no"
+                                                    name="comment_mandatory"
+                                                    value={false}
+                                                    checked={field.value === false}
+                                                    label={"No"}
+                                                    onChange={(val) =>
+                                                        field.onChange(val as boolean)
+                                                    }
+                                                />
+                                            </div>
+                                        </Field>
+                                    )}
+                                />
+                            </div>
                         </div>
 
                         <div className="grid grid-cols-2 gap-6 ">
+                            <div>
+                                <Controller
+                                    name="platform_action"
+                                    control={control}
+                                    render={({ field, fieldState }) => (
+                                        <Field data-invalid={fieldState.invalid}>
+                                            <Label htmlFor="platform_action">
+                                                Platform Action
+                                            </Label>
+                                            <Select
+                                                value={String(field.value ?? "")}
+                                                options={platformActionOptions}
+                                                placeholder="Select Platform Action"
+                                                onChange={(value: string) =>
+                                                    field.onChange(value)
+                                                }
+                                                onBlur={field.onBlur}
+                                                className="dark:bg-dark-900"
+                                            />
+                                            {fieldState.error && (
+                                                <p className="mt-1 text-sm text-error-500">
+                                                    {fieldState.error.message}
+                                                </p>
+                                            )}
+                                        </Field>
+                                    )}
+                                />
+                            </div>
                             <div>
                                 <Controller
                                     name="status"
@@ -179,12 +289,11 @@ export default function OutcomeForm() {
                                             data-invalid={fieldState.invalid}
                                         >
                                             <Label htmlFor="status">
-                                                Bordereau / Task Terminal
-                                                Status​
+                                                Bordereau / Task Terminal Status
                                             </Label>
                                             <Select
                                                 value={String(
-                                                    field.value ?? ""
+                                                    field.value ?? "",
                                                 )}
                                                 options={statusesOptions}
                                                 placeholder="Select Status"
@@ -203,6 +312,8 @@ export default function OutcomeForm() {
                                     )}
                                 />
                             </div>
+                        </div>
+                        <div className="grid grid-cols-2 gap-6 ">
                             <div>
                                 <Controller
                                     name="classification"
