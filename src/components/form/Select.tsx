@@ -6,8 +6,15 @@ interface Option {
   disabled?: boolean;
 }
 
-interface SelectProps {
+interface OptionGroup {
+  label: string;
   options: Option[];
+}
+
+type OptionOrGroup = Option | OptionGroup;
+
+interface SelectProps {
+  options: OptionOrGroup[];
   placeholder?: string;
   value?: string;
   onChange: (value: string) => void;
@@ -60,17 +67,39 @@ const Select: React.FC<SelectProps> = ({
         >
           {placeholder}
         </option>
-        {/* Map over options */}
-        {options.map((option) => (
-          <option
-            key={option.value}
-            value={option.value}
-            disabled={option.disabled}
-            className={`text-gray-700 dark:bg-gray-900 dark:text-gray-400 ${option.disabled ? 'opacity-50' : ''}`}
-          >
-            {option.label}
-          </option>
-        ))}
+        {/* Map over options and support optgroup objects */}
+        {options.map((opt, idx) => {
+          // detect group by presence of 'options' property
+          if ((opt as OptionGroup).options) {
+            const group = opt as OptionGroup;
+            return (
+              <optgroup key={`group-${idx}-${group.label}`} label={group.label}>
+                {group.options.map((option) => (
+                  <option
+                    key={option.value}
+                    value={option.value}
+                    disabled={option.disabled}
+                    className={`text-gray-700 dark:bg-gray-900 dark:text-gray-400 ${option.disabled ? 'opacity-50' : ''}`}
+                  >
+                    {option.label}
+                  </option>
+                ))}
+              </optgroup>
+            );
+          }
+
+          const option = opt as Option;
+          return (
+            <option
+              key={(option && option.value) || `opt-${idx}`}
+              value={option.value}
+              disabled={option.disabled}
+              className={`text-gray-700 dark:bg-gray-900 dark:text-gray-400 ${option.disabled ? 'opacity-50' : ''}`}
+            >
+              {option.label}
+            </option>
+          );
+        })}
       </select>
       {/* Dropdown icon */}
       <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-3">

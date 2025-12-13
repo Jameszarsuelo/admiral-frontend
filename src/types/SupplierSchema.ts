@@ -21,6 +21,7 @@ export const SupplierBaseSchema = z.object({
     id: z.number().int().positive(),
     // user_id: z.number().int().optional(),
     name: NonEmptyString,
+    logo: z.string().nullable().optional(),
     address_line_1: z.string().nullable().optional(),
     address_line_2: z.string().nullable().optional(),
     address_line_3: z.string().nullable().optional(),
@@ -74,6 +75,7 @@ export const SupplierBaseSchema = z.object({
 export const SupplierFormSchema = z.object({
     id: z.number().int().optional(),
     name: NonEmptyString,
+    logo: z.any().optional(),
     address_line_1: z.string().optional(),
     address_line_2: z.string().optional(),
     address_line_3: z.string().optional(),
@@ -119,6 +121,8 @@ export const SupplierStatisticsSchema = SupplierBaseSchema.pick({
     bordereau_query_email: true,
     bordereau: z.lazy(() => BordereauBaseSchema.array().optional()),
     contact: ContactBaseSchema.optional(),
+    bordereau_avg_process_days: z.number().nullable().optional(),
+    bordereau_bpc_aht: z.number().nullable().optional(),
 });
 
 export const SupplierDocumentSchema = DocumentBaseSchema.omit({

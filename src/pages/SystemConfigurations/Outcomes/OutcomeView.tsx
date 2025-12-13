@@ -16,7 +16,7 @@ import {
     upsertOutcome,
 } from "@/database/outcome_api";
 import { handleValidationErrors } from "@/helper/validationError";
-import { IOutcomeForm, OutcomeSchema } from "@/types/OutcomeSchema";
+import { IOutcomeForm, OutcomeSchemaWithConditional } from "@/types/OutcomeSchema";
 import Can from "@/components/auth/Can";
 import Select from "@/components/form/Select";
 
@@ -31,11 +31,14 @@ export default function OutcomeView() {
         defaultValues: {
             status: "",
             outcome_code: "",
+            outcome_code_heading: "",
+            platform_action: "",
             classification: "",
             queue: "",
             description: "",
+            comment_mandatory: false,
         },
-        resolver: zodResolver(OutcomeSchema),
+        resolver: zodResolver(OutcomeSchemaWithConditional),
     });
 
     useEffect(() => {
@@ -51,9 +54,12 @@ export default function OutcomeView() {
                 reset({
                     status: data.status || "",
                     outcome_code: data.outcome_code || "",
+                    outcome_code_heading: data.outcome_code_heading || "",
+                    platform_action: data.platform_action || "",
                     classification: data.classification || "",
                     queue: data.queue || "",
                     description: data.description || "",
+                    comment_mandatory: data.comment_mandatory ?? false,
                 });
             });
         }
@@ -96,15 +102,11 @@ export default function OutcomeView() {
                         <div className="grid grid-cols-2 gap-6 ">
                             <div>
                                 <Controller
-                                    name="outcome_code"
+                                    name="outcome_code_heading"
                                     control={control}
                                     render={({ field, fieldState }) => (
-                                        <Field
-                                            data-invalid={fieldState.invalid}
-                                        >
-                                            <Label htmlFor="input">
-                                                Outcome Code
-                                            </Label>
+                                        <Field data-invalid={fieldState.invalid}>
+                                            <Label>Outcome Code Heading</Label>
                                             {String(field.value ?? "")}
                                         </Field>
                                     )}
@@ -115,10 +117,35 @@ export default function OutcomeView() {
                                     name="queue"
                                     control={control}
                                     render={({ field, fieldState }) => (
-                                        <Field
-                                            data-invalid={fieldState.invalid}
-                                        >
-                                            <Label htmlFor="input">Queue</Label>
+                                        <Field data-invalid={fieldState.invalid}>
+                                            <Label>Queue</Label>
+                                            {String(field.value ?? "")}
+                                        </Field>
+                                    )}
+                                />
+                            </div>
+                        </div>
+
+                        <div className="grid grid-cols-2 gap-6 ">
+                            <div>
+                                <Controller
+                                    name="outcome_code"
+                                    control={control}
+                                    render={({ field, fieldState }) => (
+                                        <Field data-invalid={fieldState.invalid}>
+                                            <Label>Outcome Code</Label>
+                                            {String(field.value ?? "")}
+                                        </Field>
+                                    )}
+                                />
+                            </div>
+                            <div>
+                                <Controller
+                                    name="platform_action"
+                                    control={control}
+                                    render={({ field, fieldState }) => (
+                                        <Field data-invalid={fieldState.invalid}>
+                                            <Label>Platform Action</Label>
                                             {String(field.value ?? "")}
                                         </Field>
                                     )}
@@ -132,12 +159,8 @@ export default function OutcomeView() {
                                     name="status"
                                     control={control}
                                     render={({ field, fieldState }) => (
-                                        <Field
-                                            data-invalid={fieldState.invalid}
-                                        >
-                                            <Label htmlFor="status">
-                                                Status
-                                            </Label>
+                                        <Field data-invalid={fieldState.invalid}>
+                                            <Label>Status</Label>
                                             {String(field.value ?? "")}
                                         </Field>
                                     )}
@@ -148,30 +171,35 @@ export default function OutcomeView() {
                                     name="classification"
                                     control={control}
                                     render={({ field, fieldState }) => (
-                                        <Field
-                                            data-invalid={fieldState.invalid}
-                                        >
-                                            <Label htmlFor="input">
-                                                Classification
-                                            </Label>
+                                        <Field data-invalid={fieldState.invalid}>
+                                            <Label>Classification</Label>
                                             {String(field.value ?? "")}
                                         </Field>
                                     )}
                                 />
                             </div>
                         </div>
-                        <div className="grid grid-cols-1 gap-6 ">
+
+                        <div className="grid grid-cols-2 gap-6 ">
                             <div>
                                 <Controller
                                     name="description"
                                     control={control}
                                     render={({ field, fieldState }) => (
-                                        <Field
-                                            data-invalid={fieldState.invalid}
-                                        >
-                                            <Label htmlFor="input">
-                                                Description
-                                            </Label>
+                                        <Field data-invalid={fieldState.invalid}>
+                                            <Label>Description</Label>
+                                            {String(field.value ?? "")}
+                                        </Field>
+                                    )}
+                                />
+                            </div>
+                            <div>
+                                <Controller
+                                    name="comment_mandatory"
+                                    control={control}
+                                    render={({ field, fieldState }) => (
+                                        <Field data-invalid={fieldState.invalid}>
+                                            <Label>Comment Mandatory</Label>
                                             {String(field.value ?? "")}
                                         </Field>
                                     )}

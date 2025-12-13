@@ -3,8 +3,11 @@ import { IContactCreateSchema } from "@/types/ContactSchema";
 import { ColumnDef } from "@tanstack/react-table";
 import { ArrowUpDown, BadgeCheckIcon } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+import Button from "@/components/ui/button/Button";
+import Can from "@/components/auth/Can";
 
 export const getSupplierContactHeaders = (
+    onView?: (contact: IContactCreateSchema) => void,
 ): ColumnDef<IContactCreateSchema>[] => [
     {
         accessorKey: "salutation",
@@ -92,6 +95,28 @@ export const getSupplierContactHeaders = (
                     ? "Supplier"
                     : "User"}
             </Badge>
+        ),
+    },
+    {
+        id: "actions",
+        header: () => <div className="ml-4">Actions</div>,
+        cell: ({ row }) => (
+            <div className="ml-4">
+                <Can permission="contact_directory.view">
+                    <Button
+                        size="sm"
+                        onClick={() => onView && onView(row.original)}
+                    >
+                        View
+                    </Button>
+                </Can>
+                {/* <CustomButton
+                    size="sm"
+                    onClick={() => onView && onView(row.original)}
+                >
+                    View
+                </CustomButton> */}
+            </div>
         ),
     },
 ];

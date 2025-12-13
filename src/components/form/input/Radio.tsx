@@ -1,10 +1,10 @@
 interface RadioProps {
   id: string; // Unique ID for the radio button
   name: string; // Radio group name
-  value: string | number; // Value of the radio button
+  value: string | number | boolean; // Value of the radio button (allow boolean)
   checked: boolean; // Whether the radio button is checked
   label: string; // Label for the radio button
-  onChange: (value: string | number) => void; // Handler for value change
+  onChange: (value: string | number | boolean) => void; // Handler for value change
   className?: string; // Optional additional classes
   disabled?: boolean; // Optional disabled state for the radio button
 }
@@ -32,7 +32,7 @@ const Radio: React.FC<RadioProps> = ({
         id={id}
         name={name}
         type="radio"
-        value={value}
+        value={String(value)}
         checked={checked}
         onChange={() => !disabled && onChange(value)} // Prevent onChange when disabled
         className="sr-only"
