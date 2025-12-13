@@ -336,7 +336,7 @@ const AppSidebar: React.FC = () => {
                                 />
                                 <div className="flex flex-col">
                                     <h1 className="text-xl font-bold text-gray-900">
-                                        Admiral
+                                        Alloc8
                                     </h1>
                                     <p className="text-xs text-gray-500 font-medium">
                                         Bordereau Processing Tool
@@ -352,7 +352,7 @@ const AppSidebar: React.FC = () => {
                                 />
                                 <div className="flex flex-col">
                                     <h1 className="text-xl font-bold text-white">
-                                        Admiral
+                                        Alloc8
                                     </h1>
                                     <p className="text-xs text-white font-medium">
                                         Bordereau Processing Tool

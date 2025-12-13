@@ -5,6 +5,7 @@ import { SupplierBaseSchema } from "./SupplierSchema";
 
 // Bordereau Validation
 export const BordereauValidationBaseSchema = z.object({
+    type: z.string(),
     name: z.string().min(1, "Name is required"),
     salvage_banked: z.boolean().optional(),
     salvage_copart: z.boolean().optional(),
@@ -206,6 +207,7 @@ export const BordereauIndexSchema = BordereauBaseSchema.pick({
     supplier: z.lazy(() => SupplierBaseSchema.optional()),
     bordereau_status: BordereauStatusBaseSchema,
     bpc: BPCBaseSchema.optional(),
+    bordereau_validations: BordereauValidationBaseSchema.optional(),
 });
 
 export type IBordereauSchema = z.infer<typeof BordereauBaseSchema>;

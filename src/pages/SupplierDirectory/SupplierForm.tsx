@@ -5,6 +5,7 @@ import PageBreadcrumb from "@/components/common/PageBreadCrumb";
 import ComponentCard from "@/components/common/ComponentCard";
 import Label from "@/components/form/Label";
 import Input from "@/components/form/input/InputField";
+import FileInput from "@/components/form/input/FileInput";
 import { Field, FieldGroup } from "@/components/ui/field";
 import { Controller, useForm } from "react-hook-form";
 import Button from "@/components/ui/button/Button";
@@ -33,7 +34,6 @@ import SupplierDocumentsTable from "./SupplierDocumentTable/SupplierDocumentsTab
 import { IDocumentFormSchema } from "@/types/DocumentSchema";
 import { upsertDocument } from "@/database/document_api";
 import { useForm as useLocalForm } from "react-hook-form";
-
 
 interface DocumentVisibilityOption {
     value: number;
@@ -78,7 +78,7 @@ export default function SupplierForm() {
                     loading: "Uploading document...",
                     success: "Document uploaded",
                     error: "Failed to upload document",
-                }
+                },
             );
             docForm.reset();
             setIsAddDocModalOpen(false);
@@ -91,7 +91,7 @@ export default function SupplierForm() {
     // Fetch contacts for dropdown
     const { data: contacts = [], refetch: refetchContacts } = useQuery({
         queryKey: ["contacts"],
-        queryFn: fetchContactListSupplier
+        queryFn: fetchContactListSupplier,
     });
 
     // Fetch current supplier data if editing
@@ -111,7 +111,7 @@ export default function SupplierForm() {
         .filter(
             (contact) =>
                 contact.supplier_id === null ||
-                contact.supplier_id === Number(id)
+                contact.supplier_id === Number(id),
         )
         .map((contact) => ({
             value: contact.id || 0,
@@ -122,6 +122,7 @@ export default function SupplierForm() {
         useForm<ISupplierFormSchema>({
             defaultValues: {
                 name: "",
+                logo: undefined,
                 address_line_1: "",
                 address_line_2: "",
                 address_line_3: "",
@@ -151,11 +152,8 @@ export default function SupplierForm() {
     // Reset form with supplier data when editing
     useEffect(() => {
         if (supplierData) {
-            // Normalize null values to empty strings to prevent React warnings
-            // Convert null to empty string for text inputs, undefined for optional fields
             const normalizedData = {
                 ...supplierData,
-                contact_id: supplierData.contact_id || undefined,
                 updated_by: user?.id,
             };
             reset(normalizedData as ISupplierFormSchema);
@@ -189,7 +187,7 @@ export default function SupplierForm() {
             const dvData = await fetchDocumentVisibilityList();
 
             setDocumentVisibilityOptions(
-                dvData.map((dv) => ({ value: dv.id, label: dv.name }))
+                dvData.map((dv) => ({ value: dv.id, label: dv.name })),
             );
         };
 
@@ -199,9 +197,7 @@ export default function SupplierForm() {
     return (
         <>
             <PageBreadcrumb
-                pageTitle={
-                    id ? "Edit Supplier" : "Add Supplier"
-                }
+                pageTitle={id ? "Edit Supplier" : "Add Supplier"}
                 pageBreadcrumbs={[
                     { title: "Supplier", link: "/supplier-directory" },
                 ]}
@@ -238,6 +234,53 @@ export default function SupplierForm() {
                                                     name="name"
                                                     placeholder="Enter Supplier Name"
                                                 />
+                                                {fieldState.error && (
+                                                    <p className="mt-1 text-sm text-error-500">
+                                                        {
+                                                            fieldState.error
+                                                                .message
+                                                        }
+                                                    </p>
+                                                )}
+                                            </Field>
+                                        )}
+                                    />
+
+                                    <Controller
+                                        name="logo"
+                                        control={control}
+                                        render={({ field, fieldState }) => (
+                                            <Field
+                                                data-invalid={
+                                                    fieldState.invalid
+                                                }
+                                            >
+                                                <Label>Supplier Logo </Label>
+                                                <FileInput
+                                                    onChange={(e) => {
+                                                        const file =
+                                                            e.target.files?.[0];
+                                                        field.onChange(file);
+                                                    }}
+                                                    className="custom-class"
+                                                />
+
+                                                {field.value && (
+                                                    typeof field.value === "string" ? (
+                                                        <img
+                                                            src={import.meta.env.VITE_API_URL + field.value}
+                                                            alt="logo-preview"
+                                                            className="h-auto mt-2 rounded"
+                                                        />
+                                                    ) : (
+                                                        <img
+                                                            src={URL.createObjectURL(field.value as File)}
+                                                            alt="logo-preview"
+                                                            className="h-auto mt-2 rounded"
+                                                        />
+                                                    )
+                                                )}
+
                                                 {fieldState.error && (
                                                     <p className="mt-1 text-sm text-error-500">
                                                         {
@@ -335,12 +378,12 @@ export default function SupplierForm() {
                                                                     contactOptions
                                                                 }
                                                                 onChange={(
-                                                                    value
+                                                                    value,
                                                                 ) =>
                                                                     field.onChange(
                                                                         Number(
-                                                                            value
-                                                                        )
+                                                                            value,
+                                                                        ),
                                                                     )
                                                                 }
                                                                 placeholder="Select Primary Contact"
@@ -354,7 +397,7 @@ export default function SupplierForm() {
                                                             size="sm"
                                                             onClick={() =>
                                                                 setIsContactModalOpen(
-                                                                    true
+                                                                    true,
                                                                 )
                                                             }
                                                             className="flex items-center gap-1 whitespace-nowrap"
@@ -403,8 +446,8 @@ export default function SupplierForm() {
                                                                 ? undefined
                                                                 : Number(
                                                                       e.target
-                                                                          .value
-                                                                  )
+                                                                          .value,
+                                                                  ),
                                                         )
                                                     }
                                                     onBlur={field.onBlur}
@@ -446,8 +489,8 @@ export default function SupplierForm() {
                                                                 ? undefined
                                                                 : Number(
                                                                       e.target
-                                                                          .value
-                                                                  )
+                                                                          .value,
+                                                                  ),
                                                         )
                                                     }
                                                     onBlur={field.onBlur}
@@ -489,8 +532,8 @@ export default function SupplierForm() {
                                                                 ? undefined
                                                                 : Number(
                                                                       e.target
-                                                                          .value
-                                                                  )
+                                                                          .value,
+                                                                  ),
                                                         )
                                                     }
                                                     onBlur={field.onBlur}
@@ -796,7 +839,7 @@ export default function SupplierForm() {
                                                         variant="outline"
                                                         onClick={() =>
                                                             setIsDocsModalOpen(
-                                                                true
+                                                                true,
                                                             )
                                                         }
                                                     >
@@ -823,7 +866,7 @@ export default function SupplierForm() {
                                                             variant="outline"
                                                             onClick={() =>
                                                                 setIsAddDocModalOpen(
-                                                                    true
+                                                                    true,
                                                                 )
                                                             }
                                                         >
@@ -923,7 +966,9 @@ export default function SupplierForm() {
                 onClose={() => setIsContactModalOpen(false)}
                 onUserCreated={(user) => {
                     toast.success(
-                        `User ${user?.contact?.firstname || ""} ${user?.contact?.lastname || ""} has been added!`,
+                        `User ${user?.contact?.firstname || ""} ${
+                            user?.contact?.lastname || ""
+                        } has been added!`,
                     );
                     refetchContacts();
                 }}

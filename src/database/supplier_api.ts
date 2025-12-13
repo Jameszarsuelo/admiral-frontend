@@ -12,9 +12,10 @@ export async function upsertSupplier(
     supplierData: ISupplierFormSchema,
 ): Promise<ISupplierFormSchema> {
     try {
-        const hasFile = supplierData.document?.name instanceof File;
+        const hasDocumentFile = supplierData.document?.name instanceof File;
+        const hasLogoFile = (supplierData).logo instanceof File;
 
-        if (!hasFile) {
+        if (!hasDocumentFile && !hasLogoFile) {
             const response = supplierData.id
                 ? await api.put(`/supplier/${supplierData.id}`, supplierData)
                 : await api.post(`/supplier`, supplierData);
@@ -24,8 +25,20 @@ export async function upsertSupplier(
         const formData = new FormData();
 
         Object.entries(supplierData).forEach(([key, value]) => {
-            if (key === "document" || value === undefined || value === null)
+            if (value === undefined || value === null) return;
+
+            if (key === "document") return; // handled separately
+
+            if (key === "logo") {
+                // value may be a File or a string (path); if File, append directly
+                if ((value as unknown) instanceof File) {
+                    formData.append("logo", value as File);
+                    return;
+                }
+                formData.append(key, String(value));
                 return;
+            }
+
             formData.append(key, String(value));
         });
 

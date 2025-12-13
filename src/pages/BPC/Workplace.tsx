@@ -17,13 +17,14 @@ import { IBordereauComment, IBordereauIndex } from "@/types/BordereauSchema";
 import { fetchOutcomeList } from "@/database/outcome_api";
 import {
     changeBordereauOutcome,
-    fetchBpcBordereauByBpcId,
+    fetchBpcCustomBordereauByBpcId,
 } from "@/database/bordereau_api";
 import { changeBpcStatus } from "@/database/bpc_api";
-import BordereauDetailsView from "../BordereauDetail/BordereauDetailsView";
 import useBpcNotifications from "@/hooks/useBpcNotifications";
 import useBpcTimer from "@/hooks/useBpcTimer";
 import Button from "@/components/ui/button/Button";
+import BordereauDetailsViewBPC from "../BordereauDetail/BordereauDetailsViewBPC";
+import CommentSection from "@/components/bordereau/CommentSection";
 
 export default function Workplace() {
     const { user, logout } = useAuth();
@@ -48,56 +49,71 @@ export default function Workplace() {
 
     const statusOptions = useMemo(() => {
         const list = (bpcStatusData || []) as IBPCStatus[];
-        const currentId = Number(selectedStatusId);
 
-        // Start with all statuses except 3 and 4 (these should not be selectable).
-        let opts: { value: string; label: string; disabled?: boolean }[] = list
-            .filter((s) => typeof s.id === "number" && s.id !== 3 && s.id !== 4)
-            .map((s) => ({ value: String(s.id), label: s.status }));
+        // Base selectable statuses
+        const baseSelectable = new Set([1, 5, 6, 7]);
 
-        // When current status is 3 or 4, hide status 2 as well.
-        if (currentId === 3 || currentId === 4) {
-            opts = opts.filter((o) => o.value !== "2");
+        const curId = Number(selectedStatusId);
+        // Include status 2 in dropdown only when the current status is one of base selectable
+        const includeStatus2 = baseSelectable.has(curId);
 
-            // Ensure the current status (3 or 4) is visible so the Select can display it.
-            const cur = list.find((s) => s.id === currentId);
-            if (cur) {
-                // show current status but mark it disabled so user cannot pick it
-                opts = [
-                    {
-                        value: String(cur.id),
-                        label: cur.status + " (current)",
-                        disabled: true,
-                    },
-                    ...opts,
-                ];
-            } else {
-                opts = [
-                    {
-                        value: String(currentId),
-                        label: `Status ${currentId} (current)`,
-                        disabled: true,
-                    },
-                    ...opts,
-                ];
-            }
-        }
+        const opts: { value: string; label: string; disabled?: boolean }[] =
+            list
+                .filter((s) => {
+                    if (typeof s.id !== "number") return false;
+                    if (baseSelectable.has(s.id)) return true;
+                    if (s.id === 2 && includeStatus2) return true;
+                    return false; // explicitly exclude 3 and 4 and any others
+                })
+                .map((s) => ({ value: String(s.id), label: s.status }));
 
         return opts;
     }, [bpcStatusData, selectedStatusId]);
 
+    const status2Label = useMemo(() => {
+        const list = (bpcStatusData || []) as IBPCStatus[];
+        const s = list.find((st) => st.id === 2);
+        return s ? s.status : undefined;
+    }, [bpcStatusData]);
+
+    const isSelectedStatusSelectable = useMemo(() => {
+        return statusOptions.some((o) => o.value === selectedStatusId);
+    }, [statusOptions, selectedStatusId]);
+
     const [newCommentText, setNewCommentText] = useState("");
 
-    const { data: bordereauDetails, isLoading } =
-        useQuery<IBordereauIndex | null>({
+    type TBordereauResponse =
+        | IBordereauIndex
+        | { bordereau: IBordereauIndex; validation_fields?: Record<string, unknown> }
+        | null;
+
+    const { data: bordereauResponse, isLoading } =
+        useQuery<TBordereauResponse>({
             queryKey: ["current-bordereau", bpcUser?.id],
             queryFn: async () => {
-                return await fetchBpcBordereauByBpcId(bpcUser!.id);
+                return await fetchBpcCustomBordereauByBpcId(bpcUser!.id);
             },
             enabled: !!bpcUser?.id,
             staleTime: 1000 * 60 * 5, // 5 minutes
             refetchOnWindowFocus: false,
         });
+
+    // Support both old responses (plain bordereau) and new responses { bordereau, validation_fields }
+    const isWrappedResponse = (
+        obj: unknown,
+    ): obj is { bordereau: IBordereauIndex; validation_fields?: Record<string, unknown> } => {
+        return !!obj && typeof obj === "object" && Object.prototype.hasOwnProperty.call(obj, "bordereau");
+    };
+
+    const bordereauDetails: IBordereauIndex | null =
+        bordereauResponse && isWrappedResponse(bordereauResponse)
+            ? bordereauResponse.bordereau
+            : (bordereauResponse as IBordereauIndex | null);
+
+    const validationFields: Record<string, unknown> | null =
+        bordereauResponse && isWrappedResponse(bordereauResponse)
+            ? bordereauResponse.validation_fields ?? null
+            : null;
 
     useEffect(() => {
         if (!bpcUser) return;
@@ -145,13 +161,32 @@ export default function Workplace() {
     const queryClient = useQueryClient();
     const [isCommentSubmitting, setIsCommentSubmitting] = useState(false);
     const [showSupplierModal, setShowSupplierModal] = useState(false);
+
     const [outcomes, setOutcomes] = useState<
         {
             value: string;
             label: string;
             id: number;
+            comment_mandatory?: boolean;
         }[]
     >([]);
+    const [groupedOutcomes, setGroupedOutcomes] = useState<
+        {
+            label: string;
+            options: {
+                value: string;
+                label: string;
+                id: number;
+                comment_mandatory?: boolean;
+            }[];
+        }[]
+    >([]);
+    const [sessionCommentsAdded, setSessionCommentsAdded] = useState(false);
+    const [queuedOutcome, setQueuedOutcome] = useState<null | {
+        id: number;
+        label: string;
+    }>(null);
+    const commentTextareaRef = useRef<HTMLTextAreaElement | null>(null);
     const [outcomeToConfirm, setOutcomeToConfirm] = useState<null | {
         id: number;
         label: string;
@@ -160,7 +195,7 @@ export default function Workplace() {
 
     // cooldown state
     const [cooldownSeconds, setCooldownSeconds] = useState<number | null>(null);
-    const cooldownTotal = 10;
+    const cooldownTotal = 2;
     const cooldownIntervalRef = useRef<number | null>(null);
     const [cooldownLabel, setCooldownLabel] = useState<string | null>(null);
     const outcomeTimeoutRef = useRef<number | null>(null);
@@ -226,6 +261,17 @@ export default function Workplace() {
         },
         onSuccess: () => {
             toast.success("Comment added");
+            setSessionCommentsAdded(true);
+            // If there was a queued outcome that required a comment, show confirmation
+            // so the clerk can confirm before submission (do not auto-submit).
+            if (queuedOutcome) {
+                setOutcomeToConfirm({
+                    id: queuedOutcome.id,
+                    label: queuedOutcome.label,
+                });
+                setShowOutcomeConfirm(true);
+                setQueuedOutcome(null);
+            }
         },
         onSettled: async () => {
             await queryClient.invalidateQueries({
@@ -291,14 +337,61 @@ export default function Workplace() {
             try {
                 const list = await fetchOutcomeList();
                 if (!mounted) return;
-                const opts = list
+                type _Tmp = {
+                    value: string;
+                    label: string;
+                    id: number;
+                    heading: string;
+                    comment_mandatory?: boolean;
+                };
+
+                const raw = list as unknown as Array<Record<string, unknown>>;
+                const flat = raw
                     .filter((o) => typeof o.id === "number")
                     .map((o) => ({
-                        value: String(o.id!),
-                        label: o.description ?? o.outcome_code,
-                        id: o.id!,
-                    }));
-                setOutcomes(opts);
+                        value: String(o.id),
+                        label: o.outcome_code ?? o.description,
+                        id: o.id,
+                        heading: o.outcome_code_heading ?? "Other",
+                        comment_mandatory: !!o.comment_mandatory,
+                    })) as _Tmp[];
+
+                // Build grouping by heading while preserving flat list for lookups
+                const groups: Record<
+                    string,
+                    {
+                        value: string;
+                        label: string;
+                        id: number;
+                        comment_mandatory?: boolean;
+                    }[]
+                > = {};
+
+                flat.forEach((f) => {
+                    const h = f.heading || "Other";
+                    if (!groups[h]) groups[h] = [];
+                    groups[h].push({
+                        value: f.value,
+                        label: f.label,
+                        id: f.id,
+                        comment_mandatory: f.comment_mandatory,
+                    });
+                });
+
+                const grouped = Object.keys(groups).map((k) => ({
+                    label: k,
+                    options: groups[k],
+                }));
+
+                setOutcomes(
+                    flat.map(({ value, label, id, comment_mandatory }) => ({
+                        value,
+                        label,
+                        id,
+                        comment_mandatory,
+                    })),
+                );
+                setGroupedOutcomes(grouped);
             } catch (err) {
                 // don't block the UI; show a toast
                 console.error("Failed to load outcomes", err);
@@ -355,6 +448,15 @@ export default function Workplace() {
             }
         };
     }, [bordereauDetails, awaitingRefetch, bpcUser?.id, queryClient]);
+
+    // Clear any queued outcome when a new bordereau arrives to avoid applying
+    // a queued outcome to the wrong bordereau (e.g. when pushed via pusher).
+    useEffect(() => {
+        setQueuedOutcome(null);
+        // Reset the session-level 'comment added' flag when the bordereau changes
+        // so each bordereau requires its own comment validation.
+        setSessionCommentsAdded(false);
+    }, [bordereauDetails?.id]);
 
     const handleAddComment = async (bordereauId: number, comment: string) => {
         try {
@@ -504,40 +606,6 @@ export default function Workplace() {
                                             )}
                                         </div>
                                     </div>
-
-                                    <div className="flex flex-col items-end">
-                                        {bordereauDetails && (
-                                            <div
-                                                className={
-                                                    cooldownSeconds !== null
-                                                        ? "w-56 opacity-60 pointer-events-none"
-                                                        : "w-56"
-                                                }
-                                            >
-                                                <Select
-                                                    options={outcomes}
-                                                    placeholder="Select outcome"
-                                                    value={""}
-                                                    onChange={(val: string) => {
-                                                        const id = Number(val);
-                                                        const found =
-                                                            outcomes.find(
-                                                                (o) =>
-                                                                    o.id === id,
-                                                            );
-                                                        if (!found) return;
-                                                        setOutcomeToConfirm({
-                                                            id: found.id,
-                                                            label: found.label,
-                                                        });
-                                                        setShowOutcomeConfirm(
-                                                            true,
-                                                        );
-                                                    }}
-                                                />
-                                            </div>
-                                        )}
-                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -590,7 +658,8 @@ export default function Workplace() {
                                 </div>
                             </div>
                             <div className="mt-5 text-center text-sm text-gray-600 dark:text-gray-300">
-                                Total today: {totalFmt.hh}:{totalFmt.mm}:{totalFmt.ss}
+                                Total today: {totalFmt.hh}:{totalFmt.mm}:
+                                {totalFmt.ss}
                             </div>
                         </div>
                     </div>
@@ -642,11 +711,20 @@ export default function Workplace() {
                                     <Select
                                         options={statusOptions}
                                         placeholder={
-                                            selectedStatus
+                                            selectedStatusId === "3" ||
+                                            selectedStatusId === "4"
+                                                ? status2Label ??
+                                                  "Change status"
+                                                : isSelectedStatusSelectable &&
+                                                  selectedStatus
                                                 ? selectedStatus.status
                                                 : "Change status"
                                         }
-                                        value={selectedStatusId}
+                                        value={
+                                            isSelectedStatusSelectable
+                                                ? selectedStatusId
+                                                : ""
+                                        }
                                         onChange={async (val: string) => {
                                             const id = Number(val);
                                             setSelectedStatusId(val);
@@ -725,11 +803,8 @@ export default function Workplace() {
                             </div>
                         )}
 
-                        {/** Show loader while initial load or while refetching after outcome/status updates */}
                         {(() => {
                             const isRefetching = isRefetchingBordereau;
-                            // Show the full skeleton only when loading initially or when we removed a bordereau and are awaiting the backend
-                            // or when refetching while a bordereau was present (avoid flicker on "no bordereau" card)
                             const showSkeleton =
                                 isLoading ||
                                 awaitingRefetch ||
@@ -741,10 +816,324 @@ export default function Workplace() {
 
                             if (bordereauDetails) {
                                 return (
-                                    <BordereauDetailsView
-                                        isLoading={isLoading}
-                                        bordereau={bordereauDetails}
-                                    />
+                                    <>
+                                        <BordereauDetailsViewBPC
+                                            isLoading={isLoading}
+                                            bordereau={bordereauDetails}
+                                            validationFields={validationFields}
+                                        />
+
+                                        {bordereauDetails ? (
+                                            <div className="mt-6">
+                                                <div className="p-4 border border-gray-200 rounded-2xl dark:border-gray-800">
+                                                    <textarea
+                                                        ref={(el) => {
+                                                            commentTextareaRef.current =
+                                                                el;
+                                                        }}
+                                                        value={newCommentText}
+                                                        onChange={(e) =>
+                                                            setNewCommentText(
+                                                                e.target.value,
+                                                            )
+                                                        }
+                                                        placeholder="Add a comment"
+                                                        className="w-full rounded-md border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 px-3 py-2 text-sm"
+                                                        rows={3}
+                                                    />
+                                                    <div className="mt-2 flex items-center justify-end">
+                                                        <button
+                                                            onClick={async () => {
+                                                                if (
+                                                                    !newCommentText.trim() ||
+                                                                    !bordereauDetails?.id
+                                                                )
+                                                                    return;
+                                                                await handleAddComment(
+                                                                    bordereauDetails.id,
+                                                                    newCommentText.trim(),
+                                                                );
+                                                                setNewCommentText(
+                                                                    "",
+                                                                );
+                                                            }}
+                                                            disabled={
+                                                                isCommentSubmitting
+                                                            }
+                                                            className="inline-flex items-center gap-2 px-4 py-2 rounded-md bg-cyan-600 text-white text-sm hover:bg-cyan-700 disabled:opacity-60"
+                                                        >
+                                                            {isCommentSubmitting
+                                                                ? "Adding..."
+                                                                : "Add Comment"}
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        ) : null}
+
+                                        <div className="flex flex-row w-full justify-center mt-4">
+                                            {bordereauDetails && (
+                                                <div
+                                                    className={
+                                                        cooldownSeconds !== null
+                                                            ? "w-full opacity-60 pointer-events-none"
+                                                            : "w-full grid grid-cols-4 gap-2"
+                                                    }
+                                                >
+                                                    {groupedOutcomes &&
+                                                    groupedOutcomes.length >
+                                                        0 ? (
+                                                        groupedOutcomes
+                                                            .slice(0, 4)
+                                                            .map((g) => (
+                                                                <div
+                                                                    key={
+                                                                        g.label
+                                                                    }
+                                                                    className="flex flex-col p-2 bg-white dark:bg-gray-800 rounded"
+                                                                >
+                                                                    <div className="text-xs text-gray-500 mb-1">
+                                                                        {
+                                                                            g.label
+                                                                        }
+                                                                    </div>
+                                                                    <Select
+                                                                        options={
+                                                                            g.options
+                                                                        }
+                                                                        placeholder="Select"
+                                                                        value={
+                                                                            ""
+                                                                        }
+                                                                        className="bg-white dark:bg-gray-800"
+                                                                        onChange={(
+                                                                            val: string,
+                                                                        ) => {
+                                                                            const id =
+                                                                                Number(
+                                                                                    val,
+                                                                                );
+                                                                            const found =
+                                                                                outcomes.find(
+                                                                                    (
+                                                                                        o,
+                                                                                    ) =>
+                                                                                        o.id ===
+                                                                                        id,
+                                                                                );
+                                                                            if (
+                                                                                !found
+                                                                            )
+                                                                                return;
+                                                                            const needsComment =
+                                                                                Boolean(
+                                                                                    (
+                                                                                        found as {
+                                                                                            comment_mandatory?: boolean;
+                                                                                        }
+                                                                                    )
+                                                                                        .comment_mandatory,
+                                                                                );
+                                                                            if (
+                                                                                needsComment &&
+                                                                                !sessionCommentsAdded
+                                                                            ) {
+                                                                                // queue the outcome and prompt user to add comment first
+                                                                                setQueuedOutcome(
+                                                                                    {
+                                                                                        id: found.id,
+                                                                                        label: found.label,
+                                                                                    },
+                                                                                );
+                                                                                toast.error(
+                                                                                    "This outcome requires a comment. Please add a comment first.",
+                                                                                );
+                                                                                // focus the comment textarea if present
+                                                                                if (
+                                                                                    commentTextareaRef &&
+                                                                                    commentTextareaRef.current
+                                                                                ) {
+                                                                                    commentTextareaRef.current.focus();
+                                                                                }
+                                                                                return;
+                                                                            }
+
+                                                                            setOutcomeToConfirm(
+                                                                                {
+                                                                                    id: found.id,
+                                                                                    label: found.label,
+                                                                                },
+                                                                            );
+                                                                            setShowOutcomeConfirm(
+                                                                                true,
+                                                                            );
+                                                                        }}
+                                                                    />
+                                                                </div>
+                                                            ))
+                                                    ) : (
+                                                        // fallback: single flat select when no grouping available
+                                                        <div className="flex flex-col p-2 bg-white dark:bg-gray-800 rounded">
+                                                            <div className="text-xs text-gray-500 mb-1">
+                                                                Outcome
+                                                            </div>
+                                                            <Select
+                                                                options={
+                                                                    outcomes
+                                                                }
+                                                                placeholder="Select outcome"
+                                                                value={""}
+                                                                className="bg-white dark:bg-gray-800"
+                                                                onChange={(
+                                                                    val: string,
+                                                                ) => {
+                                                                    const id =
+                                                                        Number(
+                                                                            val,
+                                                                        );
+                                                                    const found =
+                                                                        outcomes.find(
+                                                                            (
+                                                                                o,
+                                                                            ) =>
+                                                                                o.id ===
+                                                                                id,
+                                                                        );
+                                                                    if (!found)
+                                                                        return;
+                                                                    const needsComment =
+                                                                        Boolean(
+                                                                            (
+                                                                                found as {
+                                                                                    comment_mandatory?: boolean;
+                                                                                }
+                                                                            )
+                                                                                .comment_mandatory,
+                                                                        );
+                                                                    if (
+                                                                        needsComment &&
+                                                                        !sessionCommentsAdded
+                                                                    ) {
+                                                                        setQueuedOutcome(
+                                                                            {
+                                                                                id: found.id,
+                                                                                label: found.label,
+                                                                            },
+                                                                        );
+                                                                        toast.error(
+                                                                            "This outcome requires a comment. Please add a comment first.",
+                                                                        );
+                                                                        if (
+                                                                            commentTextareaRef &&
+                                                                            commentTextareaRef.current
+                                                                        )
+                                                                            commentTextareaRef.current.focus();
+                                                                        return;
+                                                                    }
+
+                                                                    setOutcomeToConfirm(
+                                                                        {
+                                                                            id: found.id,
+                                                                            label: found.label,
+                                                                        },
+                                                                    );
+                                                                    setShowOutcomeConfirm(
+                                                                        true,
+                                                                    );
+                                                                }}
+                                                            />
+                                                        </div>
+                                                    )}
+                                                </div>
+                                            )}
+                                        </div>
+
+                                        <div className="grid lg:grid-cols-2 grid-cols-1 gap-6">
+                                            <div className="p-5 border border-gray-200 rounded-2xl dark:border-gray-800 lg:p-6 col-span-1">
+                                                <div className="mb-10">
+                                                    <h4 className="text-lg font-semibold text-gray-800 dark:text-white/90 lg:mb-6">
+                                                        Bordereau Comments
+                                                    </h4>
+                                                    <div className="grid grid-cols-1 gap-4 lg:grid-cols-1 lg:gap-7">
+                                                        <div>
+                                                            <CommentSection
+                                                                comments={
+                                                                    bordereauDetails?.comments
+                                                                }
+                                                            />
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div className="p-5 border border-gray-200 rounded-2xl dark:border-gray-800 lg:p-6 col-span-1">
+                                                <div className="mb-5">
+                                                    <h4 className="text-lg font-semibold text-gray-800 dark:text-white/90 lg:mb-6">
+                                                        Bordereau Audit
+                                                    </h4>
+                                                    <div className="grid grid-cols-1 gap-4 lg:grid-cols-1 lg:gap-7">
+                                                        <div className="grid grid-cols-2">
+                                                            <p className="mb-2 text-xs leading-normal text-gray-500 dark:text-gray-400">
+                                                                Created by
+                                                            </p>
+                                                            <p className="text-sm font-medium text-gray-800 dark:text-white/90">
+                                                                {bordereauDetails?.created_by ??
+                                                                    "-"}
+                                                            </p>
+
+                                                            <p className="mb-2 text-xs leading-normal text-gray-500 dark:text-gray-400">
+                                                                Created Date
+                                                            </p>
+                                                            <p className="text-sm font-medium text-gray-800 dark:text-white/90">
+                                                                {bordereauDetails?.created_at
+                                                                    ? new Date(
+                                                                          bordereauDetails.created_at,
+                                                                      ).toLocaleString()
+                                                                    : "-"}
+                                                            </p>
+
+                                                            <p className="mb-2 text-xs leading-normal text-gray-500 dark:text-gray-400">
+                                                                Updated by
+                                                            </p>
+                                                            <p className="text-sm font-medium text-gray-800 dark:text-white/90">
+                                                                {bordereauDetails?.updated_by ??
+                                                                    "-"}
+                                                            </p>
+
+                                                            <p className="mb-2 text-xs leading-normal text-gray-500 dark:text-gray-400">
+                                                                Updated Date
+                                                            </p>
+                                                            <p className="text-sm font-medium text-gray-800 dark:text-white/90">
+                                                                {bordereauDetails?.updated_at
+                                                                    ? new Date(
+                                                                          bordereauDetails.updated_at,
+                                                                      ).toLocaleString()
+                                                                    : "-"}
+                                                            </p>
+
+                                                            <p className="mb-2 text-xs leading-normal text-gray-500 dark:text-gray-400">
+                                                                Closed by
+                                                            </p>
+                                                            <p className="text-sm font-medium text-gray-800 dark:text-white/90">
+                                                                {bordereauDetails?.closed_by ??
+                                                                    "-"}
+                                                            </p>
+
+                                                            <p className="mb-2 text-xs leading-normal text-gray-500 dark:text-gray-400">
+                                                                Closed Date
+                                                            </p>
+                                                            <p className="text-sm font-medium text-gray-800 dark:text-white/90">
+                                                                {bordereauDetails?.closed_date
+                                                                    ? new Date(
+                                                                          bordereauDetails.closed_date,
+                                                                      ).toLocaleString()
+                                                                    : "-"}
+                                                            </p>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </>
                                 );
                             }
 
@@ -755,72 +1144,13 @@ export default function Workplace() {
                                         Waiting for next bordereau
                                     </div>
                                     <div className="text-sm text-gray-500 dark:text-gray-400">
-                                        Please wait whilst I fetch the next bordereau line item for you to process.
+                                        Please wait whilst I fetch the next
+                                        bordereau line item for you to process.
                                     </div>
-                                    {/* <div className="flex items-center justify-center">
-                                        <button
-                                            type="button"
-                                            onClick={() =>
-                                                queryClient.refetchQueries({
-                                                    queryKey: [
-                                                        "current-bordereau",
-                                                        bpcUser?.id,
-                                                    ],
-                                                })
-                                            }
-                                            className="px-4 py-2 rounded-md bg-cyan-600 text-white hover:bg-cyan-700"
-                                        >
-                                            Refresh
-                                        </button>
-                                    </div> */}
-                                    {/* {isRefetching && (
-                                        <div className="absolute top-4 right-4 flex items-center gap-2 text-sm text-gray-500">
-                                            <div className="w-4 h-4 border-2 border-t-transparent border-gray-400 rounded-full animate-spin" />
-                                            <span>Checking for new bordereaux…</span>
-                                        </div>
-                                    )} */}
                                 </div>
                             );
                         })()}
-                        {/* Comment input at bottom only (comments list remains inside BordereauDetailsView) */}
-                        {bordereauDetails ? (
-                            <div className="mt-6">
-                                <div className="p-4 border border-gray-200 rounded-2xl dark:border-gray-800">
-                                    <textarea
-                                        value={newCommentText}
-                                        onChange={(e) =>
-                                            setNewCommentText(e.target.value)
-                                        }
-                                        placeholder="Add a comment"
-                                        className="w-full rounded-md border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 px-3 py-2 text-sm"
-                                        rows={3}
-                                    />
-                                    <div className="mt-2 flex items-center justify-end">
-                                        <button
-                                            onClick={async () => {
-                                                if (
-                                                    !newCommentText.trim() ||
-                                                    !bordereauDetails?.id
-                                                )
-                                                    return;
-                                                await handleAddComment(
-                                                    bordereauDetails.id,
-                                                    newCommentText.trim(),
-                                                );
-                                                setNewCommentText("");
-                                            }}
-                                            disabled={isCommentSubmitting}
-                                            className="inline-flex items-center gap-2 px-4 py-2 rounded-md bg-cyan-600 text-white text-sm hover:bg-cyan-700 disabled:opacity-60"
-                                        >
-                                            {isCommentSubmitting
-                                                ? "Adding..."
-                                                : "Add Comment"}
-                                        </button>
-                                    </div>
-                                </div>
-                            </div>
-                        ) : null}
-                        {/* Supplier Documents modal */}
+
                         <Modal
                             isOpen={showSupplierModal}
                             onClose={() => setShowSupplierModal(false)}
