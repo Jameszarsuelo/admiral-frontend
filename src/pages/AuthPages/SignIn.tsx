@@ -41,8 +41,8 @@ export default function SignIn() {
     return (
         <>
             <PageMeta
-                title="Admiral BPT"
-                description="Admiral is a powerful platform for managing and orchestrating your containerized applications with ease."
+                title="Alloc8"
+                description="Alloc8 is a powerful platform for managing and orchestrating your containerized applications with ease."
             />
             <AuthLayout>
                 <SignInForm />

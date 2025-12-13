@@ -53,9 +53,9 @@ export default function SignInForm() {
             <div className="flex flex-col justify-center flex-1 w-full max-w-md mx-auto">
                 <div>
                     <div className="mb-20 text-center flex flex-col items-center">
-                        <img src={logo} alt="Admiral Logo" className="w-24 h-24 mb-4" />
+                        <img src={logo} alt="Alloc8 Logo" className="w-24 h-24 mb-4" />
                         <h1 className="text-6xl mb-2 font-bold text-gray-900 dark:text-white">
-                            Admiral
+                            Alloc8
                         </h1>
                         <p className="text-4xl font-normal text-gray-900 dark:text-white">
                             Borderau Processing Tool

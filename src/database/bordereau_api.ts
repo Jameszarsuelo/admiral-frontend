@@ -46,7 +46,15 @@ export async function upsertBordereau(
     }
 }
 
-export async function fetchBordereauList(): Promise<IBordereauIndex[]> {
+export async function fetchBordereauList(): Promise<{
+    data: IBordereauIndex[];
+    overdueCount: number;
+    queryCount: number;
+    inProgressCount: number;
+    deadlineTomorrowCount: number;
+    targetdateCount: number;
+    queuedCount: number;
+}> {
     try {
         const response = await api.get("/bordereau");
         return response.data;
@@ -73,6 +81,25 @@ export async function fetchBordereauById(id: number): Promise<IBordereauIndex> {
 export async function fetchBpcBordereauByBpcId(bpcId: number): Promise<IBordereauIndex | null> {
     try {
         const response = await api.get(`/get-bpc-bordereau/${bpcId}`);
+        return response.data;
+    } catch (error) {
+        if (error instanceof AxiosError && error.response?.data) {
+            // If backend returns 404 or no current bordereau, return null
+            if (error.response.status === 404) return null;
+            throw error.response.data;
+        }
+        throw error;
+    }
+}
+
+export type TBordereauApiResponse =
+    | IBordereauIndex
+    | { bordereau: IBordereauIndex; validation_fields?: Record<string, unknown> }
+    | null;
+
+export async function fetchBpcCustomBordereauByBpcId(bpcId: number): Promise<TBordereauApiResponse> {
+    try {
+        const response = await api.get(`/get-bpc-custom-bordereau/${bpcId}`);
         return response.data;
     } catch (error) {
         if (error instanceof AxiosError && error.response?.data) {

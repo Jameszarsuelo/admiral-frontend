@@ -12,6 +12,7 @@ import { useNavigate, useParams } from "react-router";
 import { useState } from "react";
 import Spinner from "@/components/ui/spinner/Spinner";
 import DatePicker from "@/components/form/date-picker";
+import TextArea from "@/components/form/input/TextArea";
 import { useQuery } from "@tanstack/react-query";
 import {
     fetchBordereauViewData,
@@ -36,6 +37,7 @@ export default function BordereauForm() {
             supplier_ref: "",
             registration_number: "",
             invoice_date: "",
+            lot_number: "",
             invoice_number: "",
             branch_name: "",
             out_of_hours: "",
@@ -58,7 +60,15 @@ export default function BordereauForm() {
             admiral_invoice_type: undefined,
             amount_banked: undefined,
             comment: "",
-            bordereau_file: "",
+            bordereau: "",
+            task_type: "",
+            rejection_reasons: "",
+            additional_information: "",
+            make_and_model: "",
+            postcode: "",
+            date: "",
+            cat: "",
+            value: undefined,
         },
         resolver: zodResolver(BordereauFormSchema),
     });
@@ -110,9 +120,13 @@ export default function BordereauForm() {
 
     return (
         <>
-            <PageBreadcrumb 
-                pageTitle={id ? "Edit Bordereau Detail" : "Add Bordereau Detail"}
-                pageBreadcrumbs={[{ title: "Bordereau Detail", link: "/bordereau-detail" }]}
+            <PageBreadcrumb
+                pageTitle={
+                    id ? "Edit Bordereau Detail" : "Add Bordereau Detail"
+                }
+                pageBreadcrumbs={[
+                    { title: "Bordereau Detail", link: "/bordereau-detail" },
+                ]}
             />
             <ComponentCard title={id ? "Edit Bordereau" : "Add Bordereau"}>
                 {isLoading ? (
@@ -128,7 +142,7 @@ export default function BordereauForm() {
                             <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
                                 <div className="space-y-6">
                                     <Controller
-                                        name="bordereau_file"
+                                        name="bordereau"
                                         control={control}
                                         render={({ field, fieldState }) => (
                                             <Field
@@ -136,12 +150,12 @@ export default function BordereauForm() {
                                                     fieldState.invalid
                                                 }
                                             >
-                                                <Label htmlFor="bordereau_file">
+                                                <Label htmlFor="bordereau">
                                                     Bordereau
                                                 </Label>
                                                 <Input
                                                     {...field}
-                                                    id="bordereau_file"
+                                                    id="bordereau"
                                                     placeholder="Enter Bordereau"
                                                     value={field.value ?? ""}
                                                 />
@@ -504,7 +518,35 @@ export default function BordereauForm() {
                                         )}
                                     />
 
-                                    {/** lot_number is not part of the BordereauFormSchema - removed **/}
+                                    <Controller
+                                        name="lot_number"
+                                        control={control}
+                                        render={({ field, fieldState }) => (
+                                            <Field
+                                                data-invalid={
+                                                    fieldState.invalid
+                                                }
+                                            >
+                                                <Label htmlFor="lot_number">
+                                                    Lot Number
+                                                </Label>
+                                                <Input
+                                                    {...field}
+                                                    id="lot_number"
+                                                    placeholder="Enter Lot Number"
+                                                    value={field.value ?? ""}
+                                                />
+                                                {fieldState.error && (
+                                                    <p className="mt-1 text-sm text-error-500">
+                                                        {
+                                                            fieldState.error
+                                                                .message
+                                                        }
+                                                    </p>
+                                                )}
+                                            </Field>
+                                        )}
+                                    />
 
                                     <Controller
                                         name="copart_comments"
@@ -583,6 +625,108 @@ export default function BordereauForm() {
                                                     id="comment"
                                                     placeholder="Enter Comment"
                                                     value={field.value ?? ""}
+                                                />
+                                                {fieldState.error && (
+                                                    <p className="mt-1 text-sm text-error-500">
+                                                        {
+                                                            fieldState.error
+                                                                .message
+                                                        }
+                                                    </p>
+                                                )}
+                                            </Field>
+                                        )}
+                                    />
+                                    <Controller
+                                        name="task_type"
+                                        control={control}
+                                        render={({ field, fieldState }) => (
+                                            <Field
+                                                data-invalid={
+                                                    fieldState.invalid
+                                                }
+                                            >
+                                                <Label htmlFor="task_type">
+                                                    Task Type
+                                                </Label>
+                                                <Input
+                                                    {...field}
+                                                    id="task_type"
+                                                    placeholder="Enter Task Type"
+                                                    value={field.value ?? ""}
+                                                />
+                                                {fieldState.error && (
+                                                    <p className="mt-1 text-sm text-error-500">
+                                                        {
+                                                            fieldState.error
+                                                                .message
+                                                        }
+                                                    </p>
+                                                )}
+                                            </Field>
+                                        )}
+                                    />
+
+                                    <Controller
+                                        name="value"
+                                        control={control}
+                                        render={({ field, fieldState }) => (
+                                            <Field
+                                                data-invalid={
+                                                    fieldState.invalid
+                                                }
+                                            >
+                                                <Label htmlFor="value">
+                                                    Value
+                                                </Label>
+                                                <Input
+                                                    {...field}
+                                                    id="value"
+                                                    type="number"
+                                                    step={0.01}
+                                                    value={
+                                                        field.value ?? undefined
+                                                    }
+                                                    onChange={(e) =>
+                                                        field.onChange(
+                                                            Number(
+                                                                e.target.value,
+                                                            ),
+                                                        )
+                                                    }
+                                                />
+                                                {fieldState.error && (
+                                                    <p className="mt-1 text-sm text-error-500">
+                                                        {
+                                                            fieldState.error
+                                                                .message
+                                                        }
+                                                    </p>
+                                                )}
+                                            </Field>
+                                        )}
+                                    />
+
+                                    <Controller
+                                        name="additional_information"
+                                        control={control}
+                                        render={({ field, fieldState }) => (
+                                            <Field
+                                                data-invalid={
+                                                    fieldState.invalid
+                                                }
+                                            >
+                                                <Label htmlFor="additional_information">
+                                                    Additional Information
+                                                </Label>
+                                                <TextArea
+                                                    name={field.name}
+                                                    placeholder="Enter additional information"
+                                                    value={field.value ?? ""}
+                                                    onChange={(val) =>
+                                                        field.onChange(val)
+                                                    }
+                                                    error={fieldState.invalid}
                                                 />
                                                 {fieldState.error && (
                                                     <p className="mt-1 text-sm text-error-500">
@@ -1100,6 +1244,165 @@ export default function BordereauForm() {
                                                     id="claim_number"
                                                     placeholder="Enter Claim Number"
                                                     value={field.value ?? ""}
+                                                />
+                                                {fieldState.error && (
+                                                    <p className="mt-1 text-sm text-error-500">
+                                                        {
+                                                            fieldState.error
+                                                                .message
+                                                        }
+                                                    </p>
+                                                )}
+                                            </Field>
+                                        )}
+                                    />
+
+                                    <Controller
+                                        name="make_and_model"
+                                        control={control}
+                                        render={({ field, fieldState }) => (
+                                            <Field
+                                                data-invalid={
+                                                    fieldState.invalid
+                                                }
+                                            >
+                                                <Label htmlFor="make_and_model">
+                                                    Make and Model
+                                                </Label>
+                                                <Input
+                                                    {...field}
+                                                    id="make_and_model"
+                                                    placeholder="Enter Make and Model"
+                                                    value={field.value ?? ""}
+                                                />
+                                                {fieldState.error && (
+                                                    <p className="mt-1 text-sm text-error-500">
+                                                        {
+                                                            fieldState.error
+                                                                .message
+                                                        }
+                                                    </p>
+                                                )}
+                                            </Field>
+                                        )}
+                                    />
+
+                                    <Controller
+                                        name="postcode"
+                                        control={control}
+                                        render={({ field, fieldState }) => (
+                                            <Field
+                                                data-invalid={
+                                                    fieldState.invalid
+                                                }
+                                            >
+                                                <Label htmlFor="postcode">
+                                                    Postcode
+                                                </Label>
+                                                <Input
+                                                    {...field}
+                                                    id="postcode"
+                                                    placeholder="Enter Postcode"
+                                                    value={field.value ?? ""}
+                                                />
+                                                {fieldState.error && (
+                                                    <p className="mt-1 text-sm text-error-500">
+                                                        {
+                                                            fieldState.error
+                                                                .message
+                                                        }
+                                                    </p>
+                                                )}
+                                            </Field>
+                                        )}
+                                    />
+
+                                    <Controller
+                                        name="date"
+                                        control={control}
+                                        render={({ field, fieldState }) => (
+                                            <Field
+                                                data-invalid={
+                                                    fieldState.invalid
+                                                }
+                                            >
+                                                <Label htmlFor="date">
+                                                    Date
+                                                </Label>
+                                                <DatePicker
+                                                    {...field}
+                                                    id="date"
+                                                    placement="top"
+                                                    placeholder="Select date"
+                                                    onChange={(
+                                                        _,
+                                                        currentDateString,
+                                                    ) =>
+                                                        field.onChange(
+                                                            currentDateString,
+                                                        )
+                                                    }
+                                                />
+                                                {fieldState.error && (
+                                                    <p className="mt-1 text-sm text-error-500">
+                                                        {
+                                                            fieldState.error
+                                                                .message
+                                                        }
+                                                    </p>
+                                                )}
+                                            </Field>
+                                        )}
+                                    />
+
+                                    <Controller
+                                        name="cat"
+                                        control={control}
+                                        render={({ field, fieldState }) => (
+                                            <Field
+                                                data-invalid={
+                                                    fieldState.invalid
+                                                }
+                                            >
+                                                <Label htmlFor="cat">CAT</Label>
+                                                <Input
+                                                    {...field}
+                                                    id="cat"
+                                                    placeholder="Enter CAT"
+                                                    value={field.value ?? ""}
+                                                />
+                                                {fieldState.error && (
+                                                    <p className="mt-1 text-sm text-error-500">
+                                                        {
+                                                            fieldState.error
+                                                                .message
+                                                        }
+                                                    </p>
+                                                )}
+                                            </Field>
+                                        )}
+                                    />
+
+                                    <Controller
+                                        name="rejection_reasons"
+                                        control={control}
+                                        render={({ field, fieldState }) => (
+                                            <Field
+                                                data-invalid={
+                                                    fieldState.invalid
+                                                }
+                                            >
+                                                <Label htmlFor="rejection_reasons">
+                                                    Rejection Reasons
+                                                </Label>
+                                                <TextArea
+                                                    name={field.name}
+                                                    placeholder="Enter rejection reasons"
+                                                    value={field.value ?? ""}
+                                                    onChange={(val) =>
+                                                        field.onChange(val)
+                                                    }
+                                                    error={fieldState.invalid}
                                                 />
                                                 {fieldState.error && (
                                                     <p className="mt-1 text-sm text-error-500">

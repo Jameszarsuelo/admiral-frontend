@@ -107,6 +107,8 @@ export default function BordereauIndex() {
         // gcTime: 20000,
     });
 
+    console.log(bordereauData);
+
     const {
         data: bpcData = [],
         // isLoading,
@@ -142,7 +144,9 @@ export default function BordereauIndex() {
 
     useEffect(() => {
         if (bordereauData) {
-            const selected = bordereauData.filter((b) => b.id === activeId);
+            const selected = bordereauData.data.filter(
+                (b) => b.id === activeId,
+            );
             setBordereauSelected(selected[0]);
         }
     }, [bordereauData, activeId]);
@@ -199,38 +203,44 @@ export default function BordereauIndex() {
                         <div className="rounded-2xl border border-gray-200 bg-white px-5 py-5 dark:border-gray-800 dark:bg-white/3 sm:px-6 mb-6">
                             <div className="grid grid-cols-4 gap-3">
                                 {[
-                                    { k: "Overdue", v: "Overdue" },
+                                    { key: "Overdue", label: "Overdue" },
                                     {
-                                        k: "MaxPayment",
-                                        v: "Max Payment Day Tomorrow",
+                                        key: "MaxPayment",
+                                        label: "Max Payment Day Tomorrow",
+                                        value: bordereauData?.overdueCount
                                     },
                                     {
-                                        k: "TargetDay",
-                                        v: "Target Day Tomorrow",
+                                        key: "TargetDay",
+                                        label: "Target Day Tomorrow",
+                                        value: bordereauData?.targetdateCount
                                     },
                                     {
-                                        k: "OverdueMaxPaymentTargetWorkload",
-                                        v: "Overdue / MaxPayment / TargetWorkload",
+                                        key: "OverdueMaxPaymentTargetWorkload",
+                                        label: "Overdue / MaxPayment / TargetWorkload",
                                     },
-                                    { k: "Queued", v: "Queued" },
-                                    { k: "In Progress", v: "In Progress" },
-                                    { k: "Query", v: "Query" },
+                                    { key: "Queued", label: "Queued", value: bordereauData?.queuedCount },
                                     {
-                                        k: "QueuedWorkload",
-                                        v: "Queued Workload",
+                                        key: "In Progress",
+                                        label: "In Progress",
+                                        value: bordereauData?.inProgressCount
+                                    },
+                                    { key: "Query", label: "Query", value: bordereauData?.queryCount },
+                                    {
+                                        key: "QueuedWorkload",
+                                        label: "Queued Workload",
                                     },
                                 ].map((s) => (
                                     <div
-                                        key={s.k}
+                                        key={s.key}
                                         className="mb-4 rounded-2xl border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-white/3 "
                                     >
                                         <div className="flex items-end justify-between ">
                                             <div>
                                                 <span className="text-sm text-gray-500 dark:text-gray-400">
-                                                    {s.v}
+                                                    {s.label}
                                                 </span>
                                                 <h4 className="font-bold text-gray-800 text-lg dark:text-white/90">
-                                                    0
+                                                    {s.value ?? 0}
                                                 </h4>
                                             </div>
                                             <Badge color="light">
@@ -499,7 +509,7 @@ export default function BordereauIndex() {
                                 >
                                     <DataTable
                                         columns={columns}
-                                        data={bordereauData}
+                                        data={bordereauData.data}
                                     />
                                 </div>
                             ) : (

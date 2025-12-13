@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { fetchBpcTimerToday } from "@/database/bpc_api";
 import { echo } from "@/lib/echo";
@@ -103,20 +103,47 @@ export default function useBpcTimer(
         }
     };
 
+    // track previous selected status to allow UI-only resets on specific transitions
+    const lastSelectedRef = useRef<number | null>(null);
+    const curSelectedId = Number(selectedStatusId ?? NaN);
+    const shouldResetPrevOnTransition =
+        lastSelectedRef.current === 7 && curSelectedId === 2;
+
     const prevSecondsForSelectedStatus = (() => {
-        const id = Number(selectedStatusId ?? NaN);
+        const id = curSelectedId;
         if (Number.isNaN(id) || !daily) return 0;
+
+        // If we're transitioning from lunch (7) to ready/active (2), reset
+        // the accumulated previous-seconds for the selected status in the UI.
+        if (shouldResetPrevOnTransition) return 0;
+
+        // When selected status is one of 2/3/4, aggregate ready + processing + wrapup
+        if (id === 2 || id === 3 || id === 4) {
+            return (
+                Number(daily.total_ready_seconds || 0) +
+                Number(daily.total_processing_seconds || 0) +
+                Number(daily.total_wrapup_seconds || 0)
+            );
+        }
+
         const col = statusCol(id);
         if (!col) return 0;
         return Number(daily[col] || 0);
     })();
 
-    const currentStatusSeconds =
-        prevSecondsForSelectedStatus +
-        (openSegment &&
-        Number(openSegment.status_id) === Number(selectedStatusId)
-            ? openDurationSeconds
-            : 0);
+    // update last selected id after render so we can detect transitions
+    useEffect(() => {
+        if (!Number.isNaN(curSelectedId)) lastSelectedRef.current = curSelectedId;
+    }, [curSelectedId]);
+
+    // Determine whether to add the currently-open segment duration.
+    const openIsRelevantForSelected =
+        openSegment &&
+        (Number(selectedStatusId) === 2 || Number(selectedStatusId) === 3 || Number(selectedStatusId) === 4)
+            ? [2, 3, 4].includes(Number(openSegment.status_id))
+            : openSegment && Number(openSegment.status_id) === Number(selectedStatusId);
+
+    const currentStatusSeconds = prevSecondsForSelectedStatus + (openIsRelevantForSelected ? openDurationSeconds : 0);
 
     const totalTodaySeconds = totalDailySeconds + openDurationSeconds;
 

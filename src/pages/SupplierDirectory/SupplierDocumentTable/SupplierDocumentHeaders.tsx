@@ -52,15 +52,13 @@ export const getSupplierDocumentHeaders = (
             const handleDownload = async (id: number) => {
                 const blob = await downloadSupplierDocument(id);
 
-                // Create blob link to download
                 const url = window.URL.createObjectURL(blob);
                 const link = window.document.createElement("a");
                 link.href = url;
-                link.setAttribute("download", row.getValue("name")); // file name from your DB
+                link.setAttribute("download", row.getValue("name"));
                 window.document.body.appendChild(link);
                 link.click();
 
-                // Cleanup
                 link.remove();
                 window.URL.revokeObjectURL(url);
             };
@@ -78,12 +76,13 @@ export const getSupplierDocumentHeaders = (
             const handleOpen = async (id: number) => {
                 const blob = await downloadSupplierDocument(id);
 
-                // Create blob link to open
                 const url = window.URL.createObjectURL(blob);
-                window.open(url, "_blank");
 
-                // Cleanup
-                window.URL.revokeObjectURL(url);
+                window.open(
+                    url,
+                    "_blank",
+                    "noopener,noreferrer,width=1000,height=800",
+                );
             };
 
             return (
