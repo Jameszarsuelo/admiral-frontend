@@ -11,13 +11,18 @@ import { IDocumentSchema } from "@/types/DocumentSchema";
 import { deleteDocument, fetchDocumentList } from "@/database/document_api";
 import Can from "@/components/auth/Can";
 import { Modal } from "@/components/ui/modal";
+import SupplierDocumentsTable from "../SupplierDirectory/SupplierDocumentTable/SupplierDocumentsTable";
+import Radio from "@/components/form/input/Radio";
+import Label from "@/components/form/Label";
+import { downloadSupplierDocument } from "@/database/supplier_api";
 
 export default function DMView() {
     const navigate = useNavigate();
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [selectedId, setSelectedId] = useState<number | null>(null);
     const [isDeleting, setIsDeleting] = useState(false);
-
+    const [isContactModalOpen, setIsContactModalOpen] = useState(false);
+    const [selectedSearch, setSelectedSearch] = useState<string>("0");
     const {
         data: documents,
         isLoading,
@@ -28,37 +33,91 @@ export default function DMView() {
             return await fetchDocumentList();
         },
         staleTime: 500,
-
     });
 
-    console.log(documents);
+    const handleContactModal = (id: number) => {
+        setSelectedId(id);
+        setIsContactModalOpen((prev) => !prev);
+    };
 
     const columns: ColumnDef<IDocumentSchema>[] = [
         { accessorKey: "id", header: "ID" },
         { accessorKey: "name", header: "Document Name" },
+        {
+            accessorKey: "supplier",
+            accessorFn: (row) => row.supplier?.name,
+            header: () => <div className="ml-4">Supplier</div>,
+            cell: ({ row }) => (
+                <div className="capitalize dark:text-white ml-4">
+                    {row.getValue("supplier")}
+                </div>
+            ),
+        },
         { accessorKey: "revision", header: "Revision" },
-        { accessorKey: "document_type_id", header: "Type" },
+        {
+            accessorKey: "document_type",
+            accessorFn: (row) => row.document_type.type,
+            header: () => <div className="ml-4">Type</div>,
+            cell: ({ row }) => (
+                <div className="capitalize dark:text-white ml-4">
+                    {row.getValue("document_type")}
+                </div>
+            ),
+        },
         { accessorKey: "path", header: "Upload" },
         { accessorKey: "expiry_date", header: "Expiry" },
-        { accessorKey: "description", header: "Description" },
         {
             id: "actions",
             header: "Actions",
             cell: ({ row }) => {
                 const item = row.original as IDocumentSchema;
+                const handleDownload = async (id: number) => {
+                    const blob = await downloadSupplierDocument(id);
+    
+                    const url = window.URL.createObjectURL(blob);
+                    const link = window.document.createElement("a");
+                    link.href = url;
+                    link.setAttribute("download", row.getValue("name"));
+                    window.document.body.appendChild(link);
+                    link.click();
+    
+                    link.remove();
+                    window.URL.revokeObjectURL(url);
+                };
+                const handleOpen = async (id: number) => {
+                    const blob = await downloadSupplierDocument(id);
+
+                    const url = window.URL.createObjectURL(blob);
+
+                    window.open(
+                        url,
+                        "_blank",
+                        "noopener,noreferrer,width=1000,height=800"
+                    );
+                };
                 return (
                     <div className="flex items-center gap-2">
+                        <Can permission="document_management.view">
+                            <Button
+                                onClick={() => handleOpen(item.id)}
+                                variant="secondary"
+                                size="sm"
+                            >
+                                View
+                            </Button>
+                        </Can>
                         <Can permission="document_management.edit">
                             <Button
                                 size="sm"
                                 onClick={() =>
-                                    navigate(`/document-management/edit/${item.id}`)
+                                    navigate(
+                                        `/document-management/edit/${item.id}`
+                                    )
                                 }
                             >
                                 Edit
                             </Button>
                         </Can>
-
                         <Can permission="document_management.delete">
                             <Button
                                 size="sm"
@@ -66,6 +125,23 @@ export default function DMView() {
                                 onClick={() => handleDeleteClick(item.id!)}
                             >
                                 Delete
+                            </Button>
+                        </Can>
+                        <Button
+                            onClick={() => handleDownload(item.id!)}
+                            variant="success"
+                            size="sm"
+                        >
+                            Download
+                        </Button>
+                        <Can permission="document_management.view">
+                            <Button
+                                onClick={() => handleContactModal(item.id)}
+                                variant="outline"
+                                className="bg-[#00B0F0]! text-white!"
+                                size="sm"
+                            >
+                                View Document
                             </Button>
                         </Can>
                     </div>
@@ -122,7 +198,9 @@ export default function DMView() {
                             <Can permission="document_management.create">
                                 <Button
                                     size="sm"
-                                    onClick={() => navigate(`/document-management/create`)}
+                                    onClick={() =>
+                                        navigate(`/document-management/create`)
+                                    }
                                 >
                                     Add New Documents
                                 </Button>
@@ -131,6 +209,33 @@ export default function DMView() {
                     </div>
 
                     <div className="max-w-full overflow-x-auto custom-scrollbar">
+                        <div className="grid">
+                            <div className="flex justify-center-safe gap-8">
+                                <Label
+                                    htmlFor="include_obsolete"
+                                    className="font-bold text-md mb-0"
+                                >
+                                    Include Obsolete:
+                                </Label>
+                                <Radio
+                                    id="obsolete_no"
+                                    value="0"
+                                    checked={selectedSearch === "0"}
+                                    onChange={() => setSelectedSearch("0")}
+                                    label="No"
+                                    name="include_obsolete"
+                                />
+
+                                <Radio
+                                    id="obsolete_yes"
+                                    value="1"
+                                    checked={selectedSearch === "1"}
+                                    onChange={() => setSelectedSearch("1")}
+                                    label="Yes"
+                                    name="include_obsolete"
+                                />
+                            </div>
+                        </div>
                         <div className="min-w-[1000px] xl:min-w-full px-2">
                             {!isLoading && documents ? (
                                 <DataTable columns={columns} data={documents} />
@@ -163,6 +268,19 @@ export default function DMView() {
                         >
                             {isDeleting ? "Deleting..." : "Confirm Delete"}
                         </Button>
+                    </div>
+                </div>
+            </Modal>
+            <Modal
+                isOpen={isContactModalOpen}
+                onClose={() => setIsContactModalOpen((prev) => !prev)}
+                className="w-auto! m-4"
+            >
+                <div className="relative w-full p-4 overflow-y-auto bg-white rounded-3xl dark:bg-gray-900 lg:p-11">
+                    <div className="px-2">
+                        {selectedId && (
+                            <SupplierDocumentsTable supplierId={selectedId!} />
+                        )}
                     </div>
                 </div>
             </Modal>
