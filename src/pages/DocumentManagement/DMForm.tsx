@@ -19,11 +19,14 @@ import { fetchDocumentVisibilityList } from "@/database/document_visibility_api"
 import { fetchSupplierList } from "@/database/supplier_api";
 import { IDocumentFormSchema } from "@/types/DocumentSchema";
 import { fetchDocumentById, upsertDocument } from "@/database/document_api";
+import { Textarea } from "@/components/ui/textarea";
+import Radio from "@/components/form/input/Radio";
 
 export default function DMForm() {
     const navigate = useNavigate();
     const { id } = useParams();
     const [isLoading, setIsLoading] = useState(false);
+    const [isObsolete, setIsObsolete] = useState(true);
 
     const { handleSubmit, control, reset, setError } =
         useForm<IDocumentFormSchema>({
@@ -128,7 +131,10 @@ export default function DMForm() {
                     id ? "Edit Document Management" : "Add Document Management"
                 }
                 pageBreadcrumbs={[
-                    { title: "Document Management", link: "/document-management" },
+                    {
+                        title: "Document Management",
+                        link: "/document-management",
+                    },
                 ]}
             />
             <ComponentCard title={id ? "Edit Document" : "Add Document"}>
@@ -276,31 +282,6 @@ export default function DMForm() {
                             <div className="col-span-12 space-y-6 xl:col-span-6">
                                 <div>
                                     <Controller
-                                        name="location"
-                                        control={control}
-                                        render={({ field, fieldState }) => (
-                                            <Field
-                                                data-invalid={
-                                                    fieldState.invalid
-                                                }
-                                            >
-                                                <Label htmlFor="location">
-                                                    Location
-                                                </Label>
-                                                <Input
-                                                    {...field}
-                                                    id="revision"
-                                                    placeholder="Enter revision"
-                                                    value={field.value ?? ""}
-                                                />
-                                            </Field>
-                                        )}
-                                    />
-                                </div>
-                            </div>
-                            <div className="col-span-12 space-y-6 xl:col-span-6">
-                                <div>
-                                    <Controller
                                         name="document_visibility_id"
                                         control={control}
                                         render={({ field, fieldState }) => (
@@ -396,11 +377,12 @@ export default function DMForm() {
                                                 <Label htmlFor="name">
                                                     Description
                                                 </Label>
-                                                <Input
+                                                <Textarea
                                                     {...field}
                                                     id="description"
                                                     placeholder="Enter description"
                                                     value={field.value ?? ""}
+                                                    rows={5}
                                                 />
                                             </Field>
                                         )}
@@ -410,6 +392,14 @@ export default function DMForm() {
                         </div>
                         {!isLoading && (
                             <div className="mt-6 flex justify-end gap-3">
+                                <Radio
+                                    id="obsolete_yes"
+                                    value="1"
+                                    checked={isObsolete} 
+                                    onChange={() => setIsObsolete(true)} 
+                                    label="Yes"
+                                    name="include_obsolete"
+                                />
                                 <Button
                                     variant="danger"
                                     onClick={() => navigate(-1)}

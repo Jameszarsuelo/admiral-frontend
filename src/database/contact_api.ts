@@ -1,4 +1,4 @@
-import { IContactCreateSchema, IContactSchema } from "@/types/ContactSchema";
+import { IContactCreateSchema, IContactSchema, IContactHeaderSchema } from "@/types/ContactSchema";
 import api from "./api";
 import { AxiosError } from "axios";
 
@@ -18,7 +18,7 @@ export async function upsertContact(
     }
 }
 
-export async function fetchContactList(filter: string): Promise<IContactCreateSchema[]> {
+export async function fetchContactList(filter: string): Promise<IContactHeaderSchema[]> {
     try {
         // const response = await api.get(`/contact`);
         const response = await api.get(`/contact-list/${filter}`);
