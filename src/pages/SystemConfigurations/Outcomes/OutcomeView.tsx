@@ -3,29 +3,18 @@ import { toast } from "sonner";
 import PageBreadcrumb from "@/components/common/PageBreadCrumb";
 import ComponentCard from "@/components/common/ComponentCard";
 import Label from "@/components/form/Label";
-import Input from "@/components/form/input/InputField";
 import { Field, FieldGroup } from "@/components/ui/field";
 import { Controller, useForm } from "react-hook-form";
-import Button from "@/components/ui/button/Button";
 import { useNavigate, useParams } from "react-router";
-import { useEffect, useState } from "react";
-import {
-    bordereauStatuses,
-    fetchOutcome,
-    fetchShowOutcome,
-    upsertOutcome,
-} from "@/database/outcome_api";
+import { fetchShowOutcome, upsertOutcome } from "@/database/outcome_api";
 import { handleValidationErrors } from "@/helper/validationError";
 import { IOutcomeForm, OutcomeSchemaWithConditional } from "@/types/OutcomeSchema";
-import Can from "@/components/auth/Can";
-import Select from "@/components/form/Select";
+import { useEffect } from "react";
 
 export default function OutcomeView() {
     const { id } = useParams();
     const navigate = useNavigate();
-    const [statusesOptions, setStatusesOptions] = useState<
-        { value: number; label: string }[]
-    >([]);
+    // statusesOptions removed because unused in this view component
 
     const { handleSubmit, control, setError, reset } = useForm<IOutcomeForm>({
         defaultValues: {
@@ -42,12 +31,6 @@ export default function OutcomeView() {
     });
 
     useEffect(() => {
-        async function fetchStatuses() {
-            const bordereauOptionResult = await bordereauStatuses(); // fetch API
-            setStatusesOptions(bordereauOptionResult);
-        }
-        fetchStatuses();
-
         if (id) {
             fetchShowOutcome(id).then((data) => {
                 console.log("Fetched outcome data:", data);

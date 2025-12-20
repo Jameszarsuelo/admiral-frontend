@@ -3,9 +3,7 @@ import { DropdownItem } from "../ui/dropdown/DropdownItem";
 import { Dropdown } from "../ui/dropdown/Dropdown";
 import { useAuth } from "@/hooks/useAuth";
 
-export default function UserDropdown(isBpc: {
-    userTypeId: boolean | undefined;
-}) {
+export default function UserDropdown({ userTypeId }: { userTypeId?: boolean }) {
     const [isOpen, setIsOpen] = useState(false);
     const [isLoggingOut, setIsLoggingOut] = useState(false);
     const { user, logout } = useAuth();
@@ -65,7 +63,7 @@ export default function UserDropdown(isBpc: {
                     </span>
                 </div>
 
-                {isBpc.userTypeId && (
+                {userTypeId && (
                     <ul className="flex flex-col gap-1 pt-4 pb-3 border-b border-gray-200 dark:border-gray-800">
                         <li>
                             <DropdownItem
