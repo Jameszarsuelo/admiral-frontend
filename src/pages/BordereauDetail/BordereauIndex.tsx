@@ -1,3 +1,4 @@
+import React from "react";
 import { useNavigate } from "react-router";
 import { useEffect, useState, type MouseEvent } from "react";
 import { Controller, useForm } from "react-hook-form";
@@ -26,7 +27,11 @@ import {
 import { IBordereauIndex } from "@/types/BordereauSchema";
 import Alert from "@/components/ui/alert/Alert";
 import { fetchBpcOptions } from "@/database/bpc_api";
+import { fetchBordereauStatusesAll } from "@/database/bordereau_status_api";
 import api from "@/database/api";
+import { fetchReasonOptionsFor } from "@/database/reason_api";
+import { fetchOutcomeList } from "@/database/outcome_api";
+import { changeBordereauOutcome } from "@/database/bordereau_api";
 import { Field } from "@/components/ui/field";
 import Combobox from "@/components/form/Combobox";
 import Input from "@/components/form/input/InputField";
@@ -87,24 +92,35 @@ export default function BordereauIndex() {
         control: closeControl,
         handleSubmit: handleCloseSubmit,
         reset: resetClose,
-    } = useForm<{ reason?: string; notes?: string }>({
-        defaultValues: { reason: "", notes: "" },
+    } = useForm<{ reason?: string; notes?: string; outcome?: number }>({
+        defaultValues: { reason: "", notes: "", outcome: 16 },
     });
     const [isUploading, setIsUploading] = useState(false);
+    const [processReasonOptions, setProcessReasonOptions] = useState<{ value: number; label: string }[]>([]);
+    const [closeReasonOptions, setCloseReasonOptions] = useState<{ value: number; label: string }[]>([]);
+    const [closeOutcomeOptions, setCloseOutcomeOptions] = useState<{ value: number; label: string }[]>([]);
+
+    const [filters, setFilters] = useState({
+        invoice_status: "",
+        supplier_id: "",
+        bpc_id: "",
+        date_from: "",
+        date_to: "",
+    });
+
+    const [appliedFilters, setAppliedFilters] = useState(filters);
 
     const {
         data: bordereauData,
         isLoading,
         refetch,
     } = useQuery({
-        queryKey: ["invoice-data"],
+        queryKey: ["invoice-data", appliedFilters],
         queryFn: async () => {
-            return await fetchBordereauList();
+            return await fetchBordereauList(appliedFilters);
         },
         refetchInterval: 1000 * 60 * 5,
         refetchIntervalInBackground: true,
-        // staleTime: 500,
-        // gcTime: 20000,
     });
 
     console.log(bordereauData);
@@ -124,6 +140,55 @@ export default function BordereauIndex() {
         staleTime: 500,
         gcTime: 20000,
     });
+
+    const {
+        data: statusData = [],
+    } = useQuery({
+        queryKey: ["bordereau-statuses"],
+        queryFn: async () => {
+            return await fetchBordereauStatusesAll();
+        },
+        refetchInterval: 1000 * 60 * 5,
+        refetchIntervalInBackground: true,
+        staleTime: 500,
+    });
+
+    const [invoiceStatus, setInvoiceStatus] = useState<string>("");
+    const [bordereauStatus, setBordereauStatus] = useState<string>("queued");
+    const [dateType, setDateType] = useState<string>("created_at");
+
+    const filteredStatusOptions = React.useMemo(() => {
+        const queuedIds = [3, 16, 17, 18];
+        const inProgressIds = [5, 6, 7, 8, 15];
+        const processedIds = [4, 9, 10, 11, 12, 13, 14];
+
+        let allowed: number[] = [];
+        switch (bordereauStatus) {
+            case "queued":
+                allowed = queuedIds;
+                break;
+            case "in-progress":
+                allowed = inProgressIds;
+                break;
+            case "processed":
+                allowed = processedIds;
+                break;
+            default:
+                allowed = [];
+        }
+
+        const mapped = (statusData || [])
+            .filter((s: any) => {
+                const id = Number(s.id ?? s.value ?? s.key ?? s.slug ?? NaN);
+                return allowed.length === 0 ? true : allowed.includes(id);
+            })
+            .map((s: any) => ({
+                value: s.value ?? s.key ?? s.slug ?? String(s.id ?? ""),
+                label: s.label ?? s.name ?? s.title ?? String(s),
+            }));
+
+        return [{ value: "", label: "-Select Invoice Status-" }].concat(mapped);
+    }, [statusData, bordereauStatus]);
 
     const { data: supplierData } = useQuery({
         queryKey: ["bordereau-view-data"],
@@ -150,6 +215,45 @@ export default function BordereauIndex() {
             setBordereauSelected(selected[0]);
         }
     }, [bordereauData, activeId]);
+
+    useEffect(() => {
+        async function loadReasonOptions() {
+            try {
+                const pOpts = await fetchReasonOptionsFor(1); // reason_for = 1 for process
+                setProcessReasonOptions(pOpts);
+            } catch (err) {
+                console.warn("Failed to load process reason options", err);
+            }
+
+            try {
+                const cOpts = await fetchReasonOptionsFor(2); // reason_for = 2 for close
+                setCloseReasonOptions(cOpts);
+            } catch (err) {
+                console.warn("Failed to load close reason options", err);
+            }
+        }
+        loadReasonOptions();
+    }, []);
+
+    useEffect(() => {
+        let mounted = true;
+        (async () => {
+            try {
+                const list = await fetchOutcomeList();
+                if (!mounted) return;
+                const opts = (list || [])
+                    .filter((o: any) => typeof o.id === "number")
+                    .map((o: any) => ({ value: o.id, label: o.outcome_code ?? o.description ?? String(o.id) }));
+                setCloseOutcomeOptions(opts);
+            } catch (err) {
+                console.warn("Failed to load close outcome options", err);
+            }
+        })();
+
+        return () => {
+            mounted = false;
+        };
+    }, []);
 
     const columns = getBordeareauHeaders();
 
@@ -184,6 +288,12 @@ export default function BordereauIndex() {
                 break;
             case "close":
                 setActiveId(id);
+                // reset close form to default values (auto-select outcome id 16)
+                try {
+                    resetClose({ outcome: 16, reason: "", notes: "" });
+                } catch (err) {
+                    // ignore
+                }
                 setGlobalModalOpen((prev) => ({
                     ...prev,
                     closeModal: !prev.closeModal,
@@ -304,30 +414,15 @@ export default function BordereauIndex() {
                                                 Invoice Status
                                             </Label>
                                             <Select
-                                                options={[
-                                                    {
-                                                        value: "",
-                                                        label: "-Select Invoice Status-",
-                                                    },
-                                                    {
-                                                        value: "in_progress",
-                                                        label: "In Progress",
-                                                    },
-                                                    {
-                                                        value: "queued",
-                                                        label: "Queued",
-                                                    },
-                                                    {
-                                                        value: "query",
-                                                        label: "Query",
-                                                    },
-                                                    {
-                                                        value: "closed",
-                                                        label: "Closed (Paid)",
-                                                    },
-                                                ]}
-                                                value={""}
-                                                onChange={() => {}}
+                                                options={filteredStatusOptions}
+                                                value={invoiceStatus}
+                                                onChange={(val: any) => {
+                                                    setInvoiceStatus(String(val));
+                                                    setFilters((f) => ({
+                                                        ...f,
+                                                        invoice_status: String(val),
+                                                    }));
+                                                }}
                                                 placeholder="-Select Invoice Status-"
                                             />
                                         </div>
@@ -336,22 +431,28 @@ export default function BordereauIndex() {
                                                 Supplier
                                             </Label>
                                             <Select
-                                                options={[
-                                                    {
-                                                        value: "",
-                                                        label: "-Select Supplier-",
-                                                    },
-                                                    {
-                                                        value: "supplier_a",
-                                                        label: "Supplier A",
-                                                    },
-                                                    {
-                                                        value: "supplier_b",
-                                                        label: "Supplier B",
-                                                    },
-                                                ]}
-                                                value={""}
-                                                onChange={() => {}}
+                                                options={
+                                                    [
+                                                        {
+                                                            value: "",
+                                                            label: "-Select Supplier-",
+                                                        },
+                                                    ].concat(
+                                                        (supplierData || []).map(
+                                                            (s: any) => ({
+                                                                value: s.value ?? s.id ?? String(s.id ?? ""),
+                                                                label: s.label ?? s.name ?? String(s),
+                                                            }),
+                                                        ),
+                                                    )
+                                                }
+                                                value={filters.supplier_id}
+                                                onChange={(val: any) =>
+                                                    setFilters((f) => ({
+                                                        ...f,
+                                                        supplier_id: String(val),
+                                                    }))
+                                                }
                                                 placeholder="-Select Supplier-"
                                             />
                                         </div>
@@ -360,22 +461,26 @@ export default function BordereauIndex() {
                                                 Bordereau Processing Clerk
                                             </Label>
                                             <Select
-                                                options={[
-                                                    {
-                                                        value: "",
-                                                        label: "-Select BPC-",
-                                                    },
-                                                    {
-                                                        value: "bpc_a",
-                                                        label: "BPC A",
-                                                    },
-                                                    {
-                                                        value: "bpc_b",
-                                                        label: "BPC B",
-                                                    },
-                                                ]}
-                                                value={""}
-                                                onChange={() => {}}
+                                                options={
+                                                    [
+                                                        {
+                                                            value: "",
+                                                            label: "-Select BPC-",
+                                                        },
+                                                    ].concat(
+                                                        (bpcData || []).map((b: any) => ({
+                                                            value: String(b.value ?? b.id ?? ""),
+                                                            label: String(b.label ?? b.name ?? b),
+                                                        })),
+                                                    )
+                                                }
+                                                value={filters.bpc_id}
+                                                onChange={(val: any) =>
+                                                    setFilters((f) => ({
+                                                        ...f,
+                                                        bpc_id: String(val),
+                                                    }))
+                                                }
                                                 placeholder="-Select BPC-"
                                             />
                                         </div>
@@ -386,6 +491,13 @@ export default function BordereauIndex() {
                                                     id="filter-date-from"
                                                     placement="top"
                                                     placeholder="Date from"
+                                                    defaultDate={filters.date_from || undefined}
+                                                    onChange={(_sd: any, dateStr: string) =>
+                                                        setFilters((f) => ({
+                                                            ...f,
+                                                            date_from: dateStr ?? "",
+                                                        }))
+                                                    }
                                                 />
                                             </div>
                                         </div>
@@ -396,6 +508,13 @@ export default function BordereauIndex() {
                                                     id="filter-date-to"
                                                     placement="top"
                                                     placeholder="Date to"
+                                                    defaultDate={filters.date_to || undefined}
+                                                    onChange={(_sd: any, dateStr: string) =>
+                                                        setFilters((f) => ({
+                                                            ...f,
+                                                            date_to: dateStr ?? "",
+                                                        }))
+                                                    }
                                                 />
                                             </div>
                                         </div>
@@ -407,10 +526,15 @@ export default function BordereauIndex() {
                                             <h3 className="text-md font-semibold mb-4">
                                                 Date Type
                                             </h3>
-                                            <RadioGroup defaultValue="initial-upload">
+                                            <RadioGroup
+                                                value={dateType}
+                                                onValueChange={(v) =>
+                                                    setDateType(String(v))
+                                                }
+                                            >
                                                 <div className="flex items-center space-x-2">
                                                     <RadioGroupItem
-                                                        value="initial-upload"
+                                                        value="created_at"
                                                         id="initial-upload"
                                                     />
                                                     <Label
@@ -434,7 +558,7 @@ export default function BordereauIndex() {
                                                 </div>
                                                 <div className="flex items-center space-x-2">
                                                     <RadioGroupItem
-                                                        value="overdue"
+                                                        value="max-pay-overdue"
                                                         id="overdue"
                                                     />
                                                     <Label
@@ -450,7 +574,13 @@ export default function BordereauIndex() {
                                             <h3 className="text-md font-semibold mb-4">
                                                 Bordereau Status
                                             </h3>
-                                            <RadioGroup defaultValue="queued">
+                                            <RadioGroup
+                                                value={bordereauStatus}
+                                                onValueChange={(v) => {
+                                                    setBordereauStatus(String(v));
+                                                    setInvoiceStatus("");
+                                                }}
+                                            >
                                                 <div className="flex items-center space-x-2">
                                                     <RadioGroupItem
                                                         value="queued"
@@ -492,9 +622,42 @@ export default function BordereauIndex() {
                                     </div>
                                 </div>
                             </div>
-                            <div className="mt-4 flex gap-3">
-                                <Button size="sm">Filter</Button>
-                                <Button size="sm" variant="outline">
+                                <div className="mt-4 flex gap-3">
+                                <Button
+                                    size="sm"
+                                    onClick={() => {
+                                        const params: Record<string, unknown> = {
+                                            ...filters,
+                                        };
+
+                                        // If date filters provided, pass backend's `date_type` token
+                                        if (filters.date_from || filters.date_to) {
+                                            params.date_type = dateType;
+                                        }
+
+                                        setAppliedFilters(params as any);
+                                    }}
+                                >
+                                    Filter
+                                </Button>
+                                <Button
+                                    size="sm"
+                                    variant="outline"
+                                    onClick={() => {
+                                        const empty = {
+                                            invoice_status: "",
+                                            supplier_id: "",
+                                            bpc_id: "",
+                                            date_from: "",
+                                            date_to: "",
+                                        };
+                                        setFilters(empty);
+                                        setInvoiceStatus("");
+                                        setBordereauStatus("queued");
+                                        setDateType("created_at");
+                                        setAppliedFilters(empty);
+                                    }}
+                                >
                                     Reset
                                 </Button>
                             </div>
@@ -862,26 +1025,21 @@ export default function BordereauIndex() {
                                     name="reason"
                                     control={processControl}
                                     render={({ field }) => (
-                                        <div>
+                                        <Field>
                                             <Label>Reason</Label>
-                                            <select
-                                                {...field}
-                                                className="mt-1 block w-full rounded-md border-gray-200 bg-white px-3 py-2 text-sm shadow-sm dark:bg-slate-800 dark:border-slate-700"
-                                            >
-                                                <option value="">
-                                                    Select reason
-                                                </option>
-                                                <option value="force">
-                                                    Force Process
-                                                </option>
-                                                <option value="urgent">
-                                                    Urgent
-                                                </option>
-                                                <option value="retry">
-                                                    Retry
-                                                </option>
-                                            </select>
-                                        </div>
+                                            <Select
+                                                options={
+                                                    [
+                                                        { value: "", label: "- Select Reason -" },
+                                                    ].concat(
+                                                        processReasonOptions.map((o) => ({ value: String(o.value), label: o.label })),
+                                                    )
+                                                }
+                                                value={String(field.value ?? "")}
+                                                onChange={(val: any) => field.onChange(Number(val))}
+                                                placeholder="Select Reason"
+                                            />
+                                        </Field>
                                     )}
                                 />
 
@@ -1025,6 +1183,28 @@ export default function BordereauIndex() {
                         <form className="mt-6">
                             <div className="grid grid-cols-1 gap-4">
                                 <Controller
+                                    name="outcome"
+                                    control={closeControl}
+                                    render={({ field }) => (
+                                        <Field>
+                                            <Label>Outcome</Label>
+                                            <Select
+                                                options={
+                                                    [
+                                                        { value: "", label: "- Select Outcome -" },
+                                                    ].concat(
+                                                        closeOutcomeOptions.map((o) => ({ value: String(o.value), label: o.label })),
+                                                    )
+                                                }
+                                                value={String(field.value ?? "")}
+                                                onChange={(val: any) => field.onChange(Number(val))}
+                                                placeholder="Select Outcome"
+                                            />
+                                        </Field>
+                                    )}
+                                />
+
+                                <Controller
                                     name="reason"
                                     control={closeControl}
                                     rules={{ required: "Reason is required" }}
@@ -1033,23 +1213,18 @@ export default function BordereauIndex() {
                                             data-invalid={fieldState.invalid}
                                         >
                                             <Label>Reason</Label>
-                                            <select
-                                                {...field}
-                                                className="mt-1 block w-full rounded-md border-gray-200 bg-white px-3 py-2 text-sm shadow-sm dark:bg-slate-800 dark:border-slate-700"
-                                            >
-                                                <option value="">
-                                                    Select reason
-                                                </option>
-                                                <option value="wrong_contact">
-                                                    Wrong Contact Details
-                                                </option>
-                                                <option value="duplicate">
-                                                    Duplicate
-                                                </option>
-                                                <option value="other">
-                                                    Other
-                                                </option>
-                                            </select>
+                                            <Select
+                                                options={
+                                                    [
+                                                        { value: "", label: "- Select Reason -" },
+                                                    ].concat(
+                                                        closeReasonOptions.map((o) => ({ value: String(o.value), label: o.label })),
+                                                    )
+                                                }
+                                                value={String(field.value ?? "")}
+                                                onChange={(val: any) => field.onChange(Number(val))}
+                                                placeholder="Select Reason"
+                                            />
                                             {fieldState.error && (
                                                 <p className="mt-1 text-sm text-error-500">
                                                     {fieldState.error.message}
@@ -1109,17 +1284,26 @@ export default function BordereauIndex() {
                                             }
                                             try {
                                                 setIsUploading(true);
-                                                await api.post(
-                                                    `/bordereau/close`,
-                                                    {
-                                                        bordereau_id:
+                                                // If an outcome was selected, submit it using same approach as Workplace
+                                                if (data.outcome) {
+                                                    try {
+                                                        await changeBordereauOutcome(
                                                             bordereauSelected.id,
-                                                        reason:
-                                                            data.reason ?? null,
-                                                        notes:
-                                                            data.notes ?? null,
-                                                    },
-                                                );
+                                                            Number(data.outcome),
+                                                        );
+                                                    } catch (err) {
+                                                        console.warn(
+                                                            "Failed to set outcome before close",
+                                                            err,
+                                                        );
+                                                    }
+                                                }
+
+                                                await api.post(`/bordereau/close`, {
+                                                    bordereau_id: bordereauSelected.id,
+                                                    reason: data.reason ?? null,
+                                                    notes: data.notes ?? null,
+                                                });
                                                 toast.success(
                                                     "Bordereau closed",
                                                 );
