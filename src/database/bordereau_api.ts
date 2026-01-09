@@ -46,7 +46,7 @@ export async function upsertBordereau(
     }
 }
 
-export async function fetchBordereauList(): Promise<{
+export async function fetchBordereauList(params?: Record<string, unknown>): Promise<{
     data: IBordereauIndex[];
     overdueCount: number;
     queryCount: number;
@@ -56,7 +56,7 @@ export async function fetchBordereauList(): Promise<{
     queuedCount: number;
 }> {
     try {
-        const response = await api.get("/bordereau");
+        const response = await api.get("/bordereau", { params });
         return response.data;
     } catch (error) {
         if (error instanceof AxiosError && error.response?.data) {

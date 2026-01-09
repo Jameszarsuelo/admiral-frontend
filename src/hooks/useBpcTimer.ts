@@ -28,7 +28,7 @@ export default function useBpcTimer(
         refetchOnWindowFocus: false,
     });
 
-    const [tick, setTick] = useState(0);
+    const [, setTick] = useState(0);
     useEffect(() => {
         const id = window.setInterval(
             () => setTick((t) => t + 1),
@@ -36,8 +36,6 @@ export default function useBpcTimer(
         ) as unknown as number;
         return () => clearInterval(id);
     }, []);
-
-    console.log(tick);
 
     useEffect(() => {
         if (!bpcId) return;
