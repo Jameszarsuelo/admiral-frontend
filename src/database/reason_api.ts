@@ -19,12 +19,20 @@ export async function fetchReasonOptions(){
     const result: { value: number; label: string }[] = [];
     data.forEach((item)=>{
         if(item.reason_for === "3" && item.id !== undefined){
-            result.push({
-                        value: item.id!,
-                        label: item.reason
-                    })
+            result.push({ value: item.id!, label: item.reason });
         }
     })
+    return result;
+}
+
+export async function fetchReasonOptionsFor(reasonFor: string | number){
+    const data = await fetchReasonList();
+    const result: { value: number; label: string }[] = [];
+    data.forEach((item) => {
+        if(String(item.reason_for) === String(reasonFor) && item.id !== undefined){
+            result.push({ value: item.id!, label: item.reason });
+        }
+    });
     return result;
 }
 

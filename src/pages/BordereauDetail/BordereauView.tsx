@@ -14,8 +14,6 @@ export default function BordereauView() {
         },
     });
 
-    console.log(bordereauDetail);
-
     return (
         <>
             <PageBreadcrumb

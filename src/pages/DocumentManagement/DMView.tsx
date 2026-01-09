@@ -15,6 +15,7 @@ import SupplierDocumentsTable from "../SupplierDirectory/SupplierDocumentTable/S
 import Radio from "@/components/form/input/Radio";
 import Label from "@/components/form/Label";
 import { downloadSupplierDocument } from "@/database/supplier_api";
+import { dateFormat } from "@/helper/dateFormat";
 
 export default function DMView() {
     const navigate = useNavigate();
@@ -28,9 +29,10 @@ export default function DMView() {
         isLoading,
         refetch,
     } = useQuery({
-        queryKey: ["document-list"],
+        queryKey: ["document-list", selectedSearch],
         queryFn: async () => {
-            return await fetchDocumentList();
+            // selectedSearch is "0" or "1" — pass boolean to API
+            return await fetchDocumentList(selectedSearch === "1");
         },
         staleTime: 500,
     });
@@ -65,7 +67,14 @@ export default function DMView() {
             ),
         },
         { accessorKey: "path", header: "Upload" },
-        { accessorKey: "expiry_date", header: "Expiry" },
+        {
+            accessorKey: "expiry_date",
+            header: "Expiry",
+            cell: ({ row }) => {
+                const v = row.getValue("expiry_date") as unknown as string | null;
+                return v ? <div className="ml-4">{dateFormat(v)}</div> : <div className="ml-4">-</div>;
+            },
+        },
         {
             id: "actions",
             header: "Actions",

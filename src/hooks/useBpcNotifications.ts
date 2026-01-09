@@ -1,7 +1,6 @@
 import { useEffect, useRef } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { echo } from "@/lib/echo";
-import { IBordereauIndex } from "@/types/BordereauSchema";
 import { IBPCStatus } from "@/types/BPCStatusSchema";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
@@ -29,19 +28,25 @@ export default function useBpcNotifications(bpcId?: number, options?: Options) {
         const channelName = `bpc.${bpcId}`;
 
         const listener = (data: unknown) => {
-            const obj = data as {
-                payload?: {
-                    bordereau?: IBordereauIndex;
-                    bpcStatus?: IBPCStatus;
-                };
-            };
+            // Support both shapes: { payload: { ... } } and top-level { ... }
+            const evt = (data as any) ?? {};
+            const payload = evt.payload ?? evt;
 
-            const incomingBordereau = obj?.payload?.bordereau ?? null;
-            const incomingStatus = obj?.payload?.bpcStatus;
+            // DEBUG: log incoming payload to help diagnose missing dynamic fields
+            // Remove or guard these logs in production
+            try {
+                // eslint-disable-next-line no-console
+                console.debug("useBpcNotifications: incoming payload for bpc.", bpcId, payload);
+            } catch (e) {
+                // ignore logging failures
+            }
+
+            const incomingBordereau = payload?.bordereau ?? null;
+            const incomingStatus = payload?.bpcStatus ?? payload?.bpc_status ?? null;
 
             // Update bpc-data cache and notify caller about status
             if (incomingStatus) {
-                queryClient.setQueryData(["bpc-data"], (old: unknown) => {
+                queryClient.setQueryData(["bpc-data"], (old: any) => {
                     if (!old) return old;
                     return {
                         ...old,
@@ -51,34 +56,50 @@ export default function useBpcNotifications(bpcId?: number, options?: Options) {
                     };
                 });
 
-                // call stable ref to avoid retriggering effect
                 onStatusRef.current?.onStatus?.(incomingStatus);
             }
 
             const cacheKey = ["current-bordereau", bpcId] as const;
 
-            if (incomingBordereau) {
-                const current =
-                    queryClient.getQueryData<IBordereauIndex | null>(cacheKey);
-                if (current?.id !== incomingBordereau.id) {
-                    queryClient.setQueryData(cacheKey, incomingBordereau);
+            // Only invalidate the current-bordereau cache when the event explicitly
+            // includes a `bordereau` key set to null/empty. If the event contains no
+            // bordereau property (e.g. only a status update), leave the cache alone.
+            if (Object.prototype.hasOwnProperty.call(payload, "bordereau")) {
+                // For consistency with the fetch endpoint, store the bordereau
+                // in the wrapped shape `{ bordereau, validation_fields }` so
+                // components that expect the wrapped response update correctly.
+                if (incomingBordereau) {
+                    const wrapped = {
+                        bordereau: incomingBordereau,
+                        validation_fields: payload?.validation_fields ?? null,
+                    };
 
-                    // show toast only for user_type_id === 3
-                    if (
-                        user?.user_type_id === 3 &&
-                        lastToastRef.current !== incomingBordereau.id
-                    ) {
-                        toast("New bordereau received", {
-                            action: {
-                                label: "Open",
-                                onClick: () => navigate("/workplace"),
-                            },
-                        });
-                        lastToastRef.current = incomingBordereau.id;
+                    const current = queryClient.getQueryData<any>(cacheKey);
+                    const currentId = current && (current.bordereau?.id ?? current.id);
+
+                    if (currentId !== incomingBordereau.id) {
+                        queryClient.setQueryData(cacheKey, wrapped);
+
+                        try {
+                            // eslint-disable-next-line no-console
+                            console.debug("useBpcNotifications: setQueryData for current-bordereau:", queryClient.getQueryData(cacheKey));
+                        } catch (e) {
+                            // ignore
+                        }
+
+                        if (user?.user_type_id === 3 && lastToastRef.current !== incomingBordereau.id) {
+                            toast("New bordereau received", {
+                                action: {
+                                    label: "Open",
+                                    onClick: () => navigate("/workplace"),
+                                },
+                            });
+                            lastToastRef.current = incomingBordereau.id;
+                        }
                     }
+                } else {
+                    queryClient.invalidateQueries({ queryKey: cacheKey });
                 }
-            } else {
-                queryClient.invalidateQueries({ queryKey: cacheKey });
             }
         };
 

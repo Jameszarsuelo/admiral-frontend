@@ -26,7 +26,7 @@ export default function DMForm() {
     const navigate = useNavigate();
     const { id } = useParams();
     const [isLoading, setIsLoading] = useState(false);
-    const [isObsolete, setIsObsolete] = useState(true);
+    const [isObsolete, setIsObsolete] = useState(false);
 
     const { handleSubmit, control, reset, setError } =
         useForm<IDocumentFormSchema>({
@@ -45,15 +45,16 @@ export default function DMForm() {
 
     useEffect(() => {
         if (id) {
-            setIsLoading(true);
-            fetchDocumentById(id)
-                .then((data) => {
-                    const documentData = data as IDocumentFormSchema;
+                    setIsLoading(true);
+                    fetchDocumentById(id)
+                        .then((data) => {
+                            const documentData = data as IDocumentFormSchema;
 
-                    reset({
-                        ...documentData,
-                    });
-                })
+                            reset({
+                                ...documentData,
+                            });
+                            setIsObsolete(Boolean((documentData as any).is_obsolete));
+                        })
                 .catch((error) => {
                     return handleValidationErrors(error, setError);
                 })
@@ -103,6 +104,9 @@ export default function DMForm() {
     });
 
     async function onSubmit(data: IDocumentFormSchema) {
+        // include is_obsolete in payload
+        (data as any).is_obsolete = isObsolete;
+
         toast.promise(upsertDocument(data), {
             loading: id ? "Updating Document..." : "Creating Document...",
             success: () => {
@@ -161,18 +165,25 @@ export default function DMForm() {
                                                 }
                                             >
                                                 <Label>Document Name</Label>
-                                                <FileInput
-                                                    onChange={(e) => {
-                                                        const file =
-                                                            e.target.files?.[0];
-                                                        if (file) {
-                                                            field.onChange(
-                                                                file
-                                                            );
-                                                        }
-                                                    }}
-                                                    className="custom-class"
-                                                />
+                                                <div className="flex flex-col gap-2">
+                                                    <FileInput
+                                                        onChange={(e) => {
+                                                            const file =
+                                                                e.target.files?.[0];
+                                                            if (file) {
+                                                                field.onChange(
+                                                                    file
+                                                                );
+                                                            }
+                                                        }}
+                                                        className="custom-class"
+                                                    />
+                                                    {typeof field.value === 'string' && field.value && (
+                                                        <div className="text-sm text-gray-600">
+                                                            Current file: {field.value}
+                                                        </div>
+                                                    )}
+                                                </div>
                                                 {fieldState.error && (
                                                     <p className="mt-1 text-sm text-error-500">
                                                         {
@@ -269,10 +280,16 @@ export default function DMForm() {
                                                     Expiry Date
                                                 </Label>
                                                 <DatePicker
-                                                    {...field}
                                                     id="expiry_date"
                                                     placement="top"
                                                     placeholder="Date from"
+                                                    defaultDate={
+                                                        field.value ?? undefined
+                                                    }
+                                                    onChange={(_selectedDates, dateStr) => {
+                                                        // pass the date string (YYYY-MM-DD) to RHF
+                                                        field.onChange(dateStr || null);
+                                                    }}
                                                 />
                                             </Field>
                                         )}
@@ -389,17 +406,32 @@ export default function DMForm() {
                                     />
                                 </div>
                             </div>
+                            <div className="col-span-12 space-y-6 xl:col-span-6">
+                                <div>
+                                    <Label className="mb-4">Include Obsolete</Label>
+                                    <div className="flex items-center gap-4">
+                                        <Radio
+                                            id="obsolete_no"
+                                            value="0"
+                                            checked={!isObsolete}
+                                            onChange={() => setIsObsolete(false)}
+                                            label="No"
+                                            name="include_obsolete"
+                                        />
+                                        <Radio
+                                            id="obsolete_yes"
+                                            value="1"
+                                            checked={isObsolete}
+                                            onChange={() => setIsObsolete(true)}
+                                            label="Yes"
+                                            name="include_obsolete"
+                                        />
+                                    </div>
+                                </div>
+                            </div>
                         </div>
                         {!isLoading && (
                             <div className="mt-6 flex justify-end gap-3">
-                                <Radio
-                                    id="obsolete_yes"
-                                    value="1"
-                                    checked={isObsolete} 
-                                    onChange={() => setIsObsolete(true)} 
-                                    label="Yes"
-                                    name="include_obsolete"
-                                />
                                 <Button
                                     variant="danger"
                                     onClick={() => navigate(-1)}
