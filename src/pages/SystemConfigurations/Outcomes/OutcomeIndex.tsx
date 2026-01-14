@@ -6,13 +6,11 @@ import { getOutcomeHeaders } from "@/data/OutcomeHeaders";
 import { useQuery } from "@tanstack/react-query";
 import { fetchOutcomeList, deleteOutcome } from "@/database/outcome_api";
 import Spinner from "@/components/ui/spinner/Spinner";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { Modal } from "@/components/ui/modal";
 import Can from "@/components/auth/Can";
-import Select from "@/components/form/Select";
 import Label from "@/components/form/Label";
 import { Textarea } from "@/components/ui/textarea";
-import { fetchReasonOptions } from "@/database/reason_api";
 
 export default function UserIndex() {
     const navigate = useNavigate();
@@ -22,35 +20,18 @@ export default function UserIndex() {
     const [reasonForDeletion, setReasonForDeletion] = useState<string>("");
     const [descriptionForDeletion, setDescriptionForDeletion] = useState<string>("");
     const [deleteErrors, setDeleteErrors] = useState({reason: "", description: ""});
-   const [reasonForDeletionOptions, setReasonForDeletionOptions] = useState<{ value: number; label: string }[]>([]);
-
-    // Fetch options once when component mounts
-    useEffect(() => {
-        async function loadOptions() {
-            try {
-                const options = await fetchReasonOptions();
-                setReasonForDeletionOptions(options);
-            } catch (error) {
-                console.error("Failed to load reason options", error);
-            }
-        }
-        loadOptions();
-    }, []);
-    
 
     const {
         data: outcomeData,
         isLoading,
-        // error,
         refetch,
     } = useQuery({
         queryKey: ["outcome-data"],
         queryFn: async () => {
             const response = await fetchOutcomeList();
             return response ?? [];
-            // return await fetchOutcomeList();
         },
-        refetchInterval: 1000 * 60 * 5, // 5 minutes
+        refetchInterval: 1000 * 60 * 5,
         refetchIntervalInBackground: true,
         staleTime: 500,
         gcTime: 20000,
@@ -62,7 +43,7 @@ export default function UserIndex() {
     };
 
     const handleConfirmDelete = async () => {
-        let errors = { reason: "", description: "" };
+        const errors = { reason: "", description: "" };
         let hasError = false;
 
         if (!reasonForDeletion.trim()) {
@@ -84,7 +65,6 @@ export default function UserIndex() {
         setIsDeleting(true);
         const payload = {id: selectedId, deleted_reason: reasonForDeletion, deleted_description: descriptionForDeletion }
         try {
-            // await deleteOutcome(selectedId);
             await deleteOutcome(payload);
             await refetch();
             setIsModalOpen(false);
@@ -102,7 +82,6 @@ export default function UserIndex() {
             setSelectedId(null);
         }
     };
-
 
     const columns = getOutcomeHeaders(navigate, handleDeleteClick, refetch);
 
@@ -123,7 +102,7 @@ export default function UserIndex() {
                         </div>
                         <div className="flex shrink-0 items-center gap-2">
                             <Can permission="outcomes.create">
-                                    <Button size="sm" onClick={() => navigate("/outcomes/create")}>
+                                <Button size="sm" onClick={() => navigate("/outcomes/create")}>
                                     Add New Outcome
                                 </Button>
                             </Can>
@@ -155,7 +134,7 @@ export default function UserIndex() {
                         </h4>
 
                         <Label>Reason for Deletion</Label>
-                        
+
                         <input
                             type="text"
                             value={reasonForDeletion}
@@ -166,16 +145,16 @@ export default function UserIndex() {
                         {deleteErrors.reason && (
                             <p className="text-red-500 text-sm">{deleteErrors.reason}</p>
                         )}
-                        
+
                         <Label className="mt-5">Description</Label>
                         <Textarea name="description_for_deletion" onChange={(e) => setDescriptionForDeletion(e.target.value)}/>
                         {deleteErrors.description && (
                             <p className="text-red-500 text-sm">{deleteErrors.description}</p>
                         )}
 
-                        <Button className="mt-5" size="sm" variant="danger" 
+                        <Button className="mt-5" size="sm" variant="danger"
                             onClick={() => handleConfirmDelete()}
-                            >
+                        >
                             {isDeleting ? "Deleting..." : "Confirm Delete"}
                         </Button>
                     </div>
