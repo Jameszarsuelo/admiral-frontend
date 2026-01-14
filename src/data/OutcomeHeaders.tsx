@@ -40,14 +40,14 @@ export const getOutcomeHeaders = (
             <div className="capitalize">{row.getValue("status")}</div>
         ),
     },
-    {
-        accessorKey: "description",
-        accessorFn: (row) => row.description,
-        header: "Description",
-        cell: ({ row }) => (
-            <div className="capitalize">{row.getValue("description")}</div>
-        ),
-    },
+    // {
+    //     accessorKey: "description",
+    //     accessorFn: (row) => row.description,
+    //     header: "Description",
+    //     cell: ({ row }) => (
+    //         <div className="capitalize">{row.getValue("description")}</div>
+    //     ),
+    // },
     
     // {
     //     accessorKey: "status",

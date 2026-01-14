@@ -156,26 +156,22 @@ export default function UserIndex() {
 
                         <Label>Reason for Deletion</Label>
                         
-                        <Select options={reasonForDeletionOptions}
-                                onChange={(value) => setReasonForDeletion(value)}
-                        ></Select>
+                        <input
+                            type="text"
+                            value={reasonForDeletion}
+                            onChange={(e) => setReasonForDeletion(e.target.value)}
+                            className="mt-2 w-full rounded-md border border-gray-200 bg-white px-3 py-2 text-sm dark:bg-gray-800 dark:border-gray-700"
+                            placeholder="Enter reason for deletion"
+                        />
                         {deleteErrors.reason && (
                             <p className="text-red-500 text-sm">{deleteErrors.reason}</p>
                         )}
                         
                         <Label className="mt-5">Description</Label>
-                        {/* <TextArea 
-                            name="description_for_deletion"
-                            rows={5}
-                            onChange={(value) => setDescriptionForDeletion(value)}/> */}
                         <Textarea name="description_for_deletion" onChange={(e) => setDescriptionForDeletion(e.target.value)}/>
                         {deleteErrors.description && (
                             <p className="text-red-500 text-sm">{deleteErrors.description}</p>
                         )}
-                            
-                        {/* <p className="mb-6 text-sm text-gray-500 dark:text-gray-400 lg:mb-7">
-                            Are you sure to delete this Outcome?
-                        </p> */}
 
                         <Button className="mt-5" size="sm" variant="danger" 
                             onClick={() => handleConfirmDelete()}
