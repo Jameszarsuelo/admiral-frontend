@@ -53,6 +53,8 @@ const iconMap: Record<string, React.ReactNode> = {
     reports: <ChartBarIcon />,
     document_management: <ArchiveBoxIcon />,
     bordereau_query_management: <QuestionMarkCircleIcon />,
+    bordereau_processing_queue: <QuestionMarkCircleIcon />,
+    bpc_supplier_skills: <QuestionMarkCircleIcon />,
     workplace: <ComputerDesktopIcon />,
 };
 
@@ -116,7 +118,8 @@ const AppSidebar: React.FC = () => {
         (i) =>
             i.name === "Reports" ||
             i.name === "Document Management" ||
-            i.name === "Bordereau Query Management",
+            i.name === "Bordereau Query Management" ||
+            i.name === "BPC Supplier Skills",
     );
 
     useEffect(() => {
@@ -376,7 +379,7 @@ const AppSidebar: React.FC = () => {
                         {mainItems.length > 0 && (
                             <div>
                                 <h2
-                                    className={`mb-4 text-xs uppercase flex leading-[20px] text-gray-400 ${
+                                    className={`mb-4 text-xs uppercase flex leading-5 text-gray-400 ${
                                         !isExpanded && !isHovered
                                             ? "lg:justify-center"
                                             : "justify-start"
@@ -395,7 +398,7 @@ const AppSidebar: React.FC = () => {
                         {configItems.length > 0 && (
                             <div className="">
                                 <h2
-                                    className={`mb-4 text-xs uppercase flex leading-[20px] text-gray-400 ${
+                                    className={`mb-4 text-xs uppercase flex leading-5 text-gray-400 ${
                                         !isExpanded && !isHovered
                                             ? "lg:justify-center"
                                             : "justify-start"
@@ -414,7 +417,7 @@ const AppSidebar: React.FC = () => {
                         {othersItems.length > 0 && (
                             <div className="">
                                 <h2
-                                    className={`mb-4 text-xs uppercase flex leading-[20px] text-gray-400 ${
+                                    className={`mb-4 text-xs uppercase flex leading-5 text-gray-400 ${
                                         !isExpanded && !isHovered
                                             ? "lg:justify-center"
                                             : "justify-start"
