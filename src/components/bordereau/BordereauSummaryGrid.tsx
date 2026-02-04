@@ -1,11 +1,18 @@
 import { dateFormat } from "@/helper/dateFormat";
 import { IBordereauIndex } from "@/types/BordereauSchema";
+import { useAuth } from "@/hooks/useAuth";
 
 interface Props {
     bordereau?: IBordereauIndex | null;
 }
 
 export default function BordereauSummaryGrid({ bordereau }: Props) {
+    const { user } = useAuth();
+
+    // Hide the summary cards when the current user is a BPC (user_type_id === 3)
+    // or when the current user is the assigned BPC for this bordereau.
+    const hideCards = user?.user_type_id === 3 || !!(bordereau?.bpc && user && bordereau.bpc.id === user.id);
+
     const cards: { title: string; value: string | number }[] = [
         // { title: "", value: `${import.meta.env.VITE_API_URL}/storage/${bordereau?.supplier?.logo}` },
         {
@@ -73,6 +80,18 @@ export default function BordereauSummaryGrid({ bordereau }: Props) {
         },
     ];
 
+    // If hide condition is met, render only the core cards (keeps supplier logo visible)
+    const coreTitles = [
+        "Admiral Bordereau Type",
+        "Supplier",
+        "Bordereau",
+        "Outstanding",
+    ];
+
+    const visibleCards = hideCards
+        ? cards.filter((c) => coreTitles.includes(c.title))
+        : cards;
+
     return (
         <div className="w-full">
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4 mb-5">
@@ -87,7 +106,7 @@ export default function BordereauSummaryGrid({ bordereau }: Props) {
                 </div>
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
-                {cards.map((c, idx) => {
+                {visibleCards.map((c, idx) => {
                     return (
                         <div
                             key={`${c.title}-${idx}`}
