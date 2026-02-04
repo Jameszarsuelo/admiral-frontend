@@ -19,6 +19,14 @@ const SupplierView = lazy(
     () => import("../pages/SupplierDirectory/SupplierView"),
 );
 
+const BordereauProcessQueueView = lazy(
+    () => import("../pages/SystemConfigurations/BordereauProcessingQueue/BordereauProcessingQueueView"),
+);
+
+const BordereauProcessQueueForm = lazy(
+    () => import("../pages/SystemConfigurations/BordereauProcessingQueue/BordereauProcessingQueueForm"),
+);
+
 const BordereauIndex = lazy(
     () => import("../pages/BordereauDetail/BordereauIndex"),
 );
@@ -37,10 +45,12 @@ const UserForm = lazy(
 );
 
 const SupplierUserIndex = lazy(
-    () => import("../pages/SystemConfigurations/SupplierUsers/SupplierUserIndex"),
+    () =>
+        import("../pages/SystemConfigurations/SupplierUsers/SupplierUserIndex"),
 );
 const SupplierUserForm = lazy(
-    () => import("../pages/SystemConfigurations/SupplierUsers/SupplierUserForm"),
+    () =>
+        import("../pages/SystemConfigurations/SupplierUsers/SupplierUserForm"),
 );
 
 const PlanningIndex = lazy(
@@ -61,7 +71,9 @@ const OutcomeIndex = lazy(
 const OutcomeForm = lazy(
     () => import("../pages/SystemConfigurations/Outcomes/OutcomeForm"),
 );
-const OutcomeView = lazy(() => import("../pages/SystemConfigurations/Outcomes/OutcomeView"),);
+const OutcomeView = lazy(
+    () => import("../pages/SystemConfigurations/Outcomes/OutcomeView"),
+);
 const ContactIndex = lazy(
     () => import("../pages/ContactDirectory/ContactIndex"),
 );
@@ -111,6 +123,14 @@ const ModuleActionForm = lazy(
 const TaskDetailView = lazy(() => import("@/pages/TaskDetail/TaskDetailView"));
 
 const Workplace = lazy(() => import("../pages/BPC/Workplace"));
+
+const BpcSupplierSkillsIndex = lazy(
+    () => import("../pages/SystemConfigurations/BpcSupplierSkills/BpcSupplierSkillsIndex"),
+);
+
+const BpcSupplierSkillsView = lazy(
+    () => import("../pages/SystemConfigurations/BpcSupplierSkills/BpcSupplierSkillsView"),
+);
 
 const TaskQueuesView = lazy(
     () => import("@/pages/SystemConfigurations/TaskQueues/TaskQueuesView"),
@@ -225,6 +245,10 @@ export const modulePageMap: Record<string, ModuleComponents> = {
     workplace: {
         main: Workplace,
     },
+    bpc_supplier_skills: {
+        main: BpcSupplierSkillsIndex,
+        view: BpcSupplierSkillsView,
+    },
     dashboard: {
         main: Home,
     },
@@ -236,5 +260,11 @@ export const modulePageMap: Record<string, ModuleComponents> = {
         create: SupplierUserForm,
         edit: SupplierUserForm,
         view: SupplierUserIndex,
+    },
+    bordereau_processing_queue: {
+        main: BordereauProcessQueueView,
+        create: BordereauProcessQueueForm,
+        edit: BordereauProcessQueueForm,
+        view: BordereauProcessQueueView,
     },
 };
