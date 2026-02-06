@@ -304,11 +304,36 @@ export default function Workplace() {
                 err?.message || "Failed to change status. Refreshing state.",
             );
         },
-        onSuccess: async (data: { bpc: IBPCSchema }) => {
+        onSuccess: async (
+            data: { bpc: IBPCSchema },
+            variables: { bpcId: number; statusId: number },
+        ) => {
             toast.success("Status updated");
             // If backend returned updated bpc, use it; otherwise refetch
             if (data && data.bpc) {
                 queryClient.setQueryData(["bpc-data"], data.bpc);
+            }
+
+            // Status 4 (Wrap Up) returns to Ready (2) after a short delay on the backend.
+            // Keep UX consistent: show the 2-second cooldown/progress bar and don't block on refetch latency.
+            if (variables.statusId === 4) {
+                setAwaitingRefetch(true);
+                queryClient.setQueryData(["current-bordereau", bpcUser?.id], null);
+
+                const wrapUpLabel =
+                    ((bpcStatusData || []) as IBPCStatus[]).find((s) => s.id === 4)
+                        ?.status ?? "Wrap Up";
+
+                startCooldown(wrapUpLabel, () => {
+                    setAwaitingRefetch(false);
+                    queryClient.invalidateQueries({ queryKey: ["bpc-data"] });
+                });
+
+                queryClient.invalidateQueries({ queryKey: ["bpc-status-list"] });
+                queryClient.invalidateQueries({
+                    queryKey: ["current-bordereau", bpcUser?.id],
+                });
+                return;
             }
             await Promise.all([
                 queryClient.refetchQueries({ queryKey: ["bpc-data"] }),
@@ -468,7 +493,7 @@ export default function Workplace() {
     };
 
     // Extracted handler to improve readability of the Confirm button
-    const startCooldown = (label: string | null) => {
+    const startCooldown = (label: string | null, onDone?: () => void) => {
         setCooldownSeconds(cooldownTotal);
         setCooldownLabel(label);
         let remaining = cooldownTotal;
@@ -490,6 +515,7 @@ export default function Workplace() {
                 queryClient.invalidateQueries({
                     queryKey: ["current-bordereau", bpcUser?.id],
                 });
+                onDone?.();
             }
         }, 1000) as unknown as number;
     };
@@ -772,10 +798,8 @@ export default function Workplace() {
                             <div className="mb-4 p-4 rounded-md bg-yellow-50 dark:bg-yellow-900/20">
                                 <div className="flex items-center justify-between">
                                     <div className="text-sm text-yellow-800 dark:text-yellow-200">
-                                        Outcome has succesfully updated. Please
-                                        wait {cooldownLabel}s for the next
-                                        queue. Remaining time: {cooldownSeconds}
-                                        s
+                                        {cooldownLabel ? `${cooldownLabel}. ` : ""}
+                                        Please wait {Math.max(0, cooldownSeconds)}s for the next queue.
                                     </div>
                                     <div className="text-xs text-yellow-700 dark:text-yellow-100">
                                         {Math.max(0, cooldownSeconds)}s

@@ -6,7 +6,7 @@ import { DataTable } from "@/components/ui/DataTable";
 import Button from "@/components/ui/button/Button";
 import { Modal } from "@/components/ui/modal";
 import Spinner from "@/components/ui/spinner/Spinner";
-import { fetchContactList } from "@/database/contact_api";
+import { deleteContact, fetchContactList } from "@/database/contact_api";
 import { getContactHeaders } from "@/data/ContactHeaders";
 import Can from "@/components/auth/Can";
 import Radio from "@/components/form/input/Radio";
@@ -43,7 +43,7 @@ export default function ContactIndex() {
 
         setIsDeleting(true);
         try {
-            // await deleteSupplier(selectedId);
+            await deleteContact(selectedId);
             await refetch();
             setIsModalOpen(false);
             setSelectedId(null);
@@ -61,7 +61,7 @@ export default function ContactIndex() {
         }
     };
 
-    const columns = getContactHeaders(navigate, handleDeleteClick, refetch);
+    const columns = getContactHeaders(navigate, handleDeleteClick);
 
     return (
         <>
@@ -125,9 +125,9 @@ export default function ContactIndex() {
 
                                 <Radio
                                     id="search_user"
-                                    value="4"
-                                    checked={selectedSearch === "4"}
-                                    onChange={() => setSelectedSearch("4")}
+                                    value="3"
+                                    checked={selectedSearch === "3"}
+                                    onChange={() => setSelectedSearch("3")}
                                     label="User"
                                     name="search_filter"
                                 />

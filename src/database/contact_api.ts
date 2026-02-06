@@ -66,3 +66,14 @@ export async function fetchContactById(id: string): Promise<IContactSchema> {
         throw error;
     }
 }
+
+export async function deleteContact(id: number): Promise<void> {
+    try {
+        await api.delete(`/contact/${id}`);
+    } catch (error) {
+        if (error instanceof AxiosError && error.response?.data) {
+            throw error.response.data;
+        }
+        throw error;
+    }
+}

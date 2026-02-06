@@ -9,7 +9,6 @@ import Can from "@/components/auth/Can";
 export const getContactHeaders = (
     navigate: (path: string) => void,
     handleDeleteClick: (id: number) => void,
-    refetch: () => void,
 ): ColumnDef<IContactHeaderSchema>[] => [
     {
         accessorKey: "salutation",
@@ -121,7 +120,6 @@ export const getContactHeaders = (
 
             const onDelete = (id: number) => {
                 handleDeleteClick(id);
-                refetch();
             };
 
             const handleView = (id: number) => {
