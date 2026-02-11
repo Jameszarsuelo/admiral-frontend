@@ -6,18 +6,20 @@ import ComponentCard from "@/components/common/ComponentCard";
 import Label from "@/components/form/Label";
 import Input from "@/components/form/input/InputField";
 import { Field, FieldGroup } from "@/components/ui/field";
-import { Controller, useForm } from "react-hook-form";
+import { Controller, SubmitHandler, useForm } from "react-hook-form";
 import Button from "@/components/ui/button/Button";
 import PhoneInput from "@/components/form/group-input/PhoneInput";
 import Select from "@/components/form/Select";
 import Switch from "@/components/form/switch/Switch";
 import { useNavigate, useParams } from "react-router";
 import { handleValidationErrors } from "@/helper/validationError";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Spinner from "@/components/ui/spinner/Spinner";
 import { useAuth } from "@/hooks/useAuth";
 import { BPCCreateSchema, IBPCForm } from "@/types/BPCSchema";
 import { fetchBpcById, upsertBpc } from "@/database/bpc_api";
+import { useQuery } from "@tanstack/react-query";
+import { fetchContactList } from "@/database/contact_api";
 
 const countries = [
     { code: "UK", label: "+44" },
@@ -41,10 +43,33 @@ export default function BPCForm() {
     const navigate = useNavigate();
     const [isLoading, setIsLoading] = useState(false);
 
+    const { data: lineManagerContacts } = useQuery({
+        queryKey: ["contact-list", "3"],
+        queryFn: async () => fetchContactList("3"),
+        staleTime: 60_000,
+    });
+
+    const lineManagerOptions = useMemo(() => {
+        return (
+            lineManagerContacts?.map((c) => ({
+                value: c.id,
+                label: `${c.firstname} ${c.lastname}`.trim(),
+            })) ?? []
+        );
+    }, [lineManagerContacts]);
+
     const { handleSubmit, control, reset, setError } = useForm<IBPCForm>({
         defaultValues: {
             two_fa_enabled: false,
             two_fa_type: 0,
+            bpc_handle_fraud: false,
+            bpc_handle_deadlock: false,
+            bpc_handle_staff: false,
+            bpc_handle_sensitive: false,
+            bpc_line_manager: null,
+            bpc_department: "",
+            bpc_dept_level2: "",
+            bpc_dept_level3: "",
             contact: {
                 salutation: "",
                 firstname: "",
@@ -63,7 +88,7 @@ export default function BPCForm() {
                 created_by: user?.id,
             },
         },
-        resolver: zodResolver(BPCCreateSchema),
+        resolver: zodResolver(BPCCreateSchema) as any,
     });
 
     useEffect(() => {
@@ -95,7 +120,7 @@ export default function BPCForm() {
         toast.error("Please fix the errors in the form");
     }
 
-    async function onSubmit(data: IBPCForm) {
+    const onSubmit: SubmitHandler<IBPCForm> = async (data) => {
         toast.promise(upsertBpc(data), {
             loading: id ? "Updating BPC..." : "Creating BPC...",
             success: () => {
@@ -110,7 +135,7 @@ export default function BPCForm() {
                 return handleValidationErrors(error, setError);
             },
         });
-    }
+    };
 
     return (
         <>
@@ -128,6 +153,204 @@ export default function BPCForm() {
                         id="form-bpc"
                         onSubmit={handleSubmit(onSubmit, onError)}
                     >
+                        <FieldGroup>
+                            <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
+                                <div className="space-y-6">
+                                    <Controller
+                                        name="bpc_handle_fraud"
+                                        control={control}
+                                        render={({ field }) => (
+                                            <Field>
+                                                <Label htmlFor="bpc_handle_fraud">
+                                                    Handle Fraud
+                                                </Label>
+                                                <Switch
+                                                    checked={!!field.value}
+                                                    onCheckedChange={field.onChange}
+                                                    label="Can handle fraud-related bordereaux."
+                                                />
+                                            </Field>
+                                        )}
+                                    />
+
+                                    <Controller
+                                        name="bpc_handle_deadlock"
+                                        control={control}
+                                        render={({ field }) => (
+                                            <Field>
+                                                <Label htmlFor="bpc_handle_deadlock">
+                                                    Handle Deadlock
+                                                </Label>
+                                                <Switch
+                                                    checked={!!field.value}
+                                                    onCheckedChange={field.onChange}
+                                                    label="Can handle deadlock/escalation cases."
+                                                />
+                                            </Field>
+                                        )}
+                                    />
+
+                                    <Controller
+                                        name="bpc_handle_staff"
+                                        control={control}
+                                        render={({ field }) => (
+                                            <Field>
+                                                <Label htmlFor="bpc_handle_staff">
+                                                    Handle Staff
+                                                </Label>
+                                                <Switch
+                                                    checked={!!field.value}
+                                                    onCheckedChange={field.onChange}
+                                                    label="Can handle staff-related cases."
+                                                />
+                                            </Field>
+                                        )}
+                                    />
+
+                                    <Controller
+                                        name="bpc_handle_sensitive"
+                                        control={control}
+                                        render={({ field }) => (
+                                            <Field>
+                                                <Label htmlFor="bpc_handle_sensitive">
+                                                    Handle Sensitive
+                                                </Label>
+                                                <Switch
+                                                    checked={!!field.value}
+                                                    onCheckedChange={field.onChange}
+                                                    label="Can handle sensitive cases."
+                                                />
+                                            </Field>
+                                        )}
+                                    />
+                                </div>
+
+                                <div className="space-y-6">
+                                    <Controller
+                                        name="bpc_line_manager"
+                                        control={control}
+                                        render={({ field, fieldState }) => (
+                                            <Field data-invalid={fieldState.invalid}>
+                                                <Label htmlFor="bpc_line_manager">
+                                                    Line Manager
+                                                </Label>
+                                                <Select
+                                                    value={
+                                                        field.value
+                                                            ? String(field.value)
+                                                            : ""
+                                                    }
+                                                    options={lineManagerOptions}
+                                                    placeholder="Select Line Manager (optional)"
+                                                    onChange={(value: string) =>
+                                                        field.onChange(
+                                                            value
+                                                                ? Number(value)
+                                                                : null,
+                                                        )
+                                                    }
+                                                    onBlur={field.onBlur}
+                                                    className="dark:bg-dark-900"
+                                                />
+                                                {fieldState.error && (
+                                                    <p className="mt-1 text-sm text-error-500">
+                                                        {
+                                                            fieldState.error
+                                                                .message
+                                                        }
+                                                    </p>
+                                                )}
+                                            </Field>
+                                        )}
+                                    />
+
+                                    <Controller
+                                        name="bpc_department"
+                                        control={control}
+                                        render={({ field, fieldState }) => (
+                                            <Field data-invalid={fieldState.invalid}>
+                                                <Label htmlFor="bpc_department">
+                                                    Department
+                                                </Label>
+                                                <Input
+                                                    {...field}
+                                                    value={field.value ?? ""}
+                                                    type="text"
+                                                    id="bpc_department"
+                                                    name="bpc_department"
+                                                    placeholder="(optional)"
+                                                />
+                                                {fieldState.error && (
+                                                    <p className="mt-1 text-sm text-error-500">
+                                                        {
+                                                            fieldState.error
+                                                                .message
+                                                        }
+                                                    </p>
+                                                )}
+                                            </Field>
+                                        )}
+                                    />
+
+                                    <Controller
+                                        name="bpc_dept_level2"
+                                        control={control}
+                                        render={({ field, fieldState }) => (
+                                            <Field data-invalid={fieldState.invalid}>
+                                                <Label htmlFor="bpc_dept_level2">
+                                                    Dept Level 2
+                                                </Label>
+                                                <Input
+                                                    {...field}
+                                                    value={field.value ?? ""}
+                                                    type="text"
+                                                    id="bpc_dept_level2"
+                                                    name="bpc_dept_level2"
+                                                    placeholder="(optional)"
+                                                />
+                                                {fieldState.error && (
+                                                    <p className="mt-1 text-sm text-error-500">
+                                                        {
+                                                            fieldState.error
+                                                                .message
+                                                        }
+                                                    </p>
+                                                )}
+                                            </Field>
+                                        )}
+                                    />
+
+                                    <Controller
+                                        name="bpc_dept_level3"
+                                        control={control}
+                                        render={({ field, fieldState }) => (
+                                            <Field data-invalid={fieldState.invalid}>
+                                                <Label htmlFor="bpc_dept_level3">
+                                                    Dept Level 3
+                                                </Label>
+                                                <Input
+                                                    {...field}
+                                                    value={field.value ?? ""}
+                                                    type="text"
+                                                    id="bpc_dept_level3"
+                                                    name="bpc_dept_level3"
+                                                    placeholder="(optional)"
+                                                />
+                                                {fieldState.error && (
+                                                    <p className="mt-1 text-sm text-error-500">
+                                                        {
+                                                            fieldState.error
+                                                                .message
+                                                        }
+                                                    </p>
+                                                )}
+                                            </Field>
+                                        )}
+                                    />
+                                </div>
+                            </div>
+                        </FieldGroup>
+
                         <FieldGroup>
                             <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
                                 <div className="space-y-6">

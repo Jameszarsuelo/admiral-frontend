@@ -17,6 +17,7 @@ import { useEffect, useState } from "react";
 import Spinner from "@/components/ui/spinner/Spinner";
 import {
     ISupplierFormSchema,
+    ISupplierFormInputSchema,
     SupplierFormSchema,
 } from "@/types/SupplierSchema";
 import { useAuth } from "@/hooks/useAuth";
@@ -118,8 +119,8 @@ export default function SupplierForm() {
             label: `${contact.firstname} ${contact.lastname}`,
         }));
 
-    const { handleSubmit, control, setError, reset } =
-        useForm<ISupplierFormSchema>({
+    const { handleSubmit, control, setError, reset, setValue } =
+        useForm<ISupplierFormInputSchema>({
             defaultValues: {
                 name: "",
                 logo: undefined,
@@ -156,11 +157,13 @@ export default function SupplierForm() {
                 ...supplierData,
                 updated_by: user?.id,
             };
-            reset(normalizedData as ISupplierFormSchema);
+            reset(normalizedData as ISupplierFormInputSchema);
         }
     }, [supplierData, reset, user]);
 
-    function onSubmit(data: ISupplierFormSchema) {
+    function onSubmit(formValues: ISupplierFormInputSchema) {
+        const data: ISupplierFormSchema = SupplierFormSchema.parse(formValues);
+
         toast.promise(upsertSupplier(data), {
             loading: id ? "Updating Supplier..." : "Creating Supplier...",
             success: () => {
@@ -432,24 +435,12 @@ export default function SupplierForm() {
                                                     Supplier Priority
                                                 </Label>
                                                 <Input
-                                                    type="number"
+                                                    type="text"
                                                     id="priority"
                                                     name="priority"
                                                     placeholder="Default: 5, Min: 1, Max: 10"
-                                                    min={1}
-                                                    max={10}
                                                     value={field.value ?? ""}
-                                                    onChange={(e) =>
-                                                        field.onChange(
-                                                            e.target.value ===
-                                                                ""
-                                                                ? undefined
-                                                                : Number(
-                                                                      e.target
-                                                                          .value,
-                                                                  ),
-                                                        )
-                                                    }
+                                                    onChange={field.onChange}
                                                     onBlur={field.onBlur}
                                                 />
                                                 {fieldState.error && (
@@ -477,22 +468,12 @@ export default function SupplierForm() {
                                                     Max Payment Days
                                                 </Label>
                                                 <Input
-                                                    type="number"
+                                                    type="text"
                                                     id="max_payment_days"
                                                     name="max_payment_days"
                                                     placeholder="30"
                                                     value={field.value ?? ""}
-                                                    onChange={(e) =>
-                                                        field.onChange(
-                                                            e.target.value ===
-                                                                ""
-                                                                ? undefined
-                                                                : Number(
-                                                                      e.target
-                                                                          .value,
-                                                                  ),
-                                                        )
-                                                    }
+                                                    onChange={field.onChange}
                                                     onBlur={field.onBlur}
                                                 />
                                                 {fieldState.error && (
@@ -520,22 +501,12 @@ export default function SupplierForm() {
                                                     Target Payment Days
                                                 </Label>
                                                 <Input
-                                                    type="number"
+                                                    type="text"
                                                     id="target_payment_days"
                                                     name="target_payment_days"
                                                     placeholder="7"
                                                     value={field.value ?? ""}
-                                                    onChange={(e) =>
-                                                        field.onChange(
-                                                            e.target.value ===
-                                                                ""
-                                                                ? undefined
-                                                                : Number(
-                                                                      e.target
-                                                                          .value,
-                                                                  ),
-                                                        )
-                                                    }
+                                                    onChange={field.onChange}
                                                     onBlur={field.onBlur}
                                                 />
                                                 {fieldState.error && (
@@ -550,7 +521,7 @@ export default function SupplierForm() {
                                         )}
                                     />
 
-                                    <Controller
+                                    {/* <Controller
                                         name="preferred_payment_day"
                                         control={control}
                                         render={({ field, fieldState }) => (
@@ -579,7 +550,7 @@ export default function SupplierForm() {
                                                 )}
                                             </Field>
                                         )}
-                                    />
+                                    /> */}
                                 </div>
 
                                 {/* RIGHT COLUMN: Address Info */}
@@ -964,13 +935,26 @@ export default function SupplierForm() {
             <SupplierUserModal
                 isOpen={isContactModalOpen}
                 onClose={() => setIsContactModalOpen(false)}
-                onUserCreated={(user) => {
+                onUserCreated={async (user) => {
                     toast.success(
                         `User ${user?.contact?.firstname || ""} ${
                             user?.contact?.lastname || ""
                         } has been added!`,
                     );
-                    refetchContacts();
+
+                    const newContactId =
+                        (user as unknown as { contact?: { id?: number } })
+                            ?.contact?.id ??
+                        (user as unknown as { contact_id?: number })
+                            ?.contact_id;
+
+                    await refetchContacts();
+                    if (typeof newContactId === "number" && newContactId > 0) {
+                        setValue("contact_id", newContactId, {
+                            shouldDirty: true,
+                            shouldValidate: true,
+                        });
+                    }
                 }}
             />
         </>

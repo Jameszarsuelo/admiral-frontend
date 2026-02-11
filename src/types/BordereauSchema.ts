@@ -34,6 +34,7 @@ export const BordereauBaseSchema = z.object({
     id: z.number().int().optional(),
 
     supplier_id: z.number().nullable(),
+    bordereau_department_id: z.number().nullable(),
     bordereau_status_id: z.number().nullable(),
     flags: z.string().nullable(),
     bpc_id: z.number().nullable(),
@@ -71,6 +72,7 @@ export const BordereauBaseSchema = z.object({
     qty_days_in_hire: z.number().nullable(),
 
     admiral_invoice_type: z.number().int(),
+    bordereau_type_id: z.number().nullable(),
     group_hire_rate: z.number().nullable(),
     amount_banked: z.number().nullable(),
     task_type: z.string().nullable(),
@@ -115,6 +117,7 @@ export const BordereauBaseSchema = z.object({
 export const BordereauFormSchema = BordereauBaseSchema.pick({
     id: true,
     supplier_id: true,
+    bordereau_department_id: true,
     claim_number: true,
     name: true,
     supplier_ref: true,
@@ -141,6 +144,7 @@ export const BordereauFormSchema = BordereauBaseSchema.pick({
     qty_days_in_hire: true,
     group_hire_rate: true,
     admiral_invoice_type: true,
+    bordereau_type_id: true,
     amount_banked: true,
     bordereau: true,
     task_type: true,

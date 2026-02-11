@@ -48,6 +48,9 @@ export async function upsertBordereau(
 
 export async function fetchBordereauList(params?: Record<string, unknown>): Promise<{
     data: IBordereauIndex[];
+    total?: number;
+    page?: number;
+    per_page?: number;
     overdueCount: number;
     queryCount: number;
     inProgressCount: number;
@@ -57,7 +60,14 @@ export async function fetchBordereauList(params?: Record<string, unknown>): Prom
 }> {
     try {
         const response = await api.get("/bordereau", { params });
-        return response.data;
+        const payload = response.data as Record<string, unknown>;
+
+        return {
+            ...(payload as any),
+            // Backend returns `targetDateCount`; frontend historically uses `targetdateCount`.
+            targetdateCount:
+                (payload as any).targetdateCount ?? (payload as any).targetDateCount ?? 0,
+        };
     } catch (error) {
         if (error instanceof AxiosError && error.response?.data) {
             throw error.response.data;
@@ -115,14 +125,29 @@ export async function uploadBordereauCsv(data: {
     document?: File | null;
     admiral_invoice_type?: string;
     supplier_id?: string;
+    bordereau_department_id?: string;
+    bordereau_type_id?: string;
     bordereau?: string;
 }): Promise<void> {
     try {
         const form = new FormData();
         form.append("file", data.document as File);
-        form.append("admiral_invoice_type", String(data.admiral_invoice_type));
-        form.append("supplier_id", String(data.supplier_id));
-        form.append("bordereau", String(data.bordereau));
+
+        if (data.admiral_invoice_type) {
+            form.append("admiral_invoice_type", String(data.admiral_invoice_type));
+        }
+        if (data.supplier_id) {
+            form.append("supplier_id", String(data.supplier_id));
+        }
+        if (data.bordereau) {
+            form.append("bordereau", String(data.bordereau));
+        }
+        if (data.bordereau_department_id) {
+            form.append("bordereau_department_id", String(data.bordereau_department_id));
+        }
+        if (data.bordereau_type_id) {
+            form.append("bordereau_type_id", String(data.bordereau_type_id));
+        }
 
         const response = await api.post("/bordereau/upload-csv", form, {
             headers: {

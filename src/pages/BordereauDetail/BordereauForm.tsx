@@ -19,6 +19,8 @@ import {
     upsertBordereau,
     fetchBordereauValidationViewData,
 } from "@/database/bordereau_api";
+import { fetchDepartmentList } from "@/database/department_api";
+import { fetchBordereauTypeList } from "@/database/bordereau_type_api";
 import { handleValidationErrors } from "@/helper/validationError";
 import { BordereauFormSchema, IBordereauForm } from "@/types/BordereauSchema";
 // import { useAuth } from "@/hooks/useAuth";
@@ -32,6 +34,7 @@ export default function BordereauForm() {
     const { handleSubmit, control, reset, setError } = useForm<IBordereauForm>({
         defaultValues: {
             supplier_id: null,
+            bordereau_department_id: null,
             claim_number: "",
             name: "",
             supplier_ref: "",
@@ -58,6 +61,7 @@ export default function BordereauForm() {
             qty_days_in_hire: undefined,
             group_hire_rate: undefined,
             admiral_invoice_type: undefined,
+            bordereau_type_id: null,
             amount_banked: undefined,
             comment: "",
             bordereau: "",
@@ -87,6 +91,28 @@ export default function BordereauForm() {
             const bordereauValidations =
                 await fetchBordereauValidationViewData();
             return bordereauValidations || [];
+        },
+    });
+
+    const { data: departmentOptions } = useQuery({
+        queryKey: ["departments-options"],
+        queryFn: async () => {
+            const departments = await fetchDepartmentList();
+            return (departments || []).map((d: any) => ({
+                value: String(d.id ?? ""),
+                label: String(d.department ?? d.name ?? ""),
+            }));
+        },
+    });
+
+    const { data: bordereauTypeOptions } = useQuery({
+        queryKey: ["bordereau-types-options"],
+        queryFn: async () => {
+            const types = await fetchBordereauTypeList();
+            return (types || []).map((t: any) => ({
+                value: String(t.id ?? ""),
+                label: String(t.bordereau_type ?? t.name ?? ""),
+            }));
         },
     });
 
@@ -142,6 +168,71 @@ export default function BordereauForm() {
                             <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
                                 <div className="space-y-6">
                                     <Controller
+                                        name="bordereau_department_id"
+                                        control={control}
+                                        render={({ field, fieldState }) => (
+                                            <Field
+                                                data-invalid={
+                                                    fieldState.invalid
+                                                }
+                                            >
+                                                <Label htmlFor="bordereau_department_id">
+                                                    Department
+                                                </Label>
+                                                <Combobox
+                                                    value={field.value ?? ""}
+                                                    options={departmentOptions || []}
+                                                    placeholder="Select Department"
+                                                    searchPlaceholder="Search department..."
+                                                    onChange={(value) =>
+                                                        field.onChange(
+                                                            Number(value),
+                                                        )
+                                                    }
+                                                />
+                                                {fieldState.error && (
+                                                    <p className="mt-1 text-sm text-error-500">
+                                                        {
+                                                            fieldState.error
+                                                                .message
+                                                        }
+                                                    </p>
+                                                )}
+                                            </Field>
+                                        )}
+                                    />
+
+                                    <Controller
+                                        name="bordereau_type_id"
+                                        control={control}
+                                        render={({ field, fieldState }) => (
+                                            <Field
+                                                data-invalid={fieldState.invalid}
+                                            >
+                                                <Label htmlFor="bordereau_type_id">
+                                                    Bordereau Type
+                                                </Label>
+                                                <Combobox
+                                                    value={field.value ?? ""}
+                                                    options={bordereauTypeOptions || []}
+                                                    placeholder="Select Bordereau Type"
+                                                    searchPlaceholder="Search bordereau types..."
+                                                    onChange={(value) =>
+                                                        field.onChange(
+                                                            Number(value),
+                                                        )
+                                                    }
+                                                />
+                                                {fieldState.error && (
+                                                    <p className="mt-1 text-sm text-error-500">
+                                                        {fieldState.error.message}
+                                                    </p>
+                                                )}
+                                            </Field>
+                                        )}
+                                    />
+
+                                    <Controller
                                         name="bordereau"
                                         control={control}
                                         render={({ field, fieldState }) => (
@@ -151,12 +242,12 @@ export default function BordereauForm() {
                                                 }
                                             >
                                                 <Label htmlFor="bordereau">
-                                                    Bordereau
+                                                    Bordereau Name
                                                 </Label>
                                                 <Input
                                                     {...field}
                                                     id="bordereau"
-                                                    placeholder="Enter Bordereau"
+                                                    placeholder="Enter Bordereau Name"
                                                     value={field.value ?? ""}
                                                 />
                                                 {fieldState.error && (

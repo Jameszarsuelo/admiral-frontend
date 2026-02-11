@@ -1,5 +1,5 @@
 import PageBreadcrumb from "@/components/common/PageBreadCrumb";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { useNavigate } from "react-router";
 import Spinner from "@/components/ui/spinner/Spinner";
 import Button from "@/components/ui/button/Button";
@@ -16,6 +16,7 @@ import Radio from "@/components/form/input/Radio";
 import Label from "@/components/form/Label";
 import { downloadSupplierDocument } from "@/database/supplier_api";
 import { dateFormat } from "@/helper/dateFormat";
+import { coerceBlobType, makeObjectUrl } from "@/helper/blobFile";
 
 export default function DMView() {
     const navigate = useNavigate();
@@ -24,6 +25,7 @@ export default function DMView() {
     const [isDeleting, setIsDeleting] = useState(false);
     const [isContactModalOpen, setIsContactModalOpen] = useState(false);
     const [selectedSearch, setSelectedSearch] = useState<string>("0");
+    const [showExpired, setShowExpired] = useState<string>("0");
     const {
         data: documents,
         isLoading,
@@ -41,6 +43,27 @@ export default function DMView() {
         setSelectedId(id);
         setIsContactModalOpen((prev) => !prev);
     };
+
+    const isExpired = (expiryDate: string | null | undefined) => {
+        if (!expiryDate) return false;
+
+        // If date comes as YYYY-MM-DD, treat it as valid through end-of-day local time.
+        const normalized = expiryDate.includes("T")
+            ? expiryDate
+            : `${expiryDate}T23:59:59`;
+
+        const parsed = new Date(normalized);
+        if (Number.isNaN(parsed.getTime())) return false;
+        return parsed.getTime() < Date.now();
+    };
+
+    const filteredDocuments = useMemo(() => {
+        if (!documents) return documents;
+        // showExpired: "0" = No (hide expired), "1" = Yes (include expired)
+        if (showExpired === "1") return documents;
+
+        return documents.filter((d) => !isExpired(d.expiry_date));
+    }, [documents, showExpired]);
 
     const columns: ColumnDef<IDocumentSchema>[] = [
         { accessorKey: "id", header: "ID" },
@@ -80,29 +103,55 @@ export default function DMView() {
             header: "Actions",
             cell: ({ row }) => {
                 const item = row.original as IDocumentSchema;
+
+                const getFilename = () => {
+                    const name = row.getValue("name");
+                    return typeof name === "string" && name.trim().length > 0
+                        ? name
+                        : `document-${item.id}`;
+                };
+
                 const handleDownload = async (id: number) => {
+                    const filename = getFilename();
                     const blob = await downloadSupplierDocument(id);
-    
-                    const url = window.URL.createObjectURL(blob);
+                    const typedBlob = coerceBlobType(blob, filename);
+                    const { url } = makeObjectUrl(typedBlob);
+
                     const link = window.document.createElement("a");
                     link.href = url;
-                    link.setAttribute("download", row.getValue("name"));
+                    link.download = filename;
                     window.document.body.appendChild(link);
                     link.click();
-    
                     link.remove();
-                    window.URL.revokeObjectURL(url);
                 };
+
                 const handleOpen = async (id: number) => {
-                    const blob = await downloadSupplierDocument(id);
+                    const filename = getFilename();
 
-                    const url = window.URL.createObjectURL(blob);
-
-                    window.open(
-                        url,
+                    // Open the tab synchronously (avoids popup blockers for slower PDF loads)
+                    const opened = window.open(
+                        "",
                         "_blank",
-                        "noopener,noreferrer,width=1000,height=800"
+                        "noopener,noreferrer,width=1000,height=800",
                     );
+                    if (opened) {
+                        try {
+                            opened.document.title = filename;
+                            opened.document.body.innerHTML = "<p style='font-family: system-ui; padding: 16px;'>Loading...</p>";
+                        } catch {
+                            // ignore
+                        }
+                    }
+
+                    const blob = await downloadSupplierDocument(id);
+                    const typedBlob = coerceBlobType(blob, filename);
+                    const { url } = makeObjectUrl(typedBlob);
+
+                    if (opened) {
+                        opened.location.href = url;
+                    } else {
+                        window.open(url, "_blank", "noopener,noreferrer,width=1000,height=800");
+                    }
                 };
                 return (
                     <div className="flex items-center gap-2">
@@ -219,35 +268,63 @@ export default function DMView() {
 
                     <div className="max-w-full overflow-x-auto custom-scrollbar">
                         <div className="grid">
-                            <div className="flex justify-center-safe gap-8">
-                                <Label
-                                    htmlFor="include_obsolete"
-                                    className="font-bold text-md mb-0"
-                                >
-                                    Include Obsolete:
-                                </Label>
-                                <Radio
-                                    id="obsolete_no"
-                                    value="0"
-                                    checked={selectedSearch === "0"}
-                                    onChange={() => setSelectedSearch("0")}
-                                    label="No"
-                                    name="include_obsolete"
-                                />
+                            <div className="flex flex-col items-center justify-center-safe gap-4 sm:flex-row sm:gap-10">
+                                <div className="flex items-center gap-8">
+                                    <Label
+                                        htmlFor="include_obsolete"
+                                        className="font-bold text-md mb-0"
+                                    >
+                                        Include Obsolete:
+                                    </Label>
+                                    <Radio
+                                        id="obsolete_no"
+                                        value="0"
+                                        checked={selectedSearch === "0"}
+                                        onChange={() => setSelectedSearch("0")}
+                                        label="No"
+                                        name="include_obsolete"
+                                    />
 
-                                <Radio
-                                    id="obsolete_yes"
-                                    value="1"
-                                    checked={selectedSearch === "1"}
-                                    onChange={() => setSelectedSearch("1")}
-                                    label="Yes"
-                                    name="include_obsolete"
-                                />
+                                    <Radio
+                                        id="obsolete_yes"
+                                        value="1"
+                                        checked={selectedSearch === "1"}
+                                        onChange={() => setSelectedSearch("1")}
+                                        label="Yes"
+                                        name="include_obsolete"
+                                    />
+                                </div>
+
+                                <div className="flex items-center gap-8">
+                                    <Label
+                                        htmlFor="show_expired"
+                                        className="font-bold text-md mb-0"
+                                    >
+                                        Show Expired:
+                                    </Label>
+                                    <Radio
+                                        id="expired_no"
+                                        value="0"
+                                        checked={showExpired === "0"}
+                                        onChange={() => setShowExpired("0")}
+                                        label="No"
+                                        name="show_expired"
+                                    />
+
+                                    <Radio
+                                        id="expired_yes"
+                                        value="1"
+                                        checked={showExpired === "1"}
+                                        onChange={() => setShowExpired("1")}
+                                        label="Yes"
+                                        name="show_expired"
+                                    />
+                                </div>
                             </div>
                         </div>
                         <div className="min-w-[1000px] xl:min-w-full px-2">
-                            {!isLoading && documents ? (
-                                <DataTable columns={columns} data={documents} />
+                            {!isLoading && filteredDocuments ? (
+                                <DataTable columns={columns} data={filteredDocuments} />
                             ) : (
                                 <div className="flex items-center justify-center py-12">
                                     <Spinner size="lg" />

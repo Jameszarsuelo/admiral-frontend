@@ -24,27 +24,10 @@ export const getBordeareauHeaders = (
         ),
     },
     {
-        accessorKey: "bordeareau_name",
-        header: "Boredereau",
+        accessorKey: "bordereau",
+        header: "Bordereau Name",
         cell: ({ row }) => (
-            <div className="capitalize">{row.getValue("bordeareau_name")}</div>
-        ),
-    },
-    {
-        accessorKey: "comment",
-        accessorFn: (row) => {
-            const lastComment = row.comments?.slice(-1)[0]?.comment;
-
-            const limit = 30;
-            const truncated =
-                lastComment && lastComment.length > limit
-                    ? lastComment.slice(0, limit) + "..."
-                    : lastComment;
-            return truncated;
-        },
-        header: "Comments",
-        cell: ({ row }) => (
-            <div className="capitalize">{row.getValue("comment")}</div>
+            <div className="capitalize">{row.getValue("bordereau")}</div>
         ),
     },
     {

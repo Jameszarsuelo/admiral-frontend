@@ -41,12 +41,33 @@ export function DataTable<TData, TValue>({
         React.useState<VisibilityState>({});
     const [rowSelection, setRowSelection] = React.useState({});
     const [globalFilter, setGlobalFilter] = React.useState("");
+    const [pagination, setPagination] = React.useState({
+        pageIndex: 0,
+        pageSize: 10,
+    });
+
+    const csvEscape = React.useCallback((value: unknown) => {
+        const normalized =
+            value === null || value === undefined
+                ? ""
+                : typeof value === "string"
+                  ? value
+                  : typeof value === "number" || typeof value === "boolean"
+                    ? String(value)
+                    : JSON.stringify(value);
+
+        const needsQuotes = /[\n\r,"]/.test(normalized);
+        const escaped = normalized.replace(/"/g, '""');
+        return needsQuotes ? `"${escaped}"` : escaped;
+    }, []);
+
 
     const table = useReactTable({
         data,
         columns,
         onSortingChange: setSorting,
         onColumnFiltersChange: setColumnFilters,
+        onPaginationChange: setPagination,
         getCoreRowModel: getCoreRowModel(),
         getPaginationRowModel: getPaginationRowModel(),
         getSortedRowModel: getSortedRowModel(),
@@ -61,8 +82,43 @@ export function DataTable<TData, TValue>({
             columnVisibility,
             rowSelection,
             globalFilter,
+            pagination,
         },
     });
+
+    const exportCsv = React.useCallback(() => {
+        const visibleColumns = table.getVisibleLeafColumns();
+
+        const headers = visibleColumns.map((col) => {
+            const header = col.columnDef.header;
+            return typeof header === "string" && header.trim().length > 0
+                ? header
+                : col.id;
+        });
+
+        const rows = table.getRowModel().rows;
+
+        const csvLines: string[] = [];
+        csvLines.push(headers.map(csvEscape).join(","));
+        for (const row of rows) {
+            const values = visibleColumns.map((col) =>
+                csvEscape(row.getValue(col.id)),
+            );
+            csvLines.push(values.join(","));
+        }
+
+        const csv = csvLines.join("\n");
+        const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement("a");
+        link.href = url;
+        const date = new Date().toISOString().slice(0, 10);
+        link.download = `table-export-${date}.csv`;
+        document.body.appendChild(link);
+        link.click();
+        link.remove();
+        URL.revokeObjectURL(url);
+    }, [csvEscape, table]);
 
     React.useEffect(() => {
         if (onRowSelectionChange) {
@@ -77,13 +133,43 @@ export function DataTable<TData, TValue>({
 
     return (
         <>
-            <div className="flex items-center py-4">
+            <div className="flex flex-col gap-3 py-4 sm:flex-row sm:items-center sm:justify-between">
                 <Input
                     placeholder="Search all columns..."
                     value={globalFilter ?? ""}
                     onChange={(event) => setGlobalFilter(event.target.value)}
                     className="max-w-sm"
                 />
+
+                <div className="flex items-center gap-3">
+                    <div className="flex items-center gap-2">
+                        <span className="text-sm text-muted-foreground">
+                            Rows
+                        </span>
+                        <select
+                            className="h-9 rounded-md border bg-transparent px-2 text-sm"
+                            value={table.getState().pagination.pageSize}
+                            onChange={(e) =>
+                                table.setPageSize(Number(e.target.value))
+                            }
+                        >
+                            {[10, 25, 50, 100].map((size) => (
+                                <option key={size} value={size}>
+                                    {size}
+                                </option>
+                            ))}
+                        </select>
+                    </div>
+
+                    <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={exportCsv}
+                        disabled={table.getRowModel().rows.length === 0}
+                    >
+                        Export CSV
+                    </Button>
+                </div>
             </div>
             <div className="overflow-hidden rounded-md border">
                 <Table>

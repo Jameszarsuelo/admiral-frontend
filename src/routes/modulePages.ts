@@ -65,6 +65,18 @@ const ReasonIndex = lazy(
 const ReasonForm = lazy(
     () => import("../pages/SystemConfigurations/Reason/ReasonForm"),
 );
+const DepartmentIndex = lazy(
+    () => import("../pages/SystemConfigurations/Departments/DepartmentIndex"),
+);
+const DepartmentForm = lazy(
+    () => import("../pages/SystemConfigurations/Departments/DepartmentForm"),
+);
+const BordereauTypeIndex = lazy(
+    () => import("../pages/SystemConfigurations/BordereauTypes/BordereauTypeIndex"),
+);
+const BordereauTypeForm = lazy(
+    () => import("../pages/SystemConfigurations/BordereauTypes/BordereauTypeForm"),
+);
 const OutcomeIndex = lazy(
     () => import("../pages/SystemConfigurations/Outcomes/OutcomeIndex"),
 );
@@ -221,6 +233,18 @@ export const modulePageMap: Record<string, ModuleComponents> = {
         create: ReasonForm,
         edit: ReasonForm,
         view: ReasonIndex,
+    },
+    departments: {
+        main: DepartmentIndex,
+        create: DepartmentForm,
+        edit: DepartmentForm,
+        view: DepartmentIndex,
+    },
+    bordereau_types: {
+        main: BordereauTypeIndex,
+        create: BordereauTypeForm,
+        edit: BordereauTypeForm,
+        view: BordereauTypeIndex,
     },
     document_management: {
         main: DMView,

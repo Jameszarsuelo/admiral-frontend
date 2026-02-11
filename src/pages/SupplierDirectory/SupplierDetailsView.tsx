@@ -2,14 +2,17 @@ import Spinner from "@/components/ui/spinner/Spinner";
 import { dateFormat } from "@/helper/dateFormat";
 import SupplierContactsTable from "./SupplierContactsTable/SupplierContactTable";
 import { ISupplierStatisticsSchema } from "@/types/SupplierSchema";
+import { Modal } from "@/components/ui/modal";
 import {
     CalendarDaysIcon,
     DocumentCheckIcon,
     DocumentCurrencyPoundIcon,
     DocumentMagnifyingGlassIcon,
     DocumentTextIcon,
+    PhotoIcon,
 } from "@heroicons/react/24/outline";
 import SupplierDocumentsTable from "./SupplierDocumentTable/SupplierDocumentsTable";
+import { useMemo, useState } from "react";
 
 export default function SupplierDetailsView({
     isLoading,
@@ -20,7 +23,33 @@ export default function SupplierDetailsView({
     supplier: ISupplierStatisticsSchema | null;
     id?: string;
 }) {
+    const [isLogoPreviewOpen, setIsLogoPreviewOpen] = useState(false);
+
+    const logoUrl = useMemo(() => {
+        if (!supplier?.logo) return null;
+        if (typeof supplier.logo !== "string") return null;
+        if (supplier.logo.startsWith("http://") || supplier.logo.startsWith("https://")) {
+            return supplier.logo;
+        }
+        return `${import.meta.env.VITE_API_URL}${supplier.logo}`;
+    }, [supplier?.logo]);
+
     const supplierDetails = [
+        {
+            label: "Supplier Logo",
+            value: logoUrl ? "Click to preview" : "-",
+            icon: logoUrl ? (
+                <img
+                    src={logoUrl}
+                    alt="Supplier Logo"
+                    className="h-10 w-10 rounded-full object-cover"
+                    loading="lazy"
+                />
+            ) : (
+                <PhotoIcon className="h-6 w-6 text-cyan-600" />
+            ),
+            onClick: logoUrl ? () => setIsLogoPreviewOpen(true) : undefined,
+        },
         {
             label: "Bordereau Received",
             value: String(
@@ -98,7 +127,21 @@ export default function SupplierDetailsView({
                                         {supplierDetails.map((card, i) => (
                                             <div
                                                 key={i}
-                                                className="flex items-center gap-4 rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 p-4 shadow-md"
+                                                className={`flex items-center gap-4 rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 p-4 shadow-md ${
+                                                    card.onClick
+                                                        ? "cursor-pointer hover:shadow-lg transition-shadow"
+                                                        : ""
+                                                }`}
+                                                onClick={card.onClick}
+                                                role={card.onClick ? "button" : undefined}
+                                                tabIndex={card.onClick ? 0 : undefined}
+                                                onKeyDown={(e) => {
+                                                    if (!card.onClick) return;
+                                                    if (e.key === "Enter" || e.key === " ") {
+                                                        e.preventDefault();
+                                                        card.onClick();
+                                                    }
+                                                }}
                                             >
                                                 <div className="shrink-0">
                                                     <div className="h-12 w-12 rounded-full bg-cyan-50 dark:bg-cyan-900 flex items-center justify-center">
@@ -182,9 +225,7 @@ export default function SupplierDetailsView({
                                             </p>
                                             <p className="text-sm font-medium text-gray-800 dark:text-white/90">
                                                 {supplier?.created_at
-                                                    ? dateFormat(
-                                                          supplier?.created_at,
-                                                      )
+                                                    ? dateFormat(supplier.created_at)
                                                     : "-"}
                                             </p>
                                         </div>
@@ -266,10 +307,8 @@ export default function SupplierDetailsView({
                                                 Updated Date
                                             </p>
                                             <p className="text-sm font-medium text-gray-800 dark:text-white/90">
-                                                {supplier?.created_at
-                                                    ? dateFormat(
-                                                          supplier?.updated_at,
-                                                      )
+                                                {supplier?.updated_at
+                                                    ? dateFormat(supplier.updated_at)
                                                     : "-"}
                                             </p>
                                         </div>
@@ -297,7 +336,7 @@ export default function SupplierDetailsView({
                                             </p>
                                         </div>
 
-                                        <div>
+                                        {/* <div>
                                             <p className="mb-2 text-xs leading-normal text-gray-500 dark:text-gray-400">
                                                 Preferred Payment Day
                                             </p>
@@ -305,7 +344,7 @@ export default function SupplierDetailsView({
                                                 {supplier?.preferred_payment_day ??
                                                     "-"}
                                             </p>
-                                        </div>
+                                        </div> */}
 
                                         <div>
                                             <p className="mb-2 text-xs leading-normal text-gray-500 dark:text-gray-400">
@@ -367,6 +406,31 @@ export default function SupplierDetailsView({
                     </div>
                 </>
             )}
+
+            <Modal
+                isOpen={isLogoPreviewOpen}
+                onClose={() => setIsLogoPreviewOpen(false)}
+                className="max-w-3xl p-6"
+            >
+                <div className="px-2 py-2">
+                    <h3 className="text-lg font-semibold mb-4">
+                        {supplier?.name ?? "Supplier"} Logo
+                    </h3>
+                    {logoUrl ? (
+                        <div className="flex items-center justify-center">
+                            <img
+                                src={logoUrl}
+                                alt="Supplier Logo Preview"
+                                className="max-h-[70vh] w-auto rounded-lg object-contain"
+                            />
+                        </div>
+                    ) : (
+                        <p className="text-sm text-gray-600 dark:text-gray-300">
+                            No logo available.
+                        </p>
+                    )}
+                </div>
+            </Modal>
         </div>
     );
 }

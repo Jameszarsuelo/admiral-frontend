@@ -7,7 +7,18 @@ export async function upsertUser(userData: IUserCreate): Promise<IUserCreate> {
         const response = userData.id
             ? await api.put(`/users/${userData.id}`, userData)
             : await api.post(`/users`, userData);
-        return response.data;
+
+        // Backend returns `{ message, user }` for create/update.
+        // Normalize to return the user object so callers can reliably use `.contact`.
+        const payload = response.data as unknown as
+            | IUserCreate
+            | { user?: IUserCreate };
+
+        if (payload && typeof payload === "object" && "user" in payload) {
+            return (payload as { user?: IUserCreate }).user as IUserCreate;
+        }
+
+        return payload as IUserCreate;
     } catch (error) {
         // Extract validation errors from axios error response
         if (error instanceof AxiosError && error.response?.data) {

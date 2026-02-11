@@ -1,7 +1,38 @@
 import EcommerceMetrics from "../../components/ecommerce/EcommerceMetrics";
 import RecentOrders from "../../components/ecommerce/RecentOrders";
+import { useQuery } from "@tanstack/react-query";
+import { fetchBordereauList } from "@/database/bordereau_api";
 
 export default function Home() {
+
+    const formatCount = (count: number) => new Intl.NumberFormat().format(count);
+
+    const { data: bordereauList, isLoading: isBordereauxLoading } = useQuery({
+        queryKey: ["dashboard", "bordereaux", "uploaded"],
+        queryFn: () => fetchBordereauList({ page: 1, per_page: 1 }),
+        staleTime: 60_000,
+    });
+
+    const { data: processedList, isLoading: isProcessedLoading } = useQuery({
+        queryKey: ["dashboard", "bordereaux", "processed"],
+        queryFn: () => fetchBordereauList({ page: 1, per_page: 1, invoice_status: "closed" }),
+        staleTime: 60_000,
+    });
+
+    const bordereauxUploadedTotal = bordereauList?.total ?? bordereauList?.data?.length ?? 0;
+    const bordereauxUploadedValue = isBordereauxLoading ? "..." : formatCount(bordereauxUploadedTotal);
+
+    const bordereauxProcessedTotal = processedList?.total ?? processedList?.data?.length ?? 0;
+    const bordereauxProcessedValue = isProcessedLoading ? "..." : formatCount(bordereauxProcessedTotal);
+
+    const bordereauxQueriesValue = isBordereauxLoading
+        ? "..."
+        : formatCount(bordereauList?.queryCount ?? 0);
+
+    // Interpreting "Approaching Deadline" as "Max Payment Day Tomorrow" from the API.
+    const bordereauxApproachingDeadlineValue = isBordereauxLoading
+        ? "..."
+        : formatCount(bordereauList?.deadlineTomorrowCount ?? 0);
 
     return (
         <>
@@ -10,11 +41,11 @@ export default function Home() {
                     <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 md:gap-6">
                         <EcommerceMetrics
                             label="Bordereaux Uploaded"
-                            value="11,987"
+                            value={bordereauxUploadedValue}
                         />
                         <EcommerceMetrics
                             label="Bordereaux Processed"
-                            value="5,987"
+                            value={bordereauxProcessedValue}
                         />
                         <EcommerceMetrics label="Task Assigned" value="11" />
                         <EcommerceMetrics label="Task Completed" value="4" />
@@ -25,11 +56,11 @@ export default function Home() {
                     <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 md:gap-6">
                         <EcommerceMetrics
                             label="Bordereaux Queries"
-                            value="234"
+                            value={bordereauxQueriesValue}
                         />
                         <EcommerceMetrics
                             label="Bordereaux Approaching Deadline"
-                            value="87"
+                            value={bordereauxApproachingDeadlineValue}
                         />
                         <EcommerceMetrics label="Tasks in Progress" value="7" />
                         <EcommerceMetrics label="Tasks Overdue" value="2" />

@@ -17,6 +17,22 @@ export const OptionalString = z.string().trim().min(1).optional();
 export const NullableString = z.string().trim().min(1).nullable();
 export const EmailString = z.string().email();
 
+const RequiredIntFromText = (label: string) =>
+    z
+        .union([z.string(), z.number()])
+        .transform((value) => {
+            if (typeof value === "number") return value;
+
+            const trimmed = value.trim();
+            if (trimmed === "") return Number.NaN;
+
+            return Number(trimmed);
+        })
+        .refine((value) => Number.isFinite(value), {
+            message: `${label} is required`,
+        })
+        .pipe(z.number().int().nonnegative());
+
 export const SupplierBaseSchema = z.object({
     id: z.number().int().positive(),
     // user_id: z.number().int().optional(),
@@ -86,10 +102,10 @@ export const SupplierFormSchema = z.object({
     phone: z.string().optional(),
     bordereau_query_email: EmailString.optional(),
     contact_id: z.number({ message: "Contact is required" }).int(),
-    max_payment_days: z.number().int().nonnegative().optional(),
-    target_payment_days: z.number().int().nonnegative().optional(),
+    max_payment_days: RequiredIntFromText("Max Payment Days"),
+    target_payment_days: RequiredIntFromText("Target Payment Days"),
     preferred_payment_day: z.string().optional(),
-    priority: z.number().int().optional(),
+    priority: RequiredIntFromText("Supplier Priority"),
     created_by: z.number().int().optional(),
     updated_by: z.number().int().optional(),
     document: DocumentCreateSchema.optional(),
@@ -108,6 +124,7 @@ export const SupplierStatisticsSchema = SupplierBaseSchema.pick({
     contact_id: true,
     county: true,
     country: true,
+    logo: true,
     max_payment_days: true,
     name: true,
     phone: true,
@@ -137,7 +154,8 @@ export const SupplierDocumentSchema = DocumentBaseSchema.omit({
 });
 
 export type ISupplierSchema = z.infer<typeof SupplierBaseSchema>;
-export type ISupplierFormSchema = z.infer<typeof SupplierFormSchema>;
+export type ISupplierFormInputSchema = z.input<typeof SupplierFormSchema>;
+export type ISupplierFormSchema = z.output<typeof SupplierFormSchema>;
 // export type ISupplierUpdateSchema = z.infer<typeof SupplierUpdateSchema>;
 export type ISupplierStatisticsSchema = z.infer<
     typeof SupplierStatisticsSchema

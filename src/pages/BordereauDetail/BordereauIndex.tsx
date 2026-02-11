@@ -24,6 +24,8 @@ import {
     fetchBordereauViewData,
     uploadBordereauCsv,
 } from "@/database/bordereau_api";
+import { fetchDepartmentList } from "@/database/department_api";
+import { fetchBordereauTypeList } from "@/database/bordereau_type_api";
 import { IBordereauIndex } from "@/types/BordereauSchema";
 import Alert from "@/components/ui/alert/Alert";
 import { fetchBpcOptions } from "@/database/bpc_api";
@@ -57,13 +59,17 @@ export default function BordereauIndex() {
     } = useForm<{
         document?: File | null;
         admiral_invoice_type?: string;
+        bordereau_type_id?: string;
         supplier_id?: string;
+        bordereau_department_id?: string;
         bordereau?: string;
     }>({
         defaultValues: {
             document: undefined,
             admiral_invoice_type: "",
+            bordereau_type_id: "",
             supplier_id: "",
+            bordereau_department_id: "",
             bordereau: "",
         },
     });
@@ -100,6 +106,17 @@ export default function BordereauIndex() {
     const [closeReasonOptions, setCloseReasonOptions] = useState<{ value: number; label: string }[]>([]);
     const [closeOutcomeOptions, setCloseOutcomeOptions] = useState<{ value: number; label: string }[]>([]);
 
+    const handleDownloadSampleBordereauCsv = () => {
+        // File lives in `frontend/public/files/sample bordereau.csv`
+        // and is served by Vite at `/files/sample%20bordereau.csv`.
+        const link = document.createElement("a");
+        link.href = "/files/sample%20bordereau.csv";
+        link.download = "sample bordereau.csv";
+        document.body.appendChild(link);
+        link.click();
+        link.remove();
+    };
+
     const [filters, setFilters] = useState({
         invoice_status: "",
         supplier_id: "",
@@ -121,6 +138,22 @@ export default function BordereauIndex() {
         },
         refetchInterval: 1000 * 60 * 5,
         refetchIntervalInBackground: true,
+    });
+
+    const {
+        data: bordereauSummary,
+        refetch: refetchSummary,
+    } = useQuery({
+        queryKey: ["bordereau-summary"],
+        queryFn: async () => {
+            // Keep payload tiny; we only need the counts.
+            return await fetchBordereauList({ page: 1, per_page: 1 });
+        },
+        // Keep the cards fresh without hammering the full table query.
+        refetchInterval: 15_000,
+        refetchIntervalInBackground: true,
+        refetchOnWindowFocus: true,
+        staleTime: 0,
     });
 
     console.log(bordereauData);
@@ -204,6 +237,28 @@ export default function BordereauIndex() {
             const bordereauValidations =
                 await fetchBordereauValidationViewData();
             return bordereauValidations || [];
+        },
+    });
+
+    const { data: departmentOptions } = useQuery({
+        queryKey: ["departments-options"],
+        queryFn: async () => {
+            const departments = await fetchDepartmentList();
+            return (departments || []).map((d: any) => ({
+                value: String(d.id ?? ""),
+                label: String(d.department ?? d.name ?? ""),
+            }));
+        },
+    });
+
+    const { data: bordereauTypeOptions } = useQuery({
+        queryKey: ["bordereau-types-options"],
+        queryFn: async () => {
+            const types = await fetchBordereauTypeList();
+            return (types || []).map((t: any) => ({
+                value: String(t.id ?? ""),
+                label: String(t.bordereau_type ?? t.name ?? ""),
+            }));
         },
     });
 
@@ -313,31 +368,36 @@ export default function BordereauIndex() {
                         <div className="rounded-2xl border border-gray-200 bg-white px-5 py-5 dark:border-gray-800 dark:bg-white/3 sm:px-6 mb-6">
                             <div className="grid grid-cols-4 gap-3">
                                 {[
-                                    { key: "Overdue", label: "Overdue" },
+                                    { key: "Overdue", label: "Overdue", value: bordereauSummary?.overdueCount },
                                     {
                                         key: "MaxPayment",
                                         label: "Max Payment Day Tomorrow",
-                                        value: bordereauData?.overdueCount
+                                        value: bordereauSummary?.deadlineTomorrowCount,
                                     },
                                     {
                                         key: "TargetDay",
                                         label: "Target Day Tomorrow",
-                                        value: bordereauData?.targetdateCount
+                                        value: bordereauSummary?.targetdateCount,
                                     },
                                     {
                                         key: "OverdueMaxPaymentTargetWorkload",
                                         label: "Overdue / MaxPayment / TargetWorkload",
+                                        value:
+                                            (bordereauSummary?.overdueCount ?? 0) +
+                                            (bordereauSummary?.deadlineTomorrowCount ?? 0) +
+                                            (bordereauSummary?.targetdateCount ?? 0),
                                     },
-                                    { key: "Queued", label: "Queued", value: bordereauData?.queuedCount },
+                                    { key: "Queued", label: "Queued", value: bordereauSummary?.queuedCount },
                                     {
                                         key: "In Progress",
                                         label: "In Progress",
-                                        value: bordereauData?.inProgressCount
+                                        value: bordereauSummary?.inProgressCount,
                                     },
-                                    { key: "Query", label: "Query", value: bordereauData?.queryCount },
+                                    { key: "Query", label: "Query", value: bordereauSummary?.queryCount },
                                     {
                                         key: "QueuedWorkload",
                                         label: "Queued Workload",
+                                        value: (bordereauSummary?.queuedCount ?? 0) + (bordereauSummary?.inProgressCount ?? 0) + (bordereauSummary?.queryCount ?? 0),
                                     },
                                 ].map((s) => (
                                     <div
@@ -691,11 +751,13 @@ export default function BordereauIndex() {
                 >
                     <div className="p-6 md:p-8">
                         <h3 className="text-lg font-semibold">
-                            Upload Invoices CSV
+                            Upload Bordereau CSV
                         </h3>
                         <p className="text-sm text-gray-600 mt-2">
-                            Upload a CSV file containing invoices — the file
-                            will be processed and invoices will be created.
+                            Upload a CSV containing a supplier bordereau. The file
+                            will be imported and individual Bordereau activities created.
+                            NOTE: Each upload can only contain Bordereau activities from a single supplier,
+                            with a single Work type and a single bordereau type
                         </p>
 
                         <form
@@ -721,6 +783,7 @@ export default function BordereauIndex() {
                                         // refetch invoice list
                                         try {
                                             await refetch?.();
+                                            await refetchSummary?.();
                                         } catch (err) {
                                             console.warn(
                                                 "Refetch after upload failed",
@@ -742,6 +805,32 @@ export default function BordereauIndex() {
                             })}
                         >
                             <div className="grid grid-cols-1 gap-6 ">
+                                <Controller
+                                    name="bordereau_department_id"
+                                    control={csvControl}
+                                    render={({ field, fieldState }) => (
+                                        <Field data-invalid={fieldState.invalid}>
+                                            <Label htmlFor="bordereau_department_id">
+                                                Department
+                                            </Label>
+                                            <Combobox
+                                                value={field.value ?? ""}
+                                                options={departmentOptions || []}
+                                                placeholder="Select Department"
+                                                searchPlaceholder="Search department..."
+                                                onChange={(value) =>
+                                                    field.onChange(Number(value))
+                                                }
+                                            />
+                                            {fieldState.error && (
+                                                <p className="mt-1 text-sm text-error-500">
+                                                    {fieldState.error.message}
+                                                </p>
+                                            )}
+                                        </Field>
+                                    )}
+                                />
+
                                 <Controller
                                     name="supplier_id"
                                     control={csvControl}
@@ -806,6 +895,32 @@ export default function BordereauIndex() {
                                 />
 
                                 <Controller
+                                    name="bordereau_type_id"
+                                    control={csvControl}
+                                    render={({ field, fieldState }) => (
+                                        <Field data-invalid={fieldState.invalid}>
+                                            <Label htmlFor="bordereau_type_id">
+                                                Bordereau Type
+                                            </Label>
+                                            <Combobox
+                                                value={field.value ?? ""}
+                                                options={bordereauTypeOptions || []}
+                                                placeholder="Select Bordereau Type"
+                                                searchPlaceholder="Search bordereau types..."
+                                                onChange={(value) =>
+                                                    field.onChange(Number(value))
+                                                }
+                                            />
+                                            {fieldState.error && (
+                                                <p className="mt-1 text-sm text-error-500">
+                                                    {fieldState.error.message}
+                                                </p>
+                                            )}
+                                        </Field>
+                                    )}
+                                />
+
+                                <Controller
                                     name="bordereau"
                                     control={csvControl}
                                     render={({ field, fieldState }) => (
@@ -813,12 +928,12 @@ export default function BordereauIndex() {
                                             data-invalid={fieldState.invalid}
                                         >
                                             <Label htmlFor="bordereau">
-                                                Bordereau
+                                                Bordereau Name
                                             </Label>
                                             <Input
                                                 {...field}
                                                 id="bordereau"
-                                                placeholder="Enter Bordereau"
+                                                placeholder="Enter Bordereau Name"
                                                 value={field.value ?? ""}
                                             />
                                             {fieldState.error && (
@@ -856,19 +971,31 @@ export default function BordereauIndex() {
                             </div>
 
                             <div className="mt-6 flex justify-end gap-3">
-                                <Button
-                                    variant="danger"
-                                    onClick={() => {
-                                        setIsCsvModalOpen(false);
-                                        resetCsv();
-                                    }}
-                                    disabled={isUploading}
-                                >
-                                    Cancel
-                                </Button>
-                                <Button type="submit" disabled={isUploading}>
-                                    {isUploading ? "Uploading..." : "Upload"}
-                                </Button>
+                                <div className="flex w-full items-center justify-between gap-3">
+                                    <Button
+                                        variant="outline"
+                                        onClick={handleDownloadSampleBordereauCsv}
+                                        disabled={isUploading}
+                                    >
+                                        Download Sample CSV
+                                    </Button>
+
+                                    <div className="flex items-center justify-end gap-3">
+                                        <Button
+                                            variant="danger"
+                                            onClick={() => {
+                                                setIsCsvModalOpen(false);
+                                                resetCsv();
+                                            }}
+                                            disabled={isUploading}
+                                        >
+                                            Cancel
+                                        </Button>
+                                        <Button type="submit" disabled={isUploading}>
+                                            {isUploading ? "Uploading..." : "Upload"}
+                                        </Button>
+                                    </div>
+                                </div>
                             </div>
                         </form>
                     </div>
@@ -976,6 +1103,7 @@ export default function BordereauIndex() {
                                                 resetAssign();
                                                 try {
                                                     await refetch?.();
+                                                    await refetchSummary?.();
                                                 } catch (err) {
                                                     console.warn(
                                                         "Refetch after assign failed",
@@ -1137,6 +1265,7 @@ export default function BordereauIndex() {
                                                 resetProcess();
                                                 try {
                                                     await refetch?.();
+                                                    await refetchSummary?.();
                                                 } catch (err) {
                                                     console.warn(
                                                         "Refetch after process failed",
@@ -1315,6 +1444,7 @@ export default function BordereauIndex() {
                                                 resetClose();
                                                 try {
                                                     await refetch?.();
+                                                    await refetchSummary?.();
                                                 } catch (err) {
                                                     console.warn(
                                                         "Refetch after close failed",

@@ -10,6 +10,7 @@ import {
     removeSupplierDocument,
 } from "@/database/supplier_api";
 import { toast } from "sonner";
+import { coerceBlobType, makeObjectUrl } from "@/helper/blobFile";
 
 export const getSupplierDocumentHeaders = (
     supplierId: number,
@@ -50,17 +51,17 @@ export const getSupplierDocumentHeaders = (
             const document = row.original;
 
             const handleDownload = async (id: number) => {
+                const filename = String(row.getValue("name") ?? `document-${id}`);
                 const blob = await downloadSupplierDocument(id);
+                const typedBlob = coerceBlobType(blob, filename);
+                const { url } = makeObjectUrl(typedBlob);
 
-                const url = window.URL.createObjectURL(blob);
                 const link = window.document.createElement("a");
                 link.href = url;
-                link.setAttribute("download", row.getValue("name"));
+                link.download = filename;
                 window.document.body.appendChild(link);
                 link.click();
-
                 link.remove();
-                window.URL.revokeObjectURL(url);
             };
 
             const handleDelete = async (id: number) => {
@@ -74,15 +75,32 @@ export const getSupplierDocumentHeaders = (
             };
 
             const handleOpen = async (id: number) => {
-                const blob = await downloadSupplierDocument(id);
+                const filename = String(row.getValue("name") ?? `document-${id}`);
 
-                const url = window.URL.createObjectURL(blob);
-
-                window.open(
-                    url,
+                // Open the tab synchronously to avoid popup blockers
+                const opened = window.open(
+                    "",
                     "_blank",
                     "noopener,noreferrer,width=1000,height=800",
                 );
+                if (opened) {
+                    try {
+                        opened.document.title = filename;
+                        opened.document.body.innerHTML = "<p style='font-family: system-ui; padding: 16px;'>Loading...</p>";
+                    } catch {
+                        // ignore
+                    }
+                }
+
+                const blob = await downloadSupplierDocument(id);
+                const typedBlob = coerceBlobType(blob, filename);
+                const { url } = makeObjectUrl(typedBlob);
+
+                if (opened) {
+                    opened.location.href = url;
+                } else {
+                    window.open(url, "_blank", "noopener,noreferrer,width=1000,height=800");
+                }
             };
 
             return (

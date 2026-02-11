@@ -3,6 +3,26 @@ import { UserCreateSchema } from "./UserSchema";
 import { ContactCreateSchema } from "./ContactSchema";
 
 const NonEmptyString = z.string().min(1);
+const NullableTextInput = z
+    .preprocess(
+        (v) => (typeof v === "string" && v.trim() === "" ? null : v),
+        z.string().trim().min(1).nullable(),
+    )
+    .optional();
+
+const NullableContactId = z
+    .preprocess(
+        (v) => {
+            if (v === "" || v === null || v === undefined) return null;
+            if (typeof v === "string") {
+                const n = Number(v);
+                return Number.isFinite(n) ? n : v;
+            }
+            return v;
+        },
+        z.number().int().positive().nullable(),
+    )
+    .optional();
 // const TimeString = z.string().regex(/^\d{2}:\d{2}(:\d{2})?$/, "Invalid time (HH:MM or HH:MM:SS)");
 
 export const BPCStatusBaseSchema = z.object({
@@ -41,6 +61,14 @@ export const BPCCreateSchema = UserCreateSchema.omit({
 }).extend({
     id: z.number().int().optional(),
     user_id: z.number().int().optional(),
+    bpc_handle_fraud: z.boolean(),
+    bpc_handle_deadlock: z.boolean(),
+    bpc_handle_staff: z.boolean(),
+    bpc_handle_sensitive: z.boolean(),
+    bpc_line_manager: NullableContactId,
+    bpc_department: NullableTextInput,
+    bpc_dept_level2: NullableTextInput,
+    bpc_dept_level3: NullableTextInput,
     contact: ContactCreateSchema.omit({
         supplier_id: true,
         type: true,
