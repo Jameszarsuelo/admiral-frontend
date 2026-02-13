@@ -1,6 +1,5 @@
-import React from "react";
+import React, { useEffect, useState, type MouseEvent } from "react";
 import { useNavigate } from "react-router";
-import { useEffect, useState, type MouseEvent } from "react";
 import { Controller, useForm } from "react-hook-form";
 import { Modal } from "@/components/ui/modal";
 import FileInput from "@/components/form/input/FileInput";
@@ -42,6 +41,7 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 export default function BordereauIndex() {
     const navigate = useNavigate();
     const [isCsvModalOpen, setIsCsvModalOpen] = useState(false);
+    const [csvFileInputKey, setCsvFileInputKey] = useState(0);
     const [activeId, setActiveId] = useState<number | null>(null);
     const [bordereauSelected, setBordereauSelected] = useState<IBordereauIndex>(
         {} as IBordereauIndex,
@@ -245,7 +245,7 @@ export default function BordereauIndex() {
         queryFn: async () => {
             const departments = await fetchDepartmentList();
             return (departments || []).map((d: any) => ({
-                value: String(d.id ?? ""),
+                value: Number(d.id),
                 label: String(d.department ?? d.name ?? ""),
             }));
         },
@@ -256,7 +256,7 @@ export default function BordereauIndex() {
         queryFn: async () => {
             const types = await fetchBordereauTypeList();
             return (types || []).map((t: any) => ({
-                value: String(t.id ?? ""),
+                value: Number(t.id),
                 label: String(t.bordereau_type ?? t.name ?? ""),
             }));
         },
@@ -746,7 +746,11 @@ export default function BordereauIndex() {
                 {/* CSV Upload Modal */}
                 <Modal
                     isOpen={isCsvModalOpen}
-                    onClose={() => setIsCsvModalOpen(false)}
+                    onClose={() => {
+                        setIsCsvModalOpen(false);
+                        // Reset the native file input so reopening the modal doesn't show a stale file.
+                        setCsvFileInputKey((k) => k + 1);
+                    }}
                     className="max-w-3xl mx-4"
                 >
                     <div className="p-6 md:p-8">
@@ -780,6 +784,7 @@ export default function BordereauIndex() {
                                         );
                                         setIsCsvModalOpen(false);
                                         resetCsv();
+                                        setCsvFileInputKey((k) => k + 1);
                                         // refetch invoice list
                                         try {
                                             await refetch?.();
@@ -952,6 +957,7 @@ export default function BordereauIndex() {
                                         <div>
                                             <Label>Upload a file</Label>
                                             <FileInput
+                                                key={csvFileInputKey}
                                                 onChange={(e) => {
                                                     const file =
                                                         e.target.files?.[0];

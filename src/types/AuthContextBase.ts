@@ -13,7 +13,26 @@ export type AuthUser = {
 export type AuthContextType = {
     user: AuthUser | null;
     loading: boolean;
-    login: (email: string, password: string) => Promise<void>;
+    login: (
+        email: string,
+        password: string,
+    ) => Promise<
+        | { twoFaRequired: false }
+        | {
+              twoFaRequired: true;
+              challengeId: string;
+              twoFaType: number;
+              destination?: string;
+          }
+    >;
+    verifyTwoFactor: (challengeId: string, code: string) => Promise<void>;
+    resendTwoFactor: (
+        challengeId: string,
+    ) => Promise<{
+        challengeId: string;
+        twoFaType: number;
+        destination?: string;
+    }>;
     logout: () => Promise<void>;
     refreshUser: () => Promise<void>;
 };

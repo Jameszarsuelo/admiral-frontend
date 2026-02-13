@@ -13,9 +13,16 @@ export default function SignInForm() {
     const [showPassword, setShowPassword] = useState(false);
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
+    const [twoFaChallengeId, setTwoFaChallengeId] = useState<string | null>(
+        null,
+    );
+    const [twoFaDestination, setTwoFaDestination] = useState<string | null>(
+        null,
+    );
+    const [twoFaCode, setTwoFaCode] = useState("");
     const [error, setError] = useState<string | null>(null);
     const [submitting, setSubmitting] = useState(false);
-    const { login } = useAuth();
+    const { login, verifyTwoFactor, resendTwoFactor } = useAuth();
     const navigate = useNavigate();
     const location = useLocation();
     const from =
@@ -27,7 +34,19 @@ export default function SignInForm() {
         setError(null);
         setSubmitting(true);
         try {
-            await login(email.trim(), password);
+            if (!twoFaChallengeId) {
+                const result = await login(email.trim(), password);
+                if (result.twoFaRequired) {
+                    setTwoFaChallengeId(result.challengeId);
+                    setTwoFaDestination(result.destination ?? null);
+                    setTwoFaCode("");
+                    return;
+                }
+                navigate(from, { replace: true });
+                return;
+            }
+
+            await verifyTwoFactor(twoFaChallengeId, twoFaCode.trim());
             navigate(from, { replace: true });
         } catch (err) {
             const apiErr = err as AxiosError<{ message?: string }>;
@@ -124,58 +143,148 @@ export default function SignInForm() {
                         </div> */}
                         <form onSubmit={onSubmit}>
                             <div className="space-y-6">
-                                <div>
-                                    <Label>
-                                        Email{" "}
-                                        <span className="text-error-500">
-                                            *
-                                        </span>{" "}
-                                    </Label>
-                                    <Input
-                                        type="email"
-                                        placeholder="info@gmail.com"
-                                        value={email}
-                                        onChange={(e) =>
-                                            setEmail(e.target.value)
-                                        }
-                                        disabled={submitting}
-                                    />
-                                </div>
-                                <div>
-                                    <Label>
-                                        Password{" "}
-                                        <span className="text-error-500">
-                                            *
-                                        </span>{" "}
-                                    </Label>
-                                    <div className="relative">
-                                        <Input
-                                            type={
-                                                showPassword
-                                                    ? "text"
-                                                    : "password"
-                                            }
-                                            placeholder="Enter your password"
-                                            value={password}
-                                            onChange={(e) =>
-                                                setPassword(e.target.value)
-                                            }
-                                            disabled={submitting}
-                                        />
-                                        <span
-                                            onClick={() =>
-                                                setShowPassword(!showPassword)
-                                            }
-                                            className="absolute z-30 -translate-y-1/2 cursor-pointer right-4 top-1/2"
-                                        >
-                                            {showPassword ? (
-                                                <EyeIcon className="fill-gray-500 dark:fill-gray-400 size-5" />
-                                            ) : (
-                                                <EyeCloseIcon className="fill-gray-500 dark:fill-gray-400 size-5" />
-                                            )}
-                                        </span>
-                                    </div>
-                                </div>
+                                {!twoFaChallengeId ? (
+                                    <>
+                                        <div>
+                                            <Label>
+                                                Email{" "}
+                                                <span className="text-error-500">
+                                                    *
+                                                </span>{" "}
+                                            </Label>
+                                            <Input
+                                                type="email"
+                                                placeholder="info@gmail.com"
+                                                value={email}
+                                                onChange={(e) =>
+                                                    setEmail(e.target.value)
+                                                }
+                                                disabled={submitting}
+                                            />
+                                        </div>
+                                        <div>
+                                            <Label>
+                                                Password{" "}
+                                                <span className="text-error-500">
+                                                    *
+                                                </span>{" "}
+                                            </Label>
+                                            <div className="relative">
+                                                <Input
+                                                    type={
+                                                        showPassword
+                                                            ? "text"
+                                                            : "password"
+                                                    }
+                                                    placeholder="Enter your password"
+                                                    value={password}
+                                                    onChange={(e) =>
+                                                        setPassword(
+                                                            e.target.value,
+                                                        )
+                                                    }
+                                                    disabled={submitting}
+                                                />
+                                                <span
+                                                    onClick={() =>
+                                                        setShowPassword(
+                                                            !showPassword,
+                                                        )
+                                                    }
+                                                    className="absolute z-30 -translate-y-1/2 cursor-pointer right-4 top-1/2"
+                                                >
+                                                    {showPassword ? (
+                                                        <EyeIcon className="fill-gray-500 dark:fill-gray-400 size-5" />
+                                                    ) : (
+                                                        <EyeCloseIcon className="fill-gray-500 dark:fill-gray-400 size-5" />
+                                                    )}
+                                                </span>
+                                            </div>
+                                        </div>
+                                    </>
+                                ) : (
+                                    <>
+                                        <div>
+                                            <Label>
+                                                Verification Code{" "}
+                                                <span className="text-error-500">
+                                                    *
+                                                </span>{" "}
+                                            </Label>
+                                            <Input
+                                                type="text"
+                                                placeholder="Enter the 6-digit code"
+                                                value={twoFaCode}
+                                                onChange={(e) =>
+                                                    setTwoFaCode(e.target.value)
+                                                }
+                                                disabled={submitting}
+                                            />
+                                            <p className="mt-2 text-sm text-gray-500 dark:text-gray-400">
+                                                Code sent{twoFaDestination
+                                                    ? ` to ${twoFaDestination}`
+                                                    : ""}.
+                                            </p>
+                                        </div>
+
+                                        <div className="flex items-center justify-between">
+                                            <button
+                                                type="button"
+                                                className="text-sm text-brand-500 hover:text-brand-600 dark:text-brand-400"
+                                                disabled={submitting}
+                                                onClick={async () => {
+                                                    if (!twoFaChallengeId) {
+                                                        return;
+                                                    }
+                                                    setError(null);
+                                                    setSubmitting(true);
+                                                    try {
+                                                        const res =
+                                                            await resendTwoFactor(
+                                                                twoFaChallengeId,
+                                                            );
+                                                        setTwoFaChallengeId(
+                                                            res.challengeId,
+                                                        );
+                                                        setTwoFaDestination(
+                                                            res.destination ??
+                                                                null,
+                                                        );
+                                                    } catch (err) {
+                                                        const apiErr =
+                                                            err as AxiosError<{
+                                                                message?: string;
+                                                            }>;
+                                                        setError(
+                                                            apiErr.response
+                                                                ?.data
+                                                                ?.message ||
+                                                                "Unable to resend code",
+                                                        );
+                                                    } finally {
+                                                        setSubmitting(false);
+                                                    }
+                                                }}
+                                            >
+                                                Resend code
+                                            </button>
+
+                                            <button
+                                                type="button"
+                                                className="text-sm text-gray-500 hover:text-gray-700 dark:text-gray-400"
+                                                disabled={submitting}
+                                                onClick={() => {
+                                                    setTwoFaChallengeId(null);
+                                                    setTwoFaDestination(null);
+                                                    setTwoFaCode("");
+                                                    setError(null);
+                                                }}
+                                            >
+                                                Back
+                                            </button>
+                                        </div>
+                                    </>
+                                )}
                                 {error && (
                                     <p className="text-sm text-error-500">
                                         {error}
@@ -206,8 +315,12 @@ export default function SignInForm() {
                                         disabled={submitting}
                                     >
                                         {submitting
-                                            ? "Signing in..."
-                                            : "Sign in"}
+                                            ? twoFaChallengeId
+                                                ? "Verifying..."
+                                                : "Signing in..."
+                                            : twoFaChallengeId
+                                              ? "Verify"
+                                              : "Sign in"}
                                     </Button>
                                 </div>
                             </div>

@@ -47,11 +47,50 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     const login = useCallback(
         async (email: string, password: string) => {
             await ensureCsrfCookie();
-            await api.post("/login", { email, password });
+            const { data } = await api.post("/login", { email, password });
+
+            if (data?.two_fa_required) {
+                return {
+                    twoFaRequired: true as const,
+                    challengeId: String(data.challenge_id),
+                    twoFaType: Number(data.two_fa_type ?? 0),
+                    destination:
+                        typeof data.destination === "string"
+                            ? data.destination
+                            : undefined,
+                };
+            }
+
+            await fetchUser();
+            return { twoFaRequired: false as const };
+        },
+        [fetchUser],
+    );
+
+    const verifyTwoFactor = useCallback(
+        async (challengeId: string, code: string) => {
+            await ensureCsrfCookie();
+            await api.post("/two-factor/verify", {
+                challenge_id: challengeId,
+                code,
+            });
             await fetchUser();
         },
         [fetchUser],
     );
+
+    const resendTwoFactor = useCallback(async (challengeId: string) => {
+        await ensureCsrfCookie();
+        const { data } = await api.post("/two-factor/resend", {
+            challenge_id: challengeId,
+        });
+        return {
+            challengeId: String(data.challenge_id),
+            twoFaType: Number(data.two_fa_type ?? 0),
+            destination:
+                typeof data.destination === "string" ? data.destination : undefined,
+        };
+    }, []);
 
     const logout = useCallback(async () => {
         try {
@@ -72,10 +111,20 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
             user,
             loading,
             login,
+            verifyTwoFactor,
+            resendTwoFactor,
             logout,
             refreshUser: fetchUser,
         }),
-        [user, loading, login, logout, fetchUser],
+        [
+            user,
+            loading,
+            login,
+            verifyTwoFactor,
+            resendTwoFactor,
+            logout,
+            fetchUser,
+        ],
     );
 
     return (
