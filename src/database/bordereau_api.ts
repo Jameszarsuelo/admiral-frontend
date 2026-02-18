@@ -20,7 +20,7 @@ export async function fetchBordereauValidationViewData(): Promise<
     { value: number; label: string }[]
 > {
     try {
-        const response = await api.get(`/bordereau-validations`);
+        const response = await api.get(`/bordereau-validations/options`);
         return response.data;
     } catch (error) {
         if (error instanceof AxiosError && error.response?.data) {
@@ -169,6 +169,23 @@ export async function changeBordereauOutcome(bordereauId: number, outcomeId: num
         const response = await api.post(`/bordereau/${bordereauId}/outcome`, {
             outcome_id: outcomeId,
         });
+        return response.data;
+    } catch (error) {
+        if (error instanceof AxiosError && error.response?.data) {
+            throw error.response.data;
+        }
+        throw error;
+    }
+}
+
+export async function queueBordereauForBpc(params: {
+    bordereau_id: number;
+    bpc_id: number;
+    reason?: string;
+    instructions?: string;
+}): Promise<void> {
+    try {
+        const response = await api.post(`/bordereau/process`, params);
         return response.data;
     } catch (error) {
         if (error instanceof AxiosError && error.response?.data) {

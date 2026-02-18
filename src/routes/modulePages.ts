@@ -77,6 +77,12 @@ const BordereauTypeIndex = lazy(
 const BordereauTypeForm = lazy(
     () => import("../pages/SystemConfigurations/BordereauTypes/BordereauTypeForm"),
 );
+const WorkTypeIndex = lazy(
+    () => import("../pages/SystemConfigurations/WorkTypes/WorkTypeIndex"),
+);
+const WorkTypeForm = lazy(
+    () => import("../pages/SystemConfigurations/WorkTypes/WorkTypeForm"),
+);
 const OutcomeIndex = lazy(
     () => import("../pages/SystemConfigurations/Outcomes/OutcomeIndex"),
 );
@@ -245,6 +251,12 @@ export const modulePageMap: Record<string, ModuleComponents> = {
         create: BordereauTypeForm,
         edit: BordereauTypeForm,
         view: BordereauTypeIndex,
+    },
+    work_types: {
+        main: WorkTypeIndex,
+        create: WorkTypeForm,
+        edit: WorkTypeForm,
+        view: WorkTypeIndex,
     },
     document_management: {
         main: DMView,

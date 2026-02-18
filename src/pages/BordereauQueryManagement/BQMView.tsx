@@ -4,13 +4,22 @@ import Can from "@/components/auth/Can";
 import Button from "@/components/ui/button/Button";
 import { DataTable } from "@/components/ui/DataTable";
 import { ColumnDef } from "@tanstack/react-table";
-import {  PencilIcon } from "@/icons";
+import { PencilIcon } from "@/icons";
 import Select from "@/components/form/Select";
 import DatePicker from "@/components/form/date-picker";
 import Label from "@/components/form/Label";
-import { useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { fetchBordereauList } from "@/database/bordereau_api";
 import { IBordereauIndex } from "@/types/BordereauSchema";
+import { fetchBpcOptions } from "@/database/bpc_api";
+import { queueBordereauForBpc } from "@/database/bordereau_api";
+import { useMemo, useState } from "react";
+import { toast } from "sonner";
+import { Badge } from "@/components/ui/badge";
+import { BadgeCheckIcon } from "lucide-react";
+import { Modal } from "@/components/ui/modal";
+import Alert from "@/components/ui/alert/Alert";
+import Combobox from "@/components/form/Combobox";
 
 export type BQMType = {
     id: number;
@@ -27,59 +36,115 @@ export type BQMType = {
 export default function BQMView () {
     // const navigate = useNavigate();
 
-    const { data: queryPayload } = useQuery({
-        queryKey: ["bordereau-query-management"],
-        queryFn: async () => {
-            return await fetchBordereauList({
-                invoice_status: "query",
-                per_page: 100,
-                page: 1,
-            });
-        },
-        staleTime: 1000 * 15,
+    const queryClient = useQueryClient();
+
+    const [selectedBpcId, setSelectedBpcId] = useState<string>("");
+
+    const [assignModalOpen, setAssignModalOpen] = useState(false);
+    const [assigningRow, setAssigningRow] = useState<BQMType | null>(null);
+    const [assignModalBpcId, setAssignModalBpcId] = useState<number | string>("");
+
+    const { data: bpcOptions } = useQuery({
+        queryKey: ["bpc-options"],
+        queryFn: () => fetchBpcOptions(),
+        staleTime: 1000 * 30,
     });
 
-    const queryRows: BQMType[] = ((queryPayload?.data ?? []) as IBordereauIndex[]).map((b) => {
-        const supplierName = (b as any)?.supplier?.name ?? "";
-        const statusLabel = (b as any)?.status?.status ?? (b as any)?.bordereau_status?.status ?? "";
+    const { data: queryPayload } = useQuery({
+        queryKey: ["bordereau-query-management"],
+        queryFn: () =>
+            fetchBordereauList({
+                invoice_status: "query",
+                include_in_progress: true,
+                per_page: 100,
+                page: 1,
+            }),
+        staleTime: 1000 * 15,
+        refetchInterval: 1000 * 15,
+    });
 
-        const contact = (b as any)?.bpc?.contact;
+    const assignMutation = useMutation({
+        mutationFn: async (params: { bordereauId: number; bpcId: number | string }) => {
+            const bordereauIdNum = Number(params.bordereauId);
+            const bpcIdNum = Number(params.bpcId);
+
+            if (!Number.isFinite(bordereauIdNum) || bordereauIdNum <= 0) {
+                throw new Error("Invalid bordereau");
+            }
+            if (!Number.isFinite(bpcIdNum) || bpcIdNum <= 0) {
+                throw new Error("Please select a BPC first");
+            }
+
+            await queueBordereauForBpc({
+                bordereau_id: bordereauIdNum,
+                bpc_id: bpcIdNum,
+            });
+        },
+        onSuccess: () => {
+            toast.success("Assigned and queued");
+            setAssignModalOpen(false);
+            setAssigningRow(null);
+            setAssignModalBpcId("");
+            void queryClient.invalidateQueries({ queryKey: ["bordereau-query-management"] });
+        },
+        onError: (err) => {
+            toast.error(err instanceof Error ? err.message : "Failed to assign");
+        },
+    });
+
+    const bpcSelectOptions = useMemo(() => {
+        return [
+            { value: "", label: "-Select Bordereau Processing Clerk-" },
+            ...(bpcOptions ?? []).map((o) => ({ value: String(o.value), label: o.label })),
+        ];
+    }, [bpcOptions]);
+
+    const queryRows: BQMType[] = (queryPayload?.data ?? []).map((b: IBordereauIndex) => {
+        const supplierName = b.supplier?.name ?? "";
+        const statusLabel = b.bordereau_status?.status ?? "";
+
+        const contact = b.bpc?.contact;
         const assignedTo = contact
             ? `${contact.firstname ?? ""} ${contact.lastname ?? ""}`.trim()
             : "";
 
-        const comments = (b as any)?.comments ?? [];
-        const latestComment = Array.isArray(comments) && comments.length > 0 ? (comments[comments.length - 1]?.comment ?? "") : "";
+        const comments = b.comments ?? [];
+        const latestComment = comments.length > 0 ? (comments[comments.length - 1]?.comment ?? "") : "";
 
         return {
-            id: (b as any).id,
+            id: b.id ?? 0,
             supplier_name: supplierName,
-            bordereau: String((b as any).bordereau ?? ""),
-            claim_number: String((b as any).claim_number ?? ""),
-            name: String((b as any).name ?? ""),
+            bordereau: String(b.bordereau ?? ""),
+            claim_number: String(b.claim_number ?? ""),
+            name: String(b.name ?? ""),
             status: String(statusLabel ?? ""),
             assigned_to: assignedTo,
-            target_process_by: String((b as any).target_payment_date ?? ""),
+            target_process_by: String(b.target_payment_date ?? ""),
             latest_comment: String(latestComment ?? ""),
         };
     });
    
     const columns: ColumnDef<BQMType>[] = [
-        { accessorKey: "id", header: "ID" },
         { accessorKey: "supplier_name", header: "Supplier Name" },
         { accessorKey: "bordereau", header: "Bordereau" },
         { accessorKey: "claim_number", header: "Claim Number" },
         { accessorKey: "name", header: "Name" },
-        { accessorKey: "status", header: "Status" },
-        { accessorKey: "assigned_to", header: "Assigned To" },
+        {
+            accessorKey: "status",
+            header: "Status",
+            cell: ({ row }) => (
+                <Badge variant="secondary">
+                    <BadgeCheckIcon className="mr-1 inline-block" />
+                    {String(row.getValue("status") ?? "")}
+                </Badge>
+            ),
+        },
         { accessorKey: "target_process_by", header: "Target Process by" },
         { accessorKey: "latest_comment", header: "Latest Comment" },
         {
             id: "actions",
             header: "Actions",
             cell: ({ row }) => {
-                const item = row.original as BQMType;
-                console.log(item);
                 return (
                     <div className="flex items-center gap-2">
                         <Can permission="modules.edit">
@@ -113,6 +178,21 @@ export default function BQMView () {
                             </Button>
                         </Can>
 
+                        <Can permission="modules.delete">
+                            <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={() => {
+                                    setAssigningRow(row.original);
+                                    setAssignModalBpcId("");
+                                    setAssignModalOpen(true);
+                                }}
+                                disabled={assignMutation.isPending}
+                            >
+                                Assign
+                            </Button>
+                        </Can>
+
                     </div>
                 );
             },
@@ -138,27 +218,9 @@ export default function BQMView () {
                                                 Assigned To
                                             </Label>
                                             <Select
-                                                options={[
-                                                    {
-                                                        value: "",
-                                                        label: "-Select Bordereau Processing Clerk-",
-                                                    },
-                                                    {
-                                                        value: "in_progress",
-                                                        label: "In Progress",
-                                                    },
-                                                    {
-                                                        value: "queued",
-                                                        label: "Queued",
-                                                    },
-                                                    { value: "query", label: "Query" },
-                                                    {
-                                                        value: "closed",
-                                                        label: "Closed (Paid)",
-                                                    },
-                                                ]}
-                                                value={""}
-                                                onChange={() => {}}
+                                                options={bpcSelectOptions}
+                                                value={selectedBpcId}
+                                                onChange={setSelectedBpcId}
                                                 placeholder="-Select Bordereau Processing Clerk-"
                                             />
                                         </div>
@@ -240,7 +302,7 @@ export default function BQMView () {
                                             Outstanding Queries
                                         </span>
                                         <h4 className="font-bold text-gray-800 text-title-sm dark:text-white/90">
-                                            {queryPayload?.queryCount ?? queryRows.length}
+                                            {queryPayload?.total ?? queryRows.length}
                                         </h4>
                                     </div>
                                 </div>
@@ -285,6 +347,70 @@ export default function BQMView () {
                     </div>
                 </div>
             </div>
+
+            <Modal
+                isOpen={assignModalOpen}
+                onClose={() => {
+                    setAssignModalOpen(false);
+                    setAssigningRow(null);
+                    setAssignModalBpcId("");
+                }}
+                className="max-w-3xl mx-4"
+            >
+                <div className="p-6 md:p-8">
+                    <h3 className="text-lg font-semibold mb-5">
+                        (Re)Assign BPC
+                    </h3>
+
+                    <Alert
+                        variant="info"
+                        title="Current BPC"
+                        message={assigningRow?.assigned_to ? assigningRow.assigned_to : "No BPC Assigned"}
+                        showLink={false}
+                    />
+
+                    <div className="mt-4">
+                        <Label htmlFor="bqm-assign-bpc">BPC to Assign</Label>
+                        <Combobox
+                            value={assignModalBpcId}
+                            options={bpcOptions ?? []}
+                            onChange={(value) => setAssignModalBpcId(value)}
+                            placeholder="Select BPC..."
+                            searchPlaceholder="Search BPC..."
+                            emptyText="No BPC found."
+                        />
+                    </div>
+
+                    <div className="mt-6 flex justify-end gap-3">
+                        <Button
+                            variant="danger"
+                            onClick={() => {
+                                setAssignModalOpen(false);
+                                setAssigningRow(null);
+                                setAssignModalBpcId("");
+                            }}
+                            disabled={assignMutation.isPending}
+                        >
+                            Cancel
+                        </Button>
+                        <Button
+                            onClick={() => {
+                                if (!assigningRow?.id) {
+                                    toast.error("Please select a bordereau first");
+                                    return;
+                                }
+                                assignMutation.mutate({
+                                    bordereauId: assigningRow.id,
+                                    bpcId: assignModalBpcId,
+                                });
+                            }}
+                            disabled={assignMutation.isPending}
+                        >
+                            {assignMutation.isPending ? "Assigning..." : "Assign"}
+                        </Button>
+                    </div>
+                </div>
+            </Modal>
         </>
     );
 }
