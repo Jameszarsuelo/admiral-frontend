@@ -47,8 +47,8 @@ export default function Home() {
                             label="Bordereaux Processed"
                             value={bordereauxProcessedValue}
                         />
-                        <EcommerceMetrics label="Task Assigned" value="11" />
-                        <EcommerceMetrics label="Task Completed" value="4" />
+                        <EcommerceMetrics label="Task Assigned" value="0" />
+                        <EcommerceMetrics label="Task Completed" value="0" />
                     </div>
                 </div>
 
@@ -62,8 +62,8 @@ export default function Home() {
                             label="Bordereaux Approaching Deadline"
                             value={bordereauxApproachingDeadlineValue}
                         />
-                        <EcommerceMetrics label="Tasks in Progress" value="7" />
-                        <EcommerceMetrics label="Tasks Overdue" value="2" />
+                        <EcommerceMetrics label="Tasks in Progress" value="0" />
+                        <EcommerceMetrics label="Tasks Overdue" value="0" />
                     </div>
                 </div>
 
