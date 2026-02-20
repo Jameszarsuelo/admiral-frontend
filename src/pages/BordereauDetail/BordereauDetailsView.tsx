@@ -12,9 +12,23 @@ export default function BordereauDetailsView(
         bordereau: IBordereauIndex | null;
     }
 ) {
-    const raw: any = bordereauDetail as any;
-    const normalized = raw ? (raw.data ?? raw.bordereau ?? raw) : null;
+    const isRecord = (value: unknown): value is Record<string, unknown> =>
+        !!value && typeof value === "object" && !Array.isArray(value);
+
+    const raw: unknown = bordereauDetail;
+    const normalized: unknown = isRecord(raw)
+        ? (raw.data ?? raw.bordereau ?? raw)
+        : raw;
+
     const bord: IBordereauIndex | null = normalized as IBordereauIndex | null;
+    const bordExtra: Record<string, unknown> = isRecord(normalized)
+        ? normalized
+        : {};
+
+    const display = (value: unknown): string => {
+        if (value === null || value === undefined || value === "") return "-";
+        return String(value);
+    };
     return (
         <div className="min-w-full xl:min-w-full px-2">
             {isLoading ? (
@@ -125,6 +139,15 @@ export default function BordereauDetailsView(
                                 </p>
                                     <p className="text-sm font-medium text-gray-800 dark:text-white/90">
                                     {bord?.tp_name ?? "-"}
+                                </p>
+                            </div>
+
+                            <div>
+                                <p className="mb-2 text-xs leading-normal text-gray-500 dark:text-gray-400">
+                                    Customer Name
+                                </p>
+                                    <p className="text-sm font-medium text-gray-800 dark:text-white/90">
+                                    {bord?.customer_name ?? "-"}
                                 </p>
                             </div>
 
@@ -271,6 +294,78 @@ export default function BordereauDetailsView(
                                 </p>
                                     <p className="text-sm font-medium text-gray-800 dark:text-white/90">
                                     {bord?.amount_banked}
+                                </p>
+                            </div>
+
+                            <div>
+                                <p className="mb-2 text-xs leading-normal text-gray-500 dark:text-gray-400">
+                                    Task Type
+                                </p>
+                                    <p className="text-sm font-medium text-gray-800 dark:text-white/90">
+                                    {display(bordExtra["task_type"])}
+                                </p>
+                            </div>
+
+                            <div>
+                                <p className="mb-2 text-xs leading-normal text-gray-500 dark:text-gray-400">
+                                    Rejection Reasons
+                                </p>
+                                    <p className="text-sm font-medium text-gray-800 dark:text-white/90">
+                                    {display(bordExtra["rejection_reasons"])}
+                                </p>
+                            </div>
+
+                            <div>
+                                <p className="mb-2 text-xs leading-normal text-gray-500 dark:text-gray-400">
+                                    Additional Information
+                                </p>
+                                    <p className="text-sm font-medium text-gray-800 dark:text-white/90">
+                                    {display(bordExtra["additional_information"])}
+                                </p>
+                            </div>
+
+                            <div>
+                                <p className="mb-2 text-xs leading-normal text-gray-500 dark:text-gray-400">
+                                    Make and Model
+                                </p>
+                                    <p className="text-sm font-medium text-gray-800 dark:text-white/90">
+                                    {display(bordExtra["make_and_model"])}
+                                </p>
+                            </div>
+
+                            <div>
+                                <p className="mb-2 text-xs leading-normal text-gray-500 dark:text-gray-400">
+                                    Postcode
+                                </p>
+                                    <p className="text-sm font-medium text-gray-800 dark:text-white/90">
+                                    {display(bordExtra["postcode"])}
+                                </p>
+                            </div>
+
+                            <div>
+                                <p className="mb-2 text-xs leading-normal text-gray-500 dark:text-gray-400">
+                                    Date
+                                </p>
+                                    <p className="text-sm font-medium text-gray-800 dark:text-white/90">
+                                    {display(bordExtra["date"])}
+                                </p>
+                            </div>
+
+                            <div>
+                                <p className="mb-2 text-xs leading-normal text-gray-500 dark:text-gray-400">
+                                    Cat
+                                </p>
+                                    <p className="text-sm font-medium text-gray-800 dark:text-white/90">
+                                    {display(bordExtra["cat"])}
+                                </p>
+                            </div>
+
+                            <div>
+                                <p className="mb-2 text-xs leading-normal text-gray-500 dark:text-gray-400">
+                                    Value
+                                </p>
+                                    <p className="text-sm font-medium text-gray-800 dark:text-white/90">
+                                    {display(bordExtra["value"])}
                                 </p>
                             </div>
                         </div>
