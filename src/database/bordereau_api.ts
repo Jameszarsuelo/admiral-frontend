@@ -180,7 +180,7 @@ export async function changeBordereauOutcome(bordereauId: number, outcomeId: num
 
 export async function queueBordereauForBpc(params: {
     bordereau_id: number;
-    bpc_id: number;
+    bpc_id?: number;
     reason?: string;
     instructions?: string;
 }): Promise<void> {

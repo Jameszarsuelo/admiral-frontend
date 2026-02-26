@@ -1,6 +1,6 @@
 import { DataTable } from "@/components/ui/DataTable";
 import { getAddSupplierContactHeaders } from "./AddSupplierContactHeaders";
-import { fetchContactOptions } from "@/database/contact_api";
+import { fetchContactListSupplier } from "@/database/contact_api";
 import { useQuery } from "@tanstack/react-query";
 import type { ColumnDef } from "@tanstack/react-table";
 import Spinner from "@/components/ui/spinner/Spinner";
@@ -24,7 +24,7 @@ export default function AddSupplierContactsTable({
     } = useQuery({
         queryKey: ["contact-data"],
         queryFn: async () => {
-            return await fetchContactOptions();
+            return await fetchContactListSupplier();
         },
         refetchInterval: 1000 * 60 * 5, // 5 minutes
         refetchIntervalInBackground: true,
@@ -65,10 +65,17 @@ export default function AddSupplierContactsTable({
                         columns={
                             columns as ColumnDef<IContactSchema, unknown>[]
                         }
-                        data={contactData as IContactSchema[]}
+                        data={
+                            (contactData as IContactSchema[]).filter(
+                                (contact) =>
+                                    ["1", "2", "3"].includes(
+                                        String(contact.type),
+                                    ) && !!contact.id,
+                            )
+                        }
                         onRowSelectionChange={handleSelectionChange}
                     />
-                ) : (
+                ) : !isLoading ? null : (
                     <div className="flex items-center justify-center py-12">
                         <Spinner size="lg" />
                     </div>

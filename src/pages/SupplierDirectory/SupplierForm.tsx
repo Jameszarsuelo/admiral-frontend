@@ -45,6 +45,11 @@ export default function SupplierForm() {
     const { id } = useParams();
     const navigate = useNavigate();
     const { user } = useAuth();
+    const contactTypeLabel: Record<string, string> = {
+        "1": "Contact",
+        "2": "Supplier",
+        "3": "User",
+    };
     const [documentVisibilityOptions, setDocumentVisibilityOptions] = useState<
         DocumentVisibilityOption[]
     >([]);
@@ -108,16 +113,20 @@ export default function SupplierForm() {
 
     // Transform contacts to dropdown options
     const contactOptions = contacts
-        .filter((contact) => Number(contact.type) === 2)
-        .filter(
-            (contact) =>
-                contact.supplier_id === null ||
-                contact.supplier_id === Number(id),
-        )
-        .map((contact) => ({
-            value: contact.id || 0,
-            label: `${contact.firstname} ${contact.lastname}`,
-        }));
+        .filter((contact) => ["1", "2", "3"].includes(String(contact.type)))
+        .filter((contact) => Boolean(contact.id))
+        .map((contact) => {
+            const typeLabel = contactTypeLabel[String(contact.type)] ?? "Contact";
+            const fullName = `${contact.firstname} ${contact.lastname}`.trim();
+            const orgSuffix = contact.organisation
+                ? ` - ${contact.organisation}`
+                : "";
+
+            return {
+                value: contact.id as number,
+                label: `${fullName}${orgSuffix} (${typeLabel})`,
+            };
+        });
 
     const { handleSubmit, control, setError, reset, setValue } =
         useForm<ISupplierFormInputSchema>({

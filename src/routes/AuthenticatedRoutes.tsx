@@ -3,8 +3,15 @@ import AppLayout from "@/layout/AppLayout";
 import ProtectedRoute from "@/components/common/ProtectedRoute";
 import { usePermissions } from "@/hooks/usePermissions";
 import SidebarSkeleton from "@/components/ui/SideBarSkeleton";
-import { JSX } from "react";
+import { JSX, lazy } from "react";
 import { modulePageMap } from "./modulePages";
+
+const OverviewHeadcount = lazy(() => import("@/pages/Overview/HeadcountIndex"));
+const OverviewProductionLine = lazy(() => import("@/pages/Overview/ProductionLineIndex"));
+const OverviewOutstandingQueries = lazy(() => import("@/pages/Overview/OutstandingQueriesIndex"));
+const OverviewForecast = lazy(() => import("@/pages/Overview/ForecastIndex"));
+const OverviewTimToday = lazy(() => import("@/pages/Overview/TimTodayIndex"));
+const OverviewTimBot = lazy(() => import("@/pages/Overview/TimBotIndex"));
 
 export const AuthenticatedRoutes = () => {
     const { modules, loading } = usePermissions();
@@ -88,12 +95,80 @@ export const AuthenticatedRoutes = () => {
         return routes;
     });
 
+    const hasOverviewModule = modules.some((m) => m.code === "overview");
+
     return [
         <Route key="protected" element={<ProtectedRoute />}>
             <Route element={<AppLayout />}>
                 {/* <Route index element={<Dashboard />} /> */}
 
                 {dynamicRoutes}
+
+                {hasOverviewModule && (
+                    <Route
+                        path="/overview/headcount"
+                        element={
+                            <ProtectedRoute permission="overview.view">
+                                <OverviewHeadcount />
+                            </ProtectedRoute>
+                        }
+                    />
+                )}
+
+                {hasOverviewModule && (
+                    <Route
+                        path="/overview/production-line"
+                        element={
+                            <ProtectedRoute permission="overview.view">
+                                <OverviewProductionLine />
+                            </ProtectedRoute>
+                        }
+                    />
+                )}
+
+                {hasOverviewModule && (
+                    <Route
+                        path="/overview/outstanding-queries"
+                        element={
+                            <ProtectedRoute permission="overview.view">
+                                <OverviewOutstandingQueries />
+                            </ProtectedRoute>
+                        }
+                    />
+                )}
+
+                {hasOverviewModule && (
+                    <Route
+                        path="/overview/forecast"
+                        element={
+                            <ProtectedRoute permission="overview.view">
+                                <OverviewForecast />
+                            </ProtectedRoute>
+                        }
+                    />
+                )}
+
+                {hasOverviewModule && (
+                    <Route
+                        path="/overview/tim-today"
+                        element={
+                            <ProtectedRoute permission="overview.view">
+                                <OverviewTimToday />
+                            </ProtectedRoute>
+                        }
+                    />
+                )}
+
+                {hasOverviewModule && (
+                    <Route
+                        path="/overview/tim-bot"
+                        element={
+                            <ProtectedRoute permission="overview.view">
+                                <OverviewTimBot />
+                            </ProtectedRoute>
+                        }
+                    />
+                )}
 
                 <Route path="*" element={<NotFound />} />
             </Route>

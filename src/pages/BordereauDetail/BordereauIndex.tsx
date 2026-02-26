@@ -1,5 +1,5 @@
 import React, { useEffect, useState, type MouseEvent } from "react";
-import { useNavigate } from "react-router";
+import { useLocation, useNavigate } from "react-router";
 import { Controller, useForm } from "react-hook-form";
 import { Modal } from "@/components/ui/modal";
 import FileInput from "@/components/form/input/FileInput";
@@ -40,6 +40,7 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 
 export default function BordereauIndex() {
     const navigate = useNavigate();
+    const location = useLocation();
     const [isCsvModalOpen, setIsCsvModalOpen] = useState(false);
     const [csvFileInputKey, setCsvFileInputKey] = useState(0);
     const [activeId, setActiveId] = useState<number | null>(null);
@@ -123,9 +124,35 @@ export default function BordereauIndex() {
         bpc_id: "",
         date_from: "",
         date_to: "",
+        search: "",
     });
 
     const [appliedFilters, setAppliedFilters] = useState(filters);
+
+    useEffect(() => {
+        const params = new URLSearchParams(location.search);
+        const search = params.get("search")?.trim() ?? "";
+        const supplierId = params.get("supplier_id")?.trim() ?? "";
+
+        if (!search && !supplierId) {
+            return;
+        }
+
+        const nextFilters = {
+            invoice_status: "",
+            supplier_id: supplierId,
+            bpc_id: "",
+            date_from: "",
+            date_to: "",
+            search,
+        };
+
+        setFilters(nextFilters);
+        setInvoiceStatus("");
+        setBordereauStatus("queued");
+        setDateType("created_at");
+        setAppliedFilters(nextFilters);
+    }, [location.search]);
 
     const {
         data: bordereauData,
@@ -710,6 +737,7 @@ export default function BordereauIndex() {
                                             bpc_id: "",
                                             date_from: "",
                                             date_to: "",
+                                            search: "",
                                         };
                                         setFilters(empty);
                                         setInvoiceStatus("");

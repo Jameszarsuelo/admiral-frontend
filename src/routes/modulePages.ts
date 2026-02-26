@@ -154,6 +154,8 @@ const TaskQueuesView = lazy(
     () => import("@/pages/SystemConfigurations/TaskQueues/TaskQueuesView"),
 );
 
+const OverviewIndex = lazy(() => import("@/pages/Overview/OverviewIndex"));
+
 const NotFound = lazy(() => import("../pages/OtherPage/NotFound"));
 
 export interface ModuleComponents {
@@ -287,6 +289,9 @@ export const modulePageMap: Record<string, ModuleComponents> = {
     },
     dashboard: {
         main: Home,
+    },
+    overview: {
+        main: OverviewIndex,
     },
     not_found: {
         main: NotFound,
