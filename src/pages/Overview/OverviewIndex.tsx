@@ -1,5 +1,4 @@
 import PageBreadcrumb from "@/components/common/PageBreadCrumb";
-import Select from "@/components/form/Select";
 import EcommerceMetrics from "@/components/ecommerce/EcommerceMetrics";
 import { DataTable } from "@/components/ui/DataTable";
 import { useNavigate } from "react-router-dom";
@@ -9,7 +8,9 @@ import { toast } from "sonner";
 import {
     fetchForecastSnapshot,
     fetchHeadcountToday,
+    fetchOutstandingQueries,
     fetchOverviewQueueList,
+    fetchProductionLineToday,
     fetchTimBotSnapshot,
     fetchTimTodaySnapshot,
 } from "@/database/overview_api";
@@ -19,23 +20,48 @@ import {
     type OverviewQueuedRow,
 } from "@/data/OverviewQueuedHeaders.tsx";
 import { useMemo, useState } from "react";
+import { useOverviewDepartmentFilter } from "./useOverviewDepartmentFilter";
+import OverviewDepartmentFilterCard from "./OverviewDepartmentFilterCard";
 
 export default function OverviewIndex() {
     const navigate = useNavigate();
     const queryClient = useQueryClient();
     const [includeCompleted, setIncludeCompleted] = useState(false);
+    const {
+        departmentId,
+        departmentIdNumber,
+        departmentOptions,
+        setDepartmentId,
+        withDepartmentQuery,
+    } = useOverviewDepartmentFilter();
 
     const { data: headcountToday } = useQuery({
-        queryKey: ["overview", "headcount", "today", "headline"],
-        queryFn: fetchHeadcountToday,
+        queryKey: ["overview", "headcount", "today", "headline", departmentIdNumber],
+        queryFn: () => fetchHeadcountToday(departmentIdNumber),
         refetchInterval: 15_000,
         refetchIntervalInBackground: true,
         staleTime: 0,
     });
 
+    const { data: productionLineToday } = useQuery({
+        queryKey: ["overview", "production-line", "headline", departmentIdNumber],
+        queryFn: () => fetchProductionLineToday(departmentIdNumber),
+        refetchOnWindowFocus: false,
+        refetchOnReconnect: false,
+        staleTime: 60_000,
+    });
+
+    const { data: outstandingQueries } = useQuery({
+        queryKey: ["overview", "outstanding-queries", "headline", departmentIdNumber],
+        queryFn: () => fetchOutstandingQueries(departmentIdNumber),
+        refetchOnWindowFocus: false,
+        refetchOnReconnect: false,
+        staleTime: 60_000,
+    });
+
     const { data: forecastSnapshot } = useQuery({
-        queryKey: ["overview", "forecast", "headline"],
-        queryFn: fetchForecastSnapshot,
+        queryKey: ["overview", "forecast", "headline", departmentIdNumber],
+        queryFn: () => fetchForecastSnapshot(departmentIdNumber),
         refetchOnWindowFocus: false,
         refetchOnReconnect: false,
         staleTime: 60_000,
@@ -44,11 +70,15 @@ export default function OverviewIndex() {
     const headcountValue = new Intl.NumberFormat().format(
         headcountToday?.online_count ?? 0,
     );
+    const productionLineValue = `${productionLineToday?.oldest_queued_days ?? 0} day(s)`;
+    const outstandingQueriesValue = new Intl.NumberFormat().format(
+        outstandingQueries?.query_activities_count ?? 0,
+    );
     const forecastValue = `${Number(forecastSnapshot?.projected_days ?? 0).toFixed(2)} day(s)`;
 
     const { data: timTodaySnapshot } = useQuery({
-        queryKey: ["overview", "tim-today", "headline"],
-        queryFn: fetchTimTodaySnapshot,
+        queryKey: ["overview", "tim-today", "headline", departmentIdNumber],
+        queryFn: () => fetchTimTodaySnapshot(departmentIdNumber),
         refetchOnWindowFocus: false,
         refetchOnReconnect: false,
         staleTime: 60_000,
@@ -57,8 +87,8 @@ export default function OverviewIndex() {
     const timTodayValue = timTodaySnapshot?.headline_aht ?? "00:00:00";
 
     const { data: timBotSnapshot } = useQuery({
-        queryKey: ["overview", "tim-bot", "headline"],
-        queryFn: fetchTimBotSnapshot,
+        queryKey: ["overview", "tim-bot", "headline", departmentIdNumber],
+        queryFn: () => fetchTimBotSnapshot(departmentIdNumber),
         refetchOnWindowFocus: false,
         refetchOnReconnect: false,
         staleTime: 60_000,
@@ -67,8 +97,8 @@ export default function OverviewIndex() {
     const timBotValue = timBotSnapshot?.headline_aht ?? "00:00:00";
 
     const { data: queueListData } = useQuery({
-        queryKey: ["overview", "queue-list", includeCompleted],
-        queryFn: () => fetchOverviewQueueList(includeCompleted),
+        queryKey: ["overview", "queue-list", includeCompleted, departmentIdNumber],
+        queryFn: () => fetchOverviewQueueList(includeCompleted, departmentIdNumber),
         refetchInterval: 15_000,
         refetchIntervalInBackground: true,
         staleTime: 0,
@@ -112,7 +142,7 @@ export default function OverviewIndex() {
                     <button
                         type="button"
                         className="w-full text-left"
-                        onClick={() => navigate("/overview/headcount")}
+                        onClick={() => navigate(withDepartmentQuery("/overview/headcount"))}
                     >
                         <EcommerceMetrics
                             label="Headcount"
@@ -124,11 +154,11 @@ export default function OverviewIndex() {
                     <button
                         type="button"
                         className="w-full text-left"
-                        onClick={() => navigate("/overview/production-line")}
+                        onClick={() => navigate(withDepartmentQuery("/overview/production-line"))}
                     >
                         <EcommerceMetrics
                             label="Production Line"
-                            value="4,057"
+                            value={productionLineValue}
                         />
                     </button>
                 </div>
@@ -136,37 +166,28 @@ export default function OverviewIndex() {
                     <button
                         type="button"
                         className="w-full text-left"
-                        onClick={() => navigate("/overview/outstanding-queries")}
+                        onClick={() => navigate(withDepartmentQuery("/overview/outstanding-queries"))}
                     >
                         <EcommerceMetrics
                             label="Outstanding Queries"
-                            value="278"
+                            value={outstandingQueriesValue}
                         />
                     </button>
                 </div>
 
                 <div className="col-span-12 sm:col-span-6 xl:col-span-3">
-                    <div className="rounded-2xl border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-white/3 md:p-6">
-                        <div>
-                            <h4 className="text-sm font-medium text-gray-800 dark:text-white/90">
-                                Department
-                            </h4>
-                            <div className="mt-3">
-                                <Select
-                                    value="all"
-                                    onChange={() => {}}
-                                    options={[{ value: "all", label: "all" }]}
-                                />
-                            </div>
-                        </div>
-                    </div>
+                    <OverviewDepartmentFilterCard
+                        value={departmentId}
+                        onChange={setDepartmentId}
+                        options={departmentOptions}
+                    />
                 </div>
 
                 <div className="col-span-12 sm:col-span-6 xl:col-span-3">
                     <button
                         type="button"
                         className="w-full text-left"
-                        onClick={() => navigate("/overview/tim-today")}
+                        onClick={() => navigate(withDepartmentQuery("/overview/tim-today"))}
                     >
                         <EcommerceMetrics label="TIM (Today)" value={timTodayValue} />
                     </button>
@@ -175,7 +196,7 @@ export default function OverviewIndex() {
                     <button
                         type="button"
                         className="w-full text-left"
-                        onClick={() => navigate("/overview/tim-bot")}
+                        onClick={() => navigate(withDepartmentQuery("/overview/tim-bot"))}
                     >
                         <EcommerceMetrics label="TIM (BoT)" value={timBotValue} />
                     </button>
@@ -184,7 +205,7 @@ export default function OverviewIndex() {
                     <button
                         type="button"
                         className="w-full text-left"
-                        onClick={() => navigate("/overview/forecast")}
+                        onClick={() => navigate(withDepartmentQuery("/overview/forecast"))}
                     >
                         <EcommerceMetrics label="Forecast" value={forecastValue} />
                     </button>

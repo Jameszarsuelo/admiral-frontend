@@ -10,11 +10,22 @@ import {
 import { useQuery } from "@tanstack/react-query";
 import { ColumnDef } from "@tanstack/react-table";
 import { useMemo } from "react";
+import { useSearchParams } from "react-router-dom";
 
 export default function TimTodayIndex() {
+    const [searchParams] = useSearchParams();
+    const departmentIdRaw = searchParams.get("department_id");
+    const departmentIdNumber =
+        departmentIdRaw && Number.isFinite(Number(departmentIdRaw))
+            ? Number(departmentIdRaw)
+            : undefined;
+    const overviewLink = departmentIdNumber
+        ? `/overview?department_id=${departmentIdNumber}`
+        : "/overview";
+
     const { data, isLoading } = useQuery({
-        queryKey: ["overview", "tim-today", "snapshot"],
-        queryFn: fetchTimTodaySnapshot,
+        queryKey: ["overview", "tim-today", "snapshot", departmentIdNumber],
+        queryFn: () => fetchTimTodaySnapshot(departmentIdNumber),
         refetchOnWindowFocus: false,
         refetchOnReconnect: false,
         staleTime: Infinity,
@@ -122,7 +133,7 @@ export default function TimTodayIndex() {
         <>
             <PageBreadcrumb
                 pageTitle="TIM (Today)"
-                pageBreadcrumbs={[{ title: "Overview", link: "/overview" }]}
+                pageBreadcrumbs={[{ title: "Overview", link: overviewLink }]}
             />
 
             <div className="grid grid-cols-12 gap-4 md:gap-6">

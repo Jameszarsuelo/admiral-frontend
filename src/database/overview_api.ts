@@ -123,59 +123,11 @@ export interface TimBotSnapshotResponse {
     rows: TimBotRow[];
 }
 
-export async function fetchHeadcountToday(): Promise<HeadcountTodayResponse> {
+export async function fetchHeadcountToday(departmentId?: number): Promise<HeadcountTodayResponse> {
     try {
-        const response = await api.get(`/overview/headcount/today`);
-        return response.data;
-    } catch (error) {
-        if (error instanceof AxiosError && error.response?.data) {
-            throw error.response.data;
-        }
-        throw error;
-    }
-}
-
-export async function fetchProductionLineToday(): Promise<ProductionLineTodayResponse> {
-    try {
-        const response = await api.get(`/overview/production-line/today`);
-        return response.data;
-    } catch (error) {
-        if (error instanceof AxiosError && error.response?.data) {
-            throw error.response.data;
-        }
-        throw error;
-    }
-}
-
-export async function fetchOutstandingQueries(): Promise<OutstandingQueriesResponse> {
-    try {
-        const response = await api.get(`/overview/outstanding-queries`);
-        return response.data;
-    } catch (error) {
-        if (error instanceof AxiosError && error.response?.data) {
-            throw error.response.data;
-        }
-        throw error;
-    }
-}
-
-export async function fetchForecastSnapshot(): Promise<ForecastSnapshotResponse> {
-    try {
-        const response = await api.get(`/overview/forecast`);
-        return response.data;
-    } catch (error) {
-        if (error instanceof AxiosError && error.response?.data) {
-            throw error.response.data;
-        }
-        throw error;
-    }
-}
-
-export async function fetchOverviewQueueList(includeCompleted: boolean): Promise<OverviewQueueListResponse> {
-    try {
-        const response = await api.get(`/overview/queue-list`, {
+        const response = await api.get(`/overview/headcount/today`, {
             params: {
-                include_completed: includeCompleted,
+                department_id: departmentId,
             },
         });
         return response.data;
@@ -187,9 +139,13 @@ export async function fetchOverviewQueueList(includeCompleted: boolean): Promise
     }
 }
 
-export async function fetchTimTodaySnapshot(): Promise<TimTodaySnapshotResponse> {
+export async function fetchProductionLineToday(departmentId?: number): Promise<ProductionLineTodayResponse> {
     try {
-        const response = await api.get(`/overview/tim-today`);
+        const response = await api.get(`/overview/production-line/today`, {
+            params: {
+                department_id: departmentId,
+            },
+        });
         return response.data;
     } catch (error) {
         if (error instanceof AxiosError && error.response?.data) {
@@ -199,9 +155,78 @@ export async function fetchTimTodaySnapshot(): Promise<TimTodaySnapshotResponse>
     }
 }
 
-export async function fetchTimBotSnapshot(): Promise<TimBotSnapshotResponse> {
+export async function fetchOutstandingQueries(departmentId?: number): Promise<OutstandingQueriesResponse> {
     try {
-        const response = await api.get(`/overview/tim-bot`);
+        const response = await api.get(`/overview/outstanding-queries`, {
+            params: {
+                department_id: departmentId,
+            },
+        });
+        return response.data;
+    } catch (error) {
+        if (error instanceof AxiosError && error.response?.data) {
+            throw error.response.data;
+        }
+        throw error;
+    }
+}
+
+export async function fetchForecastSnapshot(departmentId?: number): Promise<ForecastSnapshotResponse> {
+    try {
+        const response = await api.get(`/overview/forecast`, {
+            params: {
+                department_id: departmentId,
+            },
+        });
+        return response.data;
+    } catch (error) {
+        if (error instanceof AxiosError && error.response?.data) {
+            throw error.response.data;
+        }
+        throw error;
+    }
+}
+
+export async function fetchOverviewQueueList(includeCompleted: boolean, departmentId?: number): Promise<OverviewQueueListResponse> {
+    try {
+        const response = await api.get(`/overview/queue-list`, {
+            params: {
+                include_completed: includeCompleted,
+                department_id: departmentId,
+            },
+        });
+        return response.data;
+    } catch (error) {
+        if (error instanceof AxiosError && error.response?.data) {
+            throw error.response.data;
+        }
+        throw error;
+    }
+}
+
+export async function fetchTimTodaySnapshot(departmentId?: number): Promise<TimTodaySnapshotResponse> {
+    try {
+        const response = await api.get(`/overview/tim-today`, {
+            params: {
+                department_id: departmentId,
+            },
+        });
+        return response.data;
+    } catch (error) {
+        if (error instanceof AxiosError && error.response?.data) {
+            throw error.response.data;
+        }
+        throw error;
+    }
+}
+
+export async function fetchTimBotSnapshot(departmentId?: number): Promise<TimBotSnapshotResponse> {
+    try {
+        const response = await api.get(`/overview/tim-bot`, {
+            params: {
+                department_id: departmentId,
+            },
+        });
         return response.data;
     } catch (error) {
         if (error instanceof AxiosError && error.response?.data) {

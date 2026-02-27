@@ -7,11 +7,22 @@ import {
     type HeadcountRow,
 } from "@/data/HeadcountHeaders";
 import { fetchHeadcountToday } from "@/database/overview_api";
+import { useMemo } from "react";
+import { useSearchParams } from "react-router-dom";
 
 export default function HeadcountIndex() {
+    const [searchParams] = useSearchParams();
+    const departmentIdNumber = useMemo(() => {
+        const raw = searchParams.get("department_id");
+        return raw && Number.isFinite(Number(raw)) ? Number(raw) : undefined;
+    }, [searchParams]);
+    const overviewLink = departmentIdNumber
+        ? `/overview?department_id=${departmentIdNumber}`
+        : "/overview";
+
     const { data, isLoading } = useQuery({
-        queryKey: ["overview", "headcount", "today", "snapshot"],
-        queryFn: fetchHeadcountToday,
+        queryKey: ["overview", "headcount", "today", "snapshot", departmentIdNumber],
+        queryFn: () => fetchHeadcountToday(departmentIdNumber),
         refetchInterval: 15_000,
         refetchIntervalInBackground: true,
         refetchOnWindowFocus: true,
@@ -24,7 +35,7 @@ export default function HeadcountIndex() {
         <>
             <PageBreadcrumb
                 pageTitle="Headcount"
-                pageBreadcrumbs={[{ title: "Overview", link: "/overview" }]}
+                pageBreadcrumbs={[{ title: "Overview", link: overviewLink }]}
             />
 
             <div className="rounded-2xl border border-gray-200 bg-white px-5 pb-5 pt-5 dark:border-gray-800 dark:bg-white/3 sm:px-6 sm:pt-6">

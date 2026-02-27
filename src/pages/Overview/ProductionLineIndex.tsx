@@ -6,6 +6,7 @@ import { fetchProductionLineToday } from "@/database/overview_api";
 import { useQuery } from "@tanstack/react-query";
 import { ColumnDef } from "@tanstack/react-table";
 import { useMemo } from "react";
+import { useSearchParams } from "react-router-dom";
 
 type ProductionLineTableRow = {
     supplier_name: string;
@@ -14,9 +15,19 @@ type ProductionLineTableRow = {
 } & Record<string, number | string | boolean>;
 
 export default function ProductionLineIndex() {
+    const [searchParams] = useSearchParams();
+    const departmentIdRaw = searchParams.get("department_id");
+    const departmentIdNumber =
+        departmentIdRaw && Number.isFinite(Number(departmentIdRaw))
+            ? Number(departmentIdRaw)
+            : undefined;
+    const overviewLink = departmentIdNumber
+        ? `/overview?department_id=${departmentIdNumber}`
+        : "/overview";
+
     const { data, isLoading } = useQuery({
-        queryKey: ["overview", "production-line", "today", "snapshot"],
-        queryFn: fetchProductionLineToday,
+        queryKey: ["overview", "production-line", "today", "snapshot", departmentIdNumber],
+        queryFn: () => fetchProductionLineToday(departmentIdNumber),
         refetchOnWindowFocus: false,
         refetchOnReconnect: false,
         staleTime: Infinity,
@@ -113,7 +124,7 @@ export default function ProductionLineIndex() {
         <>
             <PageBreadcrumb
                 pageTitle="Production Line"
-                pageBreadcrumbs={[{ title: "Overview", link: "/overview" }]}
+                pageBreadcrumbs={[{ title: "Overview", link: overviewLink }]}
             />
 
             <div className="grid grid-cols-12 gap-4 md:gap-6">
