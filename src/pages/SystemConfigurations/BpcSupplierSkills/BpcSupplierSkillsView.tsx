@@ -29,7 +29,7 @@ export default function BpcSupplierSkillsView() {
 
             <div className="mb-4">
                 <Link
-                    to=".."
+                    to="../bpc-supplier-skills"
                     className="text-sm text-primary-600 hover:underline dark:text-primary-400"
                 >
 					Back to BPC list

@@ -7,7 +7,14 @@ export const PlanningFormSchema = z.object({
     work_saturday: z.enum(["0", "1"]),
     work_sunday: z.enum(["0", "1"]),
     forecast_horizon: z.string().nonempty("Forecast Horizon is required"),
-    active_hour: z.string().nonempty("Active Hour per day is required"),
+    // active_hour is an integer number of hours per day
+    active_hour: z
+        .string()
+        .nonempty("Active Hour per day is required")
+        .refine((val) => {
+            const num = Number(val);
+            return !Number.isNaN(num) && Number.isInteger(num) && num >= 0;
+        }, "Active Hour must be a non-negative integer"),
     // is_active: z.boolean().optional(),
     is_active: z.union([z.boolean(), z.number().int().refine(val => val === 0 || val === 1)]).optional(),
     created_at: z.string().optional(),

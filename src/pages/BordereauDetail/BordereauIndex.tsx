@@ -1340,7 +1340,7 @@ export default function BordereauIndex() {
                 >
                     <div className="p-6 md:p-8">
                         <h3 className="text-lg font-semibold">
-                            Close Bordereau
+                            Close Bordereau Activity
                         </h3>
 
                         <form className="mt-6">
@@ -1434,7 +1434,7 @@ export default function BordereauIndex() {
                                     }}
                                     disabled={isUploading}
                                 >
-                                    Close
+                                    Cancel
                                 </Button>
                                 <Button
                                     onClick={() =>
@@ -1488,7 +1488,7 @@ export default function BordereauIndex() {
                                             } catch (err) {
                                                 console.error(err);
                                                 toast.error(
-                                                    "Failed to close bordereau",
+                                                    "Failed to close bordereau activity",
                                                 );
                                             } finally {
                                                 setIsUploading(false);
@@ -1499,7 +1499,7 @@ export default function BordereauIndex() {
                                 >
                                     {isUploading
                                         ? "Closing..."
-                                        : "Close Bordereau"}
+                                        : "Close Activity"}
                                 </Button>
                             </div>
                         </form>

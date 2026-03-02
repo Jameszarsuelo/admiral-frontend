@@ -2,7 +2,6 @@ import PageBreadcrumb from "@/components/common/PageBreadCrumb";
 import EcommerceMetrics from "@/components/ecommerce/EcommerceMetrics";
 import { DataTable } from "@/components/ui/DataTable";
 import { useNavigate } from "react-router-dom";
-import Button from "@/components/ui/button/Button";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import {
@@ -19,14 +18,13 @@ import {
     getOverviewQueuedColumns,
     type OverviewQueuedRow,
 } from "@/data/OverviewQueuedHeaders.tsx";
-import { useMemo, useState } from "react";
+import { useMemo } from "react";
 import { useOverviewDepartmentFilter } from "./useOverviewDepartmentFilter";
 import OverviewDepartmentFilterCard from "./OverviewDepartmentFilterCard";
 
 export default function OverviewIndex() {
     const navigate = useNavigate();
     const queryClient = useQueryClient();
-    const [includeCompleted, setIncludeCompleted] = useState(false);
     const {
         departmentId,
         departmentIdNumber,
@@ -97,8 +95,8 @@ export default function OverviewIndex() {
     const timBotValue = timBotSnapshot?.headline_aht ?? "00:00:00";
 
     const { data: queueListData } = useQuery({
-        queryKey: ["overview", "queue-list", includeCompleted, departmentIdNumber],
-        queryFn: () => fetchOverviewQueueList(includeCompleted, departmentIdNumber),
+        queryKey: ["overview", "queue-list", departmentIdNumber],
+        queryFn: () => fetchOverviewQueueList(undefined, departmentIdNumber),
         refetchInterval: 15_000,
         refetchIntervalInBackground: true,
         staleTime: 0,
@@ -219,29 +217,8 @@ export default function OverviewIndex() {
                         <div className="flex flex-col gap-5 mb-6 sm:flex-row sm:justify-between">
                             <div className="w-full">
                                 <h3 className="text-lg font-semibold text-gray-800 dark:text-white/90">
-                                    List of Bordereau Queued / In Progress
+                                    List of Bordereau
                                 </h3>
-                            </div>
-                            <div className="flex items-center gap-2 self-start sm:self-center rounded-lg border border-gray-200 px-3 py-2 dark:border-gray-700">
-                                <span className="text-sm text-gray-800 dark:text-white/90">
-                                    Include Completed?
-                                </span>
-                                <div className="flex items-center gap-2">
-                                    <Button
-                                        size="sm"
-                                        variant={includeCompleted ? "outline" : "primary"}
-                                        onClick={() => setIncludeCompleted(false)}
-                                    >
-                                        No
-                                    </Button>
-                                    <Button
-                                        size="sm"
-                                        variant={includeCompleted ? "primary" : "outline"}
-                                        onClick={() => setIncludeCompleted(true)}
-                                    >
-                                        Yes
-                                    </Button>
-                                </div>
                             </div>
                         </div>
 

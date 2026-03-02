@@ -88,13 +88,17 @@ export default function PlanningForm() {
         return eh * 60 + em - (sh * 60 + sm);
     };
 
-    // Validate active_hour based on duration
+    // Validate active_hour (integer hours per day) based on duration
     const validateActiveHour = (value: string) => {
         const duration = getDuration(startTime, endTime);
         if (duration === null) return true;
 
-        const [h, m] = value.split(":").map(Number);
-        const activeMin = h * 60 + m;
+        const hours = Number(value);
+        if (Number.isNaN(hours) || hours < 0) {
+            return "Active hours must be a non-negative number";
+        }
+
+        const activeMin = hours * 60;
 
         return (
             activeMin <= duration ||
@@ -165,15 +169,14 @@ export default function PlanningForm() {
                                         <div className="relative">
                                             <Input
                                                 {...field}
-                                                type="time"
-                                                step={60}
+                                                type="number"
+                                                min={0}
                                             />
                                             {fieldState.error && (
                                                 <p className="mt-1 text-sm text-error-500">
                                                     {fieldState.error.message}
                                                 </p>
                                             )}
-                                            <TimeIcon className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 size-6" />
                                         </div>
                                     </Field>
                                 )}

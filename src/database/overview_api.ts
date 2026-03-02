@@ -187,14 +187,17 @@ export async function fetchForecastSnapshot(departmentId?: number): Promise<Fore
     }
 }
 
-export async function fetchOverviewQueueList(includeCompleted: boolean, departmentId?: number): Promise<OverviewQueueListResponse> {
+export async function fetchOverviewQueueList(includeCompleted?: boolean, departmentId?: number): Promise<OverviewQueueListResponse> {
     try {
-        const response = await api.get(`/overview/queue-list`, {
-            params: {
-                include_completed: includeCompleted,
-                department_id: departmentId,
-            },
-        });
+        const params: Record<string, unknown> = {
+            department_id: departmentId,
+        };
+
+        if (typeof includeCompleted === "boolean") {
+            params.include_completed = includeCompleted;
+        }
+
+        const response = await api.get(`/overview/queue-list`, { params });
         return response.data;
     } catch (error) {
         if (error instanceof AxiosError && error.response?.data) {

@@ -62,6 +62,12 @@ const FLAG_FIELDS: Array<{ key: keyof IWorkTypeForm; label: string }> = [
     { key: "value", label: "Value" },
 ];
 
+const MANDATORY_FLAG_KEYS: Array<keyof IWorkTypeForm> = [
+    "supplier_name",
+    "bordereau",
+    "claim_number",
+];
+
 const WorkTypeForm = () => {
     const { id } = useParams();
     const navigate = useNavigate();
@@ -70,6 +76,9 @@ const WorkTypeForm = () => {
         defaultValues: {
             type: "",
             overall_value_field: "value",
+            supplier_name: true,
+            bordereau: true,
+            claim_number: true,
         },
         resolver: zodResolver(WorkTypeSchema),
     });
@@ -82,6 +91,9 @@ const WorkTypeForm = () => {
                     type: data.type || "",
                     overall_value_field:
                         data.overall_value_field ?? "value",
+                    supplier_name: true,
+                    bordereau: true,
+                    claim_number: true,
                 });
             });
         }
@@ -211,13 +223,21 @@ const WorkTypeForm = () => {
                                             key={String(f.key)}
                                             name={f.key}
                                             control={control}
-                                            render={({ field }) => (
-                                                <Checkbox
-                                                    checked={!!field.value}
-                                                    onChange={(checked) => field.onChange(checked)}
-                                                    label={f.label}
-                                                />
-                                            )}
+                                            render={({ field }) => {
+                                                const isMandatory = MANDATORY_FLAG_KEYS.includes(f.key);
+                                                const checked = isMandatory ? true : !!field.value;
+
+                                                return (
+                                                    <Checkbox
+                                                        checked={checked}
+                                                        onChange={(checkedValue) =>
+                                                            field.onChange(isMandatory ? true : checkedValue)
+                                                        }
+                                                        label={f.label}
+                                                        disabled={isMandatory}
+                                                    />
+                                                );
+                                            }}
                                         />
                                     ))}
                                 </div>

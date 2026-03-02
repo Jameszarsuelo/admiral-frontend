@@ -100,7 +100,7 @@ export default function BordereauProcessingQueueForm() {
                                     render={({ field, fieldState }) => (
                                         <Field data-invalid={fieldState.invalid}>
                                             <Label htmlFor="deadline_queue_top">
-                                                Days to Deadline
+                                                Hours to Deadline
                                             </Label>
                                             <Input
                                                 id="deadline_queue_top"
@@ -127,7 +127,7 @@ export default function BordereauProcessingQueueForm() {
                                     render={({ field, fieldState }) => (
                                         <Field data-invalid={fieldState.invalid}>
                                             <Label htmlFor="target_queue_top">
-                                                Days to Ideal
+                                                Hours to Ideal
                                             </Label>
                                             <Input
                                                 id="target_queue_top"

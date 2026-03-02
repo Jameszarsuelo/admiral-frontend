@@ -207,6 +207,8 @@ export const BordereauIndexSchema = BordereauBaseSchema.pick({
     closed_by: true,
     closed_date: true,
 }).extend({
+    batch_total_rows: z.number().nullable().optional(),
+    batch_outstanding_rows: z.number().nullable().optional(),
     comments: BordereauCommentBaseSchema.array().optional(),
     supplier: z.lazy(() => SupplierBaseSchema.optional()),
     bordereau_status: BordereauStatusBaseSchema,

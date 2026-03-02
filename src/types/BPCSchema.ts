@@ -66,7 +66,8 @@ export const BPCCreateSchema = UserCreateSchema.omit({
     bpc_handle_staff: z.boolean(),
     bpc_handle_sensitive: z.boolean(),
     bpc_line_manager: NullableContactId,
-    bpc_department: NullableTextInput,
+    // BPC department links to departments.id
+    bpc_department_id: NullableContactId,
     bpc_dept_level2: NullableTextInput,
     bpc_dept_level3: NullableTextInput,
     contact: ContactCreateSchema.omit({

@@ -65,8 +65,8 @@ export default function BordereauProcessingQueueView() {
 
     const columns: ColumnDef<IBordereauProcessingQueueBase>[] = [
         { accessorKey: "id", header: "ID" },
-        { accessorKey: "deadline_queue_top", header: "Days to Deadline" },
-        { accessorKey: "target_queue_top", header: "Days to Ideal" },
+        { accessorKey: "deadline_queue_top", header: "Hours to Deadline" },
+        { accessorKey: "target_queue_top", header: "Hours to Ideal" },
         {
             accessorKey: "queue_priority_multiplier",
             header: "Priority Multiplying Factor",

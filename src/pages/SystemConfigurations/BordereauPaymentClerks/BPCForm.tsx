@@ -20,6 +20,7 @@ import { BPCCreateSchema, IBPCForm } from "@/types/BPCSchema";
 import { fetchBpcById, upsertBpc } from "@/database/bpc_api";
 import { useQuery } from "@tanstack/react-query";
 import { fetchContactList } from "@/database/contact_api";
+import { fetchDepartmentList } from "@/database/department_api";
 
 const countries = [
     { code: "UK", label: "+44" },
@@ -58,6 +59,19 @@ export default function BPCForm() {
         );
     }, [lineManagerContacts]);
 
+    const { data: departments } = useQuery({
+        queryKey: ["departments", "bpc-form"],
+        queryFn: async () => fetchDepartmentList(),
+        staleTime: 60_000,
+    });
+
+    const departmentOptions = useMemo(() =>
+        (departments ?? []).map((d) => ({
+            value: String(d.id),
+            label: d.department,
+        })),
+    [departments]);
+
     const { handleSubmit, control, reset, setError } = useForm<IBPCForm>({
         defaultValues: {
             two_fa_enabled: false,
@@ -67,7 +81,7 @@ export default function BPCForm() {
             bpc_handle_staff: false,
             bpc_handle_sensitive: false,
             bpc_line_manager: null,
-            bpc_department: "",
+            bpc_department_id: null,
             bpc_dept_level2: "",
             bpc_dept_level3: "",
             contact: {
@@ -265,20 +279,26 @@ export default function BPCForm() {
                                     />
 
                                     <Controller
-                                        name="bpc_department"
+                                        name="bpc_department_id"
                                         control={control}
                                         render={({ field, fieldState }) => (
                                             <Field data-invalid={fieldState.invalid}>
                                                 <Label htmlFor="bpc_department">
                                                     Department
                                                 </Label>
-                                                <Input
-                                                    {...field}
-                                                    value={field.value ?? ""}
-                                                    type="text"
-                                                    id="bpc_department"
-                                                    name="bpc_department"
-                                                    placeholder="(optional)"
+                                                <Select
+                                                    value={field.value ? String(field.value) : ""}
+                                                    options={departmentOptions}
+                                                    placeholder="Select Department (optional)"
+                                                    onChange={(value: string) =>
+                                                        field.onChange(
+                                                            value
+                                                                ? Number(value)
+                                                                : null,
+                                                        )
+                                                    }
+                                                    onBlur={field.onBlur}
+                                                    className="dark:bg-dark-900"
                                                 />
                                                 {fieldState.error && (
                                                     <p className="mt-1 text-sm text-error-500">

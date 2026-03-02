@@ -13,6 +13,17 @@ export default function BordereauSummaryGrid({ bordereau }: Props) {
     // or when the current user is the assigned BPC for this bordereau.
     const hideCards = user?.user_type_id === 3 || !!(bordereau?.bpc && user && bordereau.bpc.id === user.id);
 
+    const outstandingDisplay = (() => {
+        const outstanding = bordereau?.batch_outstanding_rows;
+        const total = bordereau?.batch_total_rows;
+
+        if (outstanding == null || total == null || total === 0) {
+            return "-";
+        }
+
+        return `${outstanding} / ${total}`;
+    })();
+
     const cards: { title: string; value: string | number }[] = [
         // { title: "", value: `${import.meta.env.VITE_API_URL}/storage/${bordereau?.supplier?.logo}` },
         {
@@ -21,7 +32,7 @@ export default function BordereauSummaryGrid({ bordereau }: Props) {
         },
         { title: "Supplier", value: bordereau?.supplier?.name ?? "-" },
         { title: "Bordereau", value: bordereau?.bordereau ?? "-" },
-        { title: "Outstanding", value: "21 / 100" },
+        { title: "Outstanding", value: outstandingDisplay },
         { title: "Status", value: bordereau?.bordereau_status?.status ?? "-" },
         {
             title: "Place in Queue",

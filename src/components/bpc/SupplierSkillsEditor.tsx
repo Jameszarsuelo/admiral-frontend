@@ -66,13 +66,13 @@ export default function SupplierSkillsEditor({
         enabled: shouldShowBpcPicker,
     });
 
-    const [draft, setDraft] = useState<Record<number, number>>({});
+    const [draft, setDraft] = useState<Record<number, string>>({});
 
     useEffect(() => {
         if (!data) return;
-        const next: Record<number, number> = {};
+        const next: Record<number, string> = {};
         for (const row of data) {
-            next[row.id] = clampSkill(row.skill ?? 0);
+            next[row.id] = String(clampSkill(row.skill ?? 0));
         }
         setDraft(next);
     }, [data]);
@@ -88,7 +88,11 @@ export default function SupplierSkillsEditor({
     const rows = useMemo(() => {
         return (data || []).map((r) => ({
             ...r,
-            skill: draft[r.id] ?? clampSkill(r.skill ?? 0),
+            skill: clampSkill(
+                Number(draft[r.id] === undefined || draft[r.id] === ""
+                    ? r.skill ?? 0
+                    : draft[r.id]),
+            ),
         }));
     }, [data, draft]);
 
@@ -109,20 +113,30 @@ export default function SupplierSkillsEditor({
                 accessorFn: (r) => r.skill,
                 cell: ({ row }) => {
                     const supplierId = row.original.id;
-                    const value = draft[supplierId] ?? clampSkill(row.original.skill ?? 0);
+                    const value =
+                        draft[supplierId] ?? String(clampSkill(row.original.skill ?? 0));
 
                     return (
                         <div className="max-w-[180px]">
                             <Input
-                                type="number"
-                                min={0}
-                                max={100}
-                                value={String(value)}
+                                type="text"
+                                value={value}
                                 onChange={(e) => {
-                                    const next = clampSkill(Number(e.target.value));
+                                    const raw = e.target.value;
+                                    const digitsOnly = raw.replace(/[^0-9]/g, "");
+
+                                    if (digitsOnly === "") {
+                                        setDraft((prev) => ({
+                                            ...prev,
+                                            [supplierId]: "",
+                                        }));
+                                        return;
+                                    }
+
+                                    const clamped = clampSkill(Number(digitsOnly));
                                     setDraft((prev) => ({
                                         ...prev,
-                                        [supplierId]: next,
+                                        [supplierId]: String(clamped),
                                     }));
                                 }}
                             />
@@ -150,7 +164,12 @@ export default function SupplierSkillsEditor({
     const onSave = () => {
         const changed = (data || [])
             .map((r) => {
-                const nextSkill = clampSkill(draft[r.id] ?? r.skill ?? 0);
+                const rawDraft = draft[r.id];
+                const numericDraft =
+                    rawDraft === undefined || rawDraft === ""
+                        ? 0
+                        : Number(rawDraft);
+                const nextSkill = clampSkill(numericDraft);
                 const prevSkill = originalSkillMap[r.id] ?? 0;
                 return {
                     supplier_id: r.id,
@@ -298,9 +317,9 @@ export default function SupplierSkillsEditor({
                             variant="outline"
                             onClick={() => {
                                 if (!data) return;
-                                const next: Record<number, number> = {};
+                                const next: Record<number, string> = {};
                                 for (const row of data) {
-                                    next[row.id] = clampSkill(row.skill ?? 0);
+                                    next[row.id] = String(clampSkill(row.skill ?? 0));
                                 }
                                 setDraft(next);
                             }}
