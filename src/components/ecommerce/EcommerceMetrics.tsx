@@ -1,6 +1,6 @@
 import { FC } from "react";
-import { DocsIcon, InfoIcon, ArrowRightIcon } from "../../icons";
-import Badge from "../ui/badge/Badge";
+import { DocsIcon } from "../../icons";
+// import Badge from "../ui/badge/Badge";
 
 interface EcommerceMetricsProps {
   label?: string;
@@ -77,10 +77,10 @@ const EcommerceMetrics: FC<EcommerceMetricsProps> = ({ label = "Customer", value
             {value}
           </h4>
         </div>
-          <Badge color="success">
+          {/* <Badge color="success">
             <InfoIcon color="success" />
             More Info <ArrowRightIcon/>
-          </Badge> 
+          </Badge>  */}
       </div>
 
     </div>

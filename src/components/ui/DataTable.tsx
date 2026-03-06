@@ -6,8 +6,10 @@ import {
     getCoreRowModel,
     getFilteredRowModel,
     getPaginationRowModel,
+    PaginationState,
     getSortedRowModel,
     SortingState,
+    Updater,
     useReactTable,
     VisibilityState,
 } from "@tanstack/react-table";
@@ -27,12 +29,40 @@ interface DataTableProps<TData, TValue> {
     columns: ColumnDef<TData, TValue>[];
     data: TData[];
     onRowSelectionChange?: (selected: TData[]) => void;
+    /**
+     * When provided, DataTable becomes pagination-controlled (useful for server-side pagination).
+     * pageIndex is 0-based.
+     */
+    pagination?: PaginationState;
+    onPaginationChange?: (updater: Updater<PaginationState>) => void;
+    /** Total number of pages when using manual pagination. */
+    pageCount?: number;
+    /** Enable manual pagination mode (server-side). */
+    manualPagination?: boolean;
+
+    /**
+     * When true, the table will not apply client-side filtering.
+     * Useful when the data is already filtered server-side.
+     */
+    manualFiltering?: boolean;
+
+    /** Optional controlled global filter value (search box). */
+    globalFilter?: string;
+    /** Optional controlled global filter handler (search box). */
+    onGlobalFilterChange?: (value: string) => void;
 }
 
 export function DataTable<TData, TValue>({
     columns,
     data,
     onRowSelectionChange,
+    pagination: paginationProp,
+    onPaginationChange: onPaginationChangeProp,
+    pageCount,
+    manualPagination,
+    manualFiltering,
+    globalFilter: globalFilterProp,
+    onGlobalFilterChange: onGlobalFilterChangeProp,
 }: DataTableProps<TData, TValue>) {
     const [sorting, setSorting] = React.useState<SortingState>([]);
     const [columnFilters, setColumnFilters] =
@@ -41,10 +71,13 @@ export function DataTable<TData, TValue>({
         React.useState<VisibilityState>({});
     const [rowSelection, setRowSelection] = React.useState({});
     const [globalFilter, setGlobalFilter] = React.useState("");
-    const [pagination, setPagination] = React.useState({
+    const [pagination, setPagination] = React.useState<PaginationState>({
         pageIndex: 0,
         pageSize: 10,
     });
+
+    const paginationState = paginationProp ?? pagination;
+    const onPaginationChange = onPaginationChangeProp ?? setPagination;
 
     const csvEscape = React.useCallback((value: unknown) => {
         const normalized =
@@ -62,27 +95,42 @@ export function DataTable<TData, TValue>({
     }, []);
 
 
+    const resolvedGlobalFilter = globalFilterProp ?? globalFilter;
+    const setResolvedGlobalFilter = React.useCallback(
+        (value: string) => {
+            if (onGlobalFilterChangeProp) {
+                onGlobalFilterChangeProp(value);
+                return;
+            }
+            setGlobalFilter(value);
+        },
+        [onGlobalFilterChangeProp],
+    );
+
     const table = useReactTable({
         data,
         columns,
         onSortingChange: setSorting,
         onColumnFiltersChange: setColumnFilters,
-        onPaginationChange: setPagination,
+        onPaginationChange,
         getCoreRowModel: getCoreRowModel(),
         getPaginationRowModel: getPaginationRowModel(),
         getSortedRowModel: getSortedRowModel(),
         getFilteredRowModel: getFilteredRowModel(),
         onColumnVisibilityChange: setColumnVisibility,
         onRowSelectionChange: setRowSelection,
-        onGlobalFilterChange: setGlobalFilter,
+        onGlobalFilterChange: setResolvedGlobalFilter,
         globalFilterFn: "includesString",
+        manualPagination: Boolean(manualPagination),
+        pageCount: manualPagination ? pageCount : undefined,
+        manualFiltering: Boolean(manualFiltering),
         state: {
             sorting,
             columnFilters,
             columnVisibility,
             rowSelection,
-            globalFilter,
-            pagination,
+            globalFilter: resolvedGlobalFilter,
+            pagination: paginationState,
         },
     });
 
@@ -136,8 +184,8 @@ export function DataTable<TData, TValue>({
             <div className="flex flex-col gap-3 py-4 sm:flex-row sm:items-center sm:justify-between">
                 <Input
                     placeholder="Search all columns..."
-                    value={globalFilter ?? ""}
-                    onChange={(event) => setGlobalFilter(event.target.value)}
+                    value={resolvedGlobalFilter ?? ""}
+                    onChange={(event) => setResolvedGlobalFilter(event.target.value)}
                     className="max-w-sm"
                 />
 

@@ -78,13 +78,14 @@ export interface OverviewQueueRow {
 export interface OverviewQueueListResponse {
     include_completed: boolean;
     rows: OverviewQueueRow[];
+    total?: number;
+    page?: number;
+    per_page?: number;
 }
 
 export interface TimTodayRow {
-    bordereau_id: number;
     supplier_id: number;
     supplier: string;
-    bordereau_name: string;
     activities_count: number;
     completed_count: number;
     success_count: number;
@@ -123,11 +124,12 @@ export interface TimBotSnapshotResponse {
     rows: TimBotRow[];
 }
 
-export async function fetchHeadcountToday(departmentId?: number): Promise<HeadcountTodayResponse> {
+export async function fetchHeadcountToday(departmentId?: number, includeRows: boolean = true): Promise<HeadcountTodayResponse> {
     try {
         const response = await api.get(`/overview/headcount/today`, {
             params: {
                 department_id: departmentId,
+                include_rows: includeRows,
             },
         });
         return response.data;
@@ -187,16 +189,18 @@ export async function fetchForecastSnapshot(departmentId?: number): Promise<Fore
     }
 }
 
-export async function fetchOverviewQueueList(includeCompleted?: boolean, departmentId?: number): Promise<OverviewQueueListResponse> {
+export type FetchOverviewQueueListParams = {
+    include_completed?: boolean;
+    department_id?: number;
+    page?: number;
+    per_page?: number;
+    search?: string;
+};
+
+export async function fetchOverviewQueueList(
+    params: FetchOverviewQueueListParams = {},
+): Promise<OverviewQueueListResponse> {
     try {
-        const params: Record<string, unknown> = {
-            department_id: departmentId,
-        };
-
-        if (typeof includeCompleted === "boolean") {
-            params.include_completed = includeCompleted;
-        }
-
         const response = await api.get(`/overview/queue-list`, { params });
         return response.data;
     } catch (error) {

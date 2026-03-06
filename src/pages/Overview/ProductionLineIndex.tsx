@@ -111,7 +111,7 @@ export default function ProductionLineIndex() {
 
                     return (
                         <div className={isGrandTotal ? "font-semibold" : ""}>
-                            {value > 0 ? String(value) : ""}
+                            {String(value)}
                         </div>
                     );
                 },

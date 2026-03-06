@@ -104,24 +104,25 @@ const AppSidebar: React.FC = () => {
             i.name === "Overview" ||
             i.name === "Dashboard" ||
             i.name === "Contact Directory" ||
-            i.name === "Bordereau Detail" ||
+            i.name === "Activity Detail" ||
             i.name === "Task Detail" ||
             i.name === "Supplier Directory" ||
             i.name === "Exceptions" ||
-            i.name === "Upload Exceptions",
+            i.name === "Upload Exceptions" ||
+            i.name === "BPC Supplier Skills" || 
+            i.name === "Reports" ||
+            i.name === "Document Management" ||
+            i.name === "Activity Query Management"
     );
 
     const configItems = dynamicNavItems.filter(
         (i) =>
             i.name === "System Configurations" || i.name === "Email Templates",
     );
-    const othersItems = dynamicNavItems.filter(
-        (i) =>
-            i.name === "Reports" ||
-            i.name === "Document Management" ||
-            i.name === "Bordereau Query Management" ||
-            i.name === "BPC Supplier Skills",
-    );
+    // const othersItems = dynamicNavItems.filter(
+    //     (i) =>
+            
+    // );
 
     useEffect(() => {
         // Close submenu when sidebar collapses
@@ -415,7 +416,7 @@ const AppSidebar: React.FC = () => {
                             </div>
                         )}
 
-                        {othersItems.length > 0 && (
+                        {/* {othersItems.length > 0 && (
                             <div className="">
                                 <h2
                                     className={`mb-4 text-xs uppercase flex leading-5 text-gray-400 ${
@@ -432,7 +433,7 @@ const AppSidebar: React.FC = () => {
                                 </h2>
                                 {renderMenuItems(othersItems, "others")}
                             </div>
-                        )}
+                        )} */}
                     </div>
                 </nav>
                 {/* {isExpanded || isHovered || isMobileOpen ? <SidebarWidget /> : null} */}

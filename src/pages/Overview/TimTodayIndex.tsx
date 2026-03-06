@@ -43,13 +43,6 @@ export default function TimTodayIndex() {
                 cell: ({ row }) => <div>{String(row.getValue("supplier") ?? "-")}</div>,
             },
             {
-                accessorKey: "bordereau_name",
-                header: "Bordereau Name",
-                cell: ({ row }) => (
-                    <div>{String(row.getValue("bordereau_name") ?? "-")}</div>
-                ),
-            },
-            {
                 accessorKey: "activities_count",
                 header: "#Activities",
                 cell: ({ row }) => (
@@ -104,20 +97,15 @@ export default function TimTodayIndex() {
                             variant="primary"
                             onClick={() => {
                                 const params = new URLSearchParams({
-                                    search: row.original.bordereau_name,
                                     supplier_id: String(row.original.supplier_id ?? ""),
                                 });
 
                                 const targetUrl = `/bordereau-detail?${params.toString()}`;
-                                const opened = window.open(
+                                window.open(
                                     targetUrl,
                                     "_blank",
                                     "noopener,noreferrer,width=1200,height=900",
                                 );
-
-                                if (!opened) {
-                                    window.location.href = targetUrl;
-                                }
                             }}
                         >
                             View

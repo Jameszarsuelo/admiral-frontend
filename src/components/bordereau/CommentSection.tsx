@@ -14,7 +14,7 @@ export default function CommentSection({ comments = [] }: Props) {
                         <div className="flex-1 min-w-0">
                             <div className="flex-col items-center gap-2">
                                 <button className="text-sm font-semibold text-cyan-600 dark:text-cyan-300 hover:underline leading-none">
-                                    {c.created_by}
+                                    {c.created_by?.trim() ? c.created_by : "Unknown"}
                                 </button>
                                 <div className="text-xs text-gray-500 dark:text-gray-400">
                                     {c.created_at ? dateFormat(c.created_at) : "-"}

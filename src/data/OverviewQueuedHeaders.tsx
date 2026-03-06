@@ -1,5 +1,7 @@
 import Button from "@/components/ui/button/Button";
 import { ColumnDef } from "@tanstack/react-table";
+import { Badge } from "@/components/ui/badge";
+import { BadgeCheckIcon } from "lucide-react";
 
 export interface OverviewQueuedRow {
     bordereau_id: number;
@@ -61,7 +63,10 @@ export function getOverviewQueuedColumns(options: {
         accessorKey: "bordereau_status",
         header: "Bordereau Status",
         cell: ({ row }) => (
-            <div>{String(row.getValue("bordereau_status") ?? "-")}</div>
+            <Badge variant="secondary">
+                <BadgeCheckIcon className="mr-1 inline-block" />
+                {String(row.getValue("bordereau_status") ?? "-")}
+            </Badge>
         ),
     },
     {

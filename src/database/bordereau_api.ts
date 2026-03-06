@@ -79,7 +79,22 @@ export async function fetchBordereauList(params?: Record<string, unknown>): Prom
 export async function fetchBordereauById(id: number): Promise<IBordereauIndex> {
     try {
         const response = await api.get(`/bordereau/${id}`);
-        return response.data;
+        const payload = response.data as unknown;
+
+        // Backend commonly wraps show() responses like { data: {...} }
+        if (payload && typeof payload === "object") {
+            const record = payload as Record<string, unknown>;
+            if (record.data && typeof record.data === "object") {
+                return record.data as IBordereauIndex;
+            }
+            // Some endpoints use { bordereau: {...} }
+            if (record.bordereau && typeof record.bordereau === "object") {
+                return record.bordereau as IBordereauIndex;
+            }
+        }
+
+        // Fallback: assume the payload is already the bordereau
+        return payload as IBordereauIndex;
     } catch (error) {
         if (error instanceof AxiosError && error.response?.data) {
             throw error.response.data;
@@ -186,6 +201,23 @@ export async function queueBordereauForBpc(params: {
 }): Promise<void> {
     try {
         const response = await api.post(`/bordereau/process`, params);
+        return response.data;
+    } catch (error) {
+        if (error instanceof AxiosError && error.response?.data) {
+            throw error.response.data;
+        }
+        throw error;
+    }
+}
+
+export async function assignBordereauInProgress(params: {
+    bordereau_id: number;
+    bpc_id: number;
+    bordereau_status_id: 3 | 6 | 7;
+    instructions?: string | null;
+}): Promise<void> {
+    try {
+        const response = await api.post(`/bordereau/assign-in-progress`, params);
         return response.data;
     } catch (error) {
         if (error instanceof AxiosError && error.response?.data) {

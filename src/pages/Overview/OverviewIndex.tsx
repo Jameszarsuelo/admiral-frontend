@@ -4,6 +4,8 @@ import { DataTable } from "@/components/ui/DataTable";
 import { useNavigate } from "react-router-dom";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import Label from "@/components/form/Label";
 import {
     fetchForecastSnapshot,
     fetchHeadcountToday,
@@ -18,7 +20,8 @@ import {
     getOverviewQueuedColumns,
     type OverviewQueuedRow,
 } from "@/data/OverviewQueuedHeaders.tsx";
-import { useMemo } from "react";
+import type { PaginationState, Updater } from "@tanstack/react-table";
+import { useEffect, useMemo, useState } from "react";
 import { useOverviewDepartmentFilter } from "./useOverviewDepartmentFilter";
 import OverviewDepartmentFilterCard from "./OverviewDepartmentFilterCard";
 
@@ -35,7 +38,7 @@ export default function OverviewIndex() {
 
     const { data: headcountToday } = useQuery({
         queryKey: ["overview", "headcount", "today", "headline", departmentIdNumber],
-        queryFn: () => fetchHeadcountToday(departmentIdNumber),
+        queryFn: () => fetchHeadcountToday(departmentIdNumber, false),
         refetchInterval: 15_000,
         refetchIntervalInBackground: true,
         staleTime: 0,
@@ -94,9 +97,64 @@ export default function OverviewIndex() {
 
     const timBotValue = timBotSnapshot?.headline_aht ?? "00:00:00";
 
+    const DEFAULT_PER_PAGE = 10;
+    const [queuePagination, setQueuePagination] = useState<{
+        page: number;
+        per_page: number;
+    }>({
+        page: 1,
+        per_page: DEFAULT_PER_PAGE,
+    });
+
+    const [queueSearch, setQueueSearch] = useState<string>("");
+    const [queueSearchApplied, setQueueSearchApplied] = useState<string>("");
+
+    const [includeCompleted, setIncludeCompleted] = useState<boolean>(false);
+
+    useEffect(() => {
+        const handle = window.setTimeout(() => {
+            setQueueSearchApplied(queueSearch.trim());
+            setQueuePagination((prev) => ({
+                ...prev,
+                page: 1,
+            }));
+        }, 300);
+
+        return () => window.clearTimeout(handle);
+    }, [queueSearch]);
+
+    useEffect(() => {
+        setQueuePagination((prev) => ({
+            ...prev,
+            page: 1,
+        }));
+    }, [departmentIdNumber]);
+
+    useEffect(() => {
+        setQueuePagination((prev) => ({
+            ...prev,
+            page: 1,
+        }));
+    }, [includeCompleted]);
+
     const { data: queueListData } = useQuery({
-        queryKey: ["overview", "queue-list", departmentIdNumber],
-        queryFn: () => fetchOverviewQueueList(undefined, departmentIdNumber),
+        queryKey: [
+            "overview",
+            "queue-list",
+            departmentIdNumber,
+            includeCompleted,
+            queuePagination.page,
+            queuePagination.per_page,
+            queueSearchApplied,
+        ],
+        queryFn: () =>
+            fetchOverviewQueueList({
+                department_id: departmentIdNumber,
+                include_completed: includeCompleted,
+                page: queuePagination.page,
+                per_page: queuePagination.per_page,
+                search: queueSearchApplied,
+            }),
         refetchInterval: 15_000,
         refetchIntervalInBackground: true,
         staleTime: 0,
@@ -120,6 +178,14 @@ export default function OverviewIndex() {
     });
 
     const queuedRows: OverviewQueuedRow[] = queueListData?.rows ?? [];
+
+    const queuePageCount = (() => {
+        const total = Number(queueListData?.total ?? 0);
+        const perPage = Number(queueListData?.per_page ?? queuePagination.per_page);
+        if (!Number.isFinite(total) || total <= 0) return 0;
+        if (!Number.isFinite(perPage) || perPage <= 0) return 0;
+        return Math.ceil(total / perPage);
+    })();
 
     const overviewQueuedColumns = useMemo(
         () =>
@@ -220,6 +286,33 @@ export default function OverviewIndex() {
                                     List of Bordereau
                                 </h3>
                             </div>
+
+                            <div className="flex items-center gap-4">
+                                <div className="flex items-center gap-3">
+                                    <Label className="mb-0">Include Completed?</Label>
+                                    <RadioGroup
+                                        value={includeCompleted ? "yes" : "no"}
+                                        onValueChange={(v) =>
+                                            setIncludeCompleted(String(v) === "yes")
+                                        }
+                                    >
+                                        <div className="flex items-center gap-4">
+                                            <div className="flex items-center space-x-2">
+                                                <RadioGroupItem value="yes" id="include-completed-yes" />
+                                                <Label htmlFor="include-completed-yes" className="mb-0">
+                                                    Yes
+                                                </Label>
+                                            </div>
+                                            <div className="flex items-center space-x-2">
+                                                <RadioGroupItem value="no" id="include-completed-no" />
+                                                <Label htmlFor="include-completed-no" className="mb-0">
+                                                    No
+                                                </Label>
+                                            </div>
+                                        </div>
+                                    </RadioGroup>
+                                </div>
+                            </div>
                         </div>
 
                         <div className="max-w-full overflow-x-auto custom-scrollbar">
@@ -227,6 +320,43 @@ export default function OverviewIndex() {
                                 <DataTable
                                     columns={overviewQueuedColumns}
                                     data={queuedRows}
+                                    manualPagination
+                                    manualFiltering
+                                    globalFilter={queueSearch}
+                                    onGlobalFilterChange={(value) => {
+                                        setQueueSearch(value);
+                                    }}
+                                    pageCount={queuePageCount}
+                                    pagination={{
+                                        pageIndex: Math.max(0, queuePagination.page - 1),
+                                        pageSize: queuePagination.per_page,
+                                    }}
+                                    onPaginationChange={(
+                                        updater: Updater<PaginationState>,
+                                    ) => {
+                                        setQueuePagination((prev) => {
+                                            const current: PaginationState = {
+                                                pageIndex: Math.max(0, prev.page - 1),
+                                                pageSize: prev.per_page,
+                                            };
+
+                                            const next: PaginationState =
+                                                typeof updater === "function"
+                                                    ? updater(current)
+                                                    : updater;
+
+                                            const pageSizeChanged =
+                                                Number(next.pageSize) !==
+                                                Number(current.pageSize);
+
+                                            return {
+                                                page: pageSizeChanged
+                                                    ? 1
+                                                    : Math.max(1, next.pageIndex + 1),
+                                                per_page: Math.max(1, next.pageSize),
+                                            };
+                                        });
+                                    }}
                                 />
                             </div>
                         </div>

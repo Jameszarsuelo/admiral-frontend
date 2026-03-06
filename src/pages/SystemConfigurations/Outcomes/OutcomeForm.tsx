@@ -289,7 +289,7 @@ export default function OutcomeForm() {
                                             data-invalid={fieldState.invalid}
                                         >
                                             <Label htmlFor="status">
-                                                Bordereau / Task Terminal Status
+                                                Activity / Task Terminal Status
                                             </Label>
                                             <Select
                                                 value={String(

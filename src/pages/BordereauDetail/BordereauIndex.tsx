@@ -9,6 +9,7 @@ import { DataTable } from "@/components/ui/DataTable";
 import Button from "@/components/ui/button/Button";
 import { getBordeareauHeaders } from "@/data/BordereauHeaders";
 import { useQuery } from "@tanstack/react-query";
+import type { PaginationState, Updater } from "@tanstack/react-table";
 import Spinner from "@/components/ui/spinner/Spinner";
 import Select from "@/components/form/Select";
 import DatePicker from "@/components/form/date-picker";
@@ -118,7 +119,23 @@ export default function BordereauIndex() {
         link.remove();
     };
 
-    const [filters, setFilters] = useState({
+    type TFilterFormState = {
+        invoice_status: string;
+        supplier_id: string;
+        bpc_id: string;
+        date_from: string;
+        date_to: string;
+        search: string;
+    };
+
+    type TAppliedFilters = TFilterFormState & {
+        page: number;
+        per_page: number;
+        include_comments: boolean;
+        date_type?: string;
+    };
+
+    const [filters, setFilters] = useState<TFilterFormState>({
         invoice_status: "",
         supplier_id: "",
         bpc_id: "",
@@ -127,7 +144,29 @@ export default function BordereauIndex() {
         search: "",
     });
 
-    const [appliedFilters, setAppliedFilters] = useState(filters);
+    const DEFAULT_PER_PAGE = 10;
+    const [appliedFilters, setAppliedFilters] = useState<TAppliedFilters>(() => ({
+        ...filters,
+        page: 1,
+        per_page: DEFAULT_PER_PAGE,
+        include_comments: false,
+    }));
+
+    // DataTable's built-in search box (server-side)
+    const [tableSearch, setTableSearch] = useState<string>("");
+
+    useEffect(() => {
+        const handle = window.setTimeout(() => {
+            const trimmed = tableSearch.trim();
+            setAppliedFilters((prev) => ({
+                ...prev,
+                search: trimmed,
+                page: 1,
+            }));
+        }, 300);
+
+        return () => window.clearTimeout(handle);
+    }, [tableSearch]);
 
     useEffect(() => {
         const params = new URLSearchParams(location.search);
@@ -151,7 +190,13 @@ export default function BordereauIndex() {
         setInvoiceStatus("");
         setBordereauStatus("queued");
         setDateType("created_at");
-        setAppliedFilters(nextFilters);
+        setTableSearch(search);
+        setAppliedFilters((prev) => ({
+            ...nextFilters,
+            page: 1,
+            per_page: prev?.per_page ?? DEFAULT_PER_PAGE,
+            include_comments: false,
+        }));
     }, [location.search]);
 
     const {
@@ -173,8 +218,8 @@ export default function BordereauIndex() {
     } = useQuery({
         queryKey: ["bordereau-summary"],
         queryFn: async () => {
-            // Keep payload tiny; we only need the counts.
-            return await fetchBordereauList({ page: 1, per_page: 1 });
+            // Counts-only: avoid running the main list query.
+            return await fetchBordereauList({ summary_only: true, page: 1, per_page: 1 });
         },
         // Keep the cards fresh without hammering the full table query.
         refetchInterval: 15_000,
@@ -388,7 +433,7 @@ export default function BordereauIndex() {
 
     return (
         <>
-            <PageBreadcrumb pageTitle="Bordereau Detail" />
+            <PageBreadcrumb pageTitle="Activity Detail" />
             <div className="w-full">
                 <div className="grid grid-cols-12 gap-4 md:gap-6">
                     <div className="col-span-12 space-y-6 xl:col-span-9">
@@ -452,7 +497,7 @@ export default function BordereauIndex() {
                     <div className="col-span-12 space-y-6 xl:col-span-3">
                         <div className="rounded-2xl border border-gray-200 bg-white px-5 py-5 dark:border-gray-800 dark:bg-white/3 sm:px-6 mb-6">
                             <h1 className="text-xl font-bold mb-5">
-                                Add Bordereau / Workload
+                                Add Activity / Workload
                             </h1>
                             <Can permission="bordereau_detail.create">
                                 <Button
@@ -461,7 +506,7 @@ export default function BordereauIndex() {
                                     variant="outline"
                                     onClick={() => setIsCsvModalOpen(true)}
                                 >
-                                    Bulk Upload (CSV)
+                                    Upload Bordereau (CSV)
                                 </Button>
                             </Can>
                             <Can permission="bordereau_detail.create">
@@ -473,7 +518,7 @@ export default function BordereauIndex() {
                                         navigate("/bordereau-detail/create")
                                     }
                                 >
-                                    Add Single Bordereau
+                                    Add Activity
                                 </Button>
                             </Can>
                         </div>
@@ -659,7 +704,7 @@ export default function BordereauIndex() {
                                         </div>
                                         <div className="col-span-12 space-y-6 xl:col-span-6">
                                             <h3 className="text-md font-semibold mb-4">
-                                                Bordereau Status
+                                                Activity Status
                                             </h3>
                                             <RadioGroup
                                                 value={bordereauStatus}
@@ -713,16 +758,22 @@ export default function BordereauIndex() {
                                 <Button
                                     size="sm"
                                     onClick={() => {
-                                        const params: Record<string, unknown> = {
+                                        const params: TAppliedFilters = {
                                             ...filters,
+                                            page: 1,
+                                            per_page: appliedFilters.per_page ?? DEFAULT_PER_PAGE,
+                                            include_comments: false,
+                                            search: tableSearch.trim(),
                                         };
 
                                         // If date filters provided, pass backend's `date_type` token
                                         if (filters.date_from || filters.date_to) {
                                             params.date_type = dateType;
+                                        } else {
+                                            delete params.date_type;
                                         }
 
-                                        setAppliedFilters(params as any);
+                                        setAppliedFilters(params);
                                     }}
                                 >
                                     Filter
@@ -731,7 +782,7 @@ export default function BordereauIndex() {
                                     size="sm"
                                     variant="outline"
                                     onClick={() => {
-                                        const empty = {
+                                        const empty: TFilterFormState = {
                                             invoice_status: "",
                                             supplier_id: "",
                                             bpc_id: "",
@@ -740,10 +791,16 @@ export default function BordereauIndex() {
                                             search: "",
                                         };
                                         setFilters(empty);
+                                        setTableSearch("");
                                         setInvoiceStatus("");
                                         setBordereauStatus("queued");
                                         setDateType("created_at");
-                                        setAppliedFilters(empty);
+                                        setAppliedFilters({
+                                            ...empty,
+                                            page: 1,
+                                            per_page: appliedFilters.per_page ?? DEFAULT_PER_PAGE,
+                                            include_comments: false,
+                                        });
                                     }}
                                 >
                                     Reset
@@ -761,6 +818,48 @@ export default function BordereauIndex() {
                                     <DataTable
                                         columns={columns}
                                         data={bordereauData.data}
+                                        manualPagination
+                                        manualFiltering
+                                        globalFilter={tableSearch}
+                                        onGlobalFilterChange={(value) => {
+                                            setTableSearch(value);
+                                        }}
+                                        pageCount={(() => {
+                                            const total = Number(bordereauData.total ?? 0);
+                                            const perPage = Number(appliedFilters.per_page ?? DEFAULT_PER_PAGE);
+                                            if (!Number.isFinite(total) || total <= 0) return 0;
+                                            if (!Number.isFinite(perPage) || perPage <= 0) return 0;
+                                            return Math.ceil(total / perPage);
+                                        })()}
+                                        pagination={{
+                                            pageIndex: Math.max(0, Number(appliedFilters.page ?? 1) - 1),
+                                            pageSize: Number(appliedFilters.per_page ?? DEFAULT_PER_PAGE),
+                                        }}
+                                        onPaginationChange={(updater: Updater<PaginationState>) => {
+                                            setAppliedFilters((prev) => {
+                                                const current: PaginationState = {
+                                                    pageIndex: Math.max(0, Number(prev.page ?? 1) - 1),
+                                                    pageSize: Number(prev.per_page ?? DEFAULT_PER_PAGE),
+                                                };
+
+                                                const next: PaginationState =
+                                                    typeof updater === "function"
+                                                        ? updater(current)
+                                                        : updater;
+
+                                                const pageSizeChanged =
+                                                    Number(next.pageSize) !== Number(current.pageSize);
+
+                                                return {
+                                                    ...prev,
+                                                    page: pageSizeChanged
+                                                        ? 1
+                                                        : Math.max(1, Number(next.pageIndex) + 1),
+                                                    per_page: Math.max(1, Number(next.pageSize)),
+                                                    include_comments: false,
+                                                };
+                                            });
+                                        }}
                                     />
                                 </div>
                             ) : (

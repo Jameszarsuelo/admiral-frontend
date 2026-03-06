@@ -1,5 +1,7 @@
 import Button from "@/components/ui/button/Button";
+import { Badge } from "@/components/ui/badge";
 import { ColumnDef } from "@tanstack/react-table";
+import { BadgeCheckIcon } from "lucide-react";
 
 export interface HeadcountRow {
     bordereau_processing_clerk: string;
@@ -29,7 +31,31 @@ export const headcountColumns: ColumnDef<HeadcountRow>[] = [
     {
         accessorKey: "current_status",
         header: "Current Status",
-        cell: ({ row }) => <div>{String(row.getValue("current_status") ?? "-")}</div>,
+        cell: ({ row }) => {
+            const raw = row.getValue("current_status");
+            const status = String(raw ?? "-");
+            const normalized = status.trim().toLowerCase();
+
+            const className =
+                normalized === "ready"
+                    ? "bg-success-500 text-white border-transparent"
+                    : normalized === "processing" || normalized === "wrap up"
+                      ? "bg-blue-light-500 text-white border-transparent"
+                      : normalized === "break" ||
+                          normalized === "training" ||
+                          normalized === "lunch"
+                        ? "bg-warning-500 text-white border-transparent"
+                        : normalized === "log off" || normalized === "logged off"
+                          ? "bg-gray-100 text-gray-700 border-gray-200 dark:bg-white/5 dark:text-white/80 dark:border-gray-800"
+                          : "bg-gray-500 text-white border-transparent";
+
+            return (
+                <Badge variant="secondary" className={className}>
+                    <BadgeCheckIcon className="mr-1 inline-block" />
+                    {status}
+                </Badge>
+            );
+        },
     },
     {
         accessorKey: "time_in_current_status",

@@ -1,5 +1,4 @@
 import EcommerceMetrics from "../../components/ecommerce/EcommerceMetrics";
-import RecentOrders from "../../components/ecommerce/RecentOrders";
 import { useQuery } from "@tanstack/react-query";
 import { fetchBordereauList } from "@/database/bordereau_api";
 
@@ -40,11 +39,11 @@ export default function Home() {
                 <div className="col-span-12 space-y-6 xl:col-span-6">
                     <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 md:gap-6">
                         <EcommerceMetrics
-                            label="Bordereaux Uploaded"
+                            label="Activities Uploaded"
                             value={bordereauxUploadedValue}
                         />
                         <EcommerceMetrics
-                            label="Bordereaux Processed"
+                            label="Activities Processed"
                             value={bordereauxProcessedValue}
                         />
                         <EcommerceMetrics label="Task Assigned" value="0" />
@@ -55,11 +54,11 @@ export default function Home() {
                 <div className="col-span-12 xl:col-span-6">
                     <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 md:gap-6">
                         <EcommerceMetrics
-                            label="Bordereaux Queries"
+                            label="Activities Queries"
                             value={bordereauxQueriesValue}
                         />
                         <EcommerceMetrics
-                            label="Bordereaux Approaching Deadline"
+                            label="Activities Approaching Deadline"
                             value={bordereauxApproachingDeadlineValue}
                         />
                         <EcommerceMetrics label="Tasks in Progress" value="0" />
@@ -67,12 +66,12 @@ export default function Home() {
                     </div>
                 </div>
 
-                <div className="col-span-12">
+                {/* <div className="col-span-12">
                     <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 md:gap-6">
                         <RecentOrders />
                         <RecentOrders />
                     </div>
-                </div>
+                </div> */}
             </div>
         </>
     );

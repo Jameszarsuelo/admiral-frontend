@@ -2,7 +2,7 @@ import { ColumnDef } from "@tanstack/react-table";
 import { Badge } from "@/components/ui/badge";
 import Button from "@/components/ui/button/Button";
 import { IBordereauIndex } from "@/types/BordereauSchema";
-import { BadgeCheckIcon } from "lucide-react";
+import { BadgeCheckIcon, User2 } from "lucide-react";
 import Can from "@/components/auth/Can";
 
 export const getBordeareauHeaders = (
@@ -38,11 +38,23 @@ export const getBordeareauHeaders = (
         ),
     },
     {
-        accessorKey: "name",
-        header: "Name",
-        cell: ({ row }) => (
-            <div className="capitalize">{row.getValue("name")}</div>
-        ),
+        accessorKey: "agent",
+        accessorFn: (row) =>
+            row.bpc?.contact
+                ? `${row.bpc.contact.firstname} ${row.bpc.contact.lastname}`
+                : "Unassigned",
+        header: "Agent",
+        cell: ({ row }) => {
+            const label = String(row.getValue("agent") ?? "");
+            const isUnassigned = label.toLowerCase() === "unassigned";
+
+            return (
+                <Badge variant={isUnassigned ? "outline" : "secondary"}>
+                    <User2 className="mr-1 inline-block" />
+                    {label || "-"}
+                </Badge>
+            );
+        },
     },
     {
         accessorKey: "status",

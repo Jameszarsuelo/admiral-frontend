@@ -118,15 +118,11 @@ export default function ForecastIndex() {
                                     });
 
                                     const targetUrl = `/bordereau-detail?${params.toString()}`;
-                                    const opened = window.open(
+                                    window.open(
                                         targetUrl,
                                         "_blank",
                                         "noopener,noreferrer,width=1200,height=900",
                                     );
-
-                                    if (!opened) {
-                                        window.location.href = targetUrl;
-                                    }
                                 }}
                             >
                                 View

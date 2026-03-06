@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
@@ -68,6 +68,42 @@ export default function SupplierSkillsEditor({
 
     const [draft, setDraft] = useState<Record<number, string>>({});
 
+    const handleDraftChange = useCallback((supplierId: number, raw: string) => {
+        const digitsOnly = raw.replace(/[^0-9]/g, "");
+
+        if (digitsOnly === "") {
+            setDraft((prev) => ({
+                ...prev,
+                [supplierId]: "",
+            }));
+            return;
+        }
+
+        const clamped = clampSkill(Number(digitsOnly));
+        setDraft((prev) => ({
+            ...prev,
+            [supplierId]: String(clamped),
+        }));
+    }, []);
+
+    const handleDraftBlur = useCallback((supplierId: number) => {
+        setDraft((prev) => {
+            const current = prev[supplierId];
+
+            if (current === undefined) {
+                return prev;
+            }
+
+            if (current === "") {
+                return { ...prev, [supplierId]: "0" };
+            }
+
+            const normalized = String(clampSkill(Number(current)));
+            if (normalized === current) return prev;
+            return { ...prev, [supplierId]: normalized };
+        });
+    }, []);
+
     useEffect(() => {
         if (!data) return;
         const next: Record<number, string> = {};
@@ -85,18 +121,26 @@ export default function SupplierSkillsEditor({
         return map;
     }, [data]);
 
-    const rows = useMemo(() => {
-        return (data || []).map((r) => ({
-            ...r,
-            skill: clampSkill(
-                Number(draft[r.id] === undefined || draft[r.id] === ""
-                    ? r.skill ?? 0
-                    : draft[r.id]),
-            ),
-        }));
+    type TSupplierSkillRow = IBpcSupplierSkillRow & { draftSkill: string };
+
+    const rows = useMemo((): TSupplierSkillRow[] => {
+        return (data || []).map((r) => {
+            const draftSkill =
+                draft[r.id] ?? String(clampSkill(r.skill ?? 0));
+
+            const effectiveNumeric = clampSkill(
+                Number(draftSkill === "" ? 0 : draftSkill),
+            );
+
+            return {
+                ...r,
+                draftSkill,
+                skill: effectiveNumeric,
+            };
+        });
     }, [data, draft]);
 
-    const columns: ColumnDef<IBpcSupplierSkillRow>[] = useMemo(
+    const columns: ColumnDef<TSupplierSkillRow>[] = useMemo(
         () => [
             {
                 accessorKey: "name",
@@ -113,39 +157,22 @@ export default function SupplierSkillsEditor({
                 accessorFn: (r) => r.skill,
                 cell: ({ row }) => {
                     const supplierId = row.original.id;
-                    const value =
-                        draft[supplierId] ?? String(clampSkill(row.original.skill ?? 0));
+                    const value = row.original.draftSkill;
 
                     return (
                         <div className="max-w-[180px]">
                             <Input
                                 type="text"
                                 value={value}
-                                onChange={(e) => {
-                                    const raw = e.target.value;
-                                    const digitsOnly = raw.replace(/[^0-9]/g, "");
-
-                                    if (digitsOnly === "") {
-                                        setDraft((prev) => ({
-                                            ...prev,
-                                            [supplierId]: "",
-                                        }));
-                                        return;
-                                    }
-
-                                    const clamped = clampSkill(Number(digitsOnly));
-                                    setDraft((prev) => ({
-                                        ...prev,
-                                        [supplierId]: String(clamped),
-                                    }));
-                                }}
+                                onChange={(e) => handleDraftChange(supplierId, e.target.value)}
+                                onBlur={() => handleDraftBlur(supplierId)}
                             />
                         </div>
                     );
                 },
             },
         ],
-        [draft],
+        [handleDraftBlur, handleDraftChange],
     );
 
     const mutation = useMutation({
