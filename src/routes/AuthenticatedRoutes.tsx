@@ -12,6 +12,9 @@ const OverviewOutstandingQueries = lazy(() => import("@/pages/Overview/Outstandi
 const OverviewForecast = lazy(() => import("@/pages/Overview/ForecastIndex"));
 const OverviewTimToday = lazy(() => import("@/pages/Overview/TimTodayIndex"));
 const OverviewTimBot = lazy(() => import("@/pages/Overview/TimBotIndex"));
+const OverviewBatchActivitiesIndex = lazy(
+    () => import("@/pages/Overview/OverviewBatchActivitiesIndex"),
+);
 const UploadExceptionActivitiesIndex = lazy(
     () => import("@/pages/UploadExceptions/UploadExceptionActivitiesIndex"),
 );
@@ -171,6 +174,17 @@ export const AuthenticatedRoutes = () => {
                         element={
                             <ProtectedRoute permission="overview.view">
                                 <OverviewTimBot />
+                            </ProtectedRoute>
+                        }
+                    />
+                )}
+
+                {hasOverviewModule && (
+                    <Route
+                        path="/overview/queue-batch/:uploadBatchNumber"
+                        element={
+                            <ProtectedRoute permission="overview.view">
+                                <OverviewBatchActivitiesIndex />
                             </ProtectedRoute>
                         }
                     />

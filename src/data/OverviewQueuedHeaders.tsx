@@ -5,6 +5,7 @@ import { BadgeCheckIcon } from "lucide-react";
 
 export interface OverviewQueuedRow {
     bordereau_id: number;
+    upload_batch_number?: number | null;
     supplier_id: number;
     import_date: string;
     department: string;
@@ -96,7 +97,13 @@ export function getOverviewQueuedColumns(options: {
                         variant="primary"
                         size="xs"
                         onClick={() => {
-                            const targetUrl = `/bordereau-detail/view/${bordereauId}`;
+                            const uploadBatchNumber =
+                                row.original.upload_batch_number ?? null;
+
+                            const targetUrl =
+                                uploadBatchNumber != null
+                                    ? `/overview/queue-batch/${uploadBatchNumber}`
+                                    : `/bordereau-detail/view/${bordereauId}`;
                             window.open(
                                 targetUrl,
                                 "_blank",
@@ -147,7 +154,7 @@ export function getOverviewQueuedColumns(options: {
                         onClick={() =>
                             options.onTogglePause(
                                 bordereauId,
-                                !Boolean(row.original.is_paused),
+                                !row.original.is_paused,
                             )
                         }
                         disabled={

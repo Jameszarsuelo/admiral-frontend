@@ -64,6 +64,7 @@ export interface ForecastSnapshotResponse {
 
 export interface OverviewQueueRow {
     bordereau_id: number;
+    upload_batch_number?: number | null;
     supplier_id: number;
     import_date: string;
     department: string;
