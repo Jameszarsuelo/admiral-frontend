@@ -38,31 +38,47 @@ export default function Home() {
             <div className="grid grid-cols-12 gap-4 md:gap-6">
                 <div className="col-span-12 space-y-6 xl:col-span-6">
                     <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 md:gap-6">
-                        <EcommerceMetrics
-                            label="Activities Uploaded"
-                            value={bordereauxUploadedValue}
-                        />
-                        <EcommerceMetrics
-                            label="Activities Processed"
-                            value={bordereauxProcessedValue}
-                        />
-                        <EcommerceMetrics label="Task Assigned" value="0" />
-                        <EcommerceMetrics label="Task Completed" value="0" />
+                        <div className="w-full [&>div]:transition-all [&>div]:duration-200 [&>div]:ease-out [&>div]:transform-gpu hover:[&>div]:shadow-theme-md hover:[&>div]:-translate-y-0.5 hover:[&>div]:scale-[1.02]">
+                            <EcommerceMetrics
+                                label="Activities Uploaded"
+                                value={bordereauxUploadedValue}
+                            />
+                        </div>
+                        <div className="w-full [&>div]:transition-all [&>div]:duration-200 [&>div]:ease-out [&>div]:transform-gpu hover:[&>div]:shadow-theme-md hover:[&>div]:-translate-y-0.5 hover:[&>div]:scale-[1.02]">
+                            <EcommerceMetrics
+                                label="Activities Processed"
+                                value={bordereauxProcessedValue}
+                            />
+                        </div>
+                        <div className="w-full [&>div]:transition-all [&>div]:duration-200 [&>div]:ease-out [&>div]:transform-gpu hover:[&>div]:shadow-theme-md hover:[&>div]:-translate-y-0.5 hover:[&>div]:scale-[1.02]">
+                            <EcommerceMetrics label="Task Assigned" value="0" />
+                        </div>
+                        <div className="w-full [&>div]:transition-all [&>div]:duration-200 [&>div]:ease-out [&>div]:transform-gpu hover:[&>div]:shadow-theme-md hover:[&>div]:-translate-y-0.5 hover:[&>div]:scale-[1.02]">
+                            <EcommerceMetrics label="Task Completed" value="0" />
+                        </div>
                     </div>
                 </div>
 
                 <div className="col-span-12 xl:col-span-6">
                     <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 md:gap-6">
-                        <EcommerceMetrics
-                            label="Activities Queries"
-                            value={bordereauxQueriesValue}
-                        />
-                        <EcommerceMetrics
-                            label="Activities Approaching Deadline"
-                            value={bordereauxApproachingDeadlineValue}
-                        />
-                        <EcommerceMetrics label="Tasks in Progress" value="0" />
-                        <EcommerceMetrics label="Tasks Overdue" value="0" />
+                        <div className="w-full [&>div]:transition-all [&>div]:duration-200 [&>div]:ease-out [&>div]:transform-gpu hover:[&>div]:shadow-theme-md hover:[&>div]:-translate-y-0.5 hover:[&>div]:scale-[1.02]">
+                            <EcommerceMetrics
+                                label="Activities Queries"
+                                value={bordereauxQueriesValue}
+                            />
+                        </div>
+                        <div className="w-full [&>div]:transition-all [&>div]:duration-200 [&>div]:ease-out [&>div]:transform-gpu hover:[&>div]:shadow-theme-md hover:[&>div]:-translate-y-0.5 hover:[&>div]:scale-[1.02]">
+                            <EcommerceMetrics
+                                label="Activities Approaching Deadline"
+                                value={bordereauxApproachingDeadlineValue}
+                            />
+                        </div>
+                        <div className="w-full [&>div]:transition-all [&>div]:duration-200 [&>div]:ease-out [&>div]:transform-gpu hover:[&>div]:shadow-theme-md hover:[&>div]:-translate-y-0.5 hover:[&>div]:scale-[1.02]">
+                            <EcommerceMetrics label="Tasks in Progress" value="0" />
+                        </div>
+                        <div className="w-full [&>div]:transition-all [&>div]:duration-200 [&>div]:ease-out [&>div]:transform-gpu hover:[&>div]:shadow-theme-md hover:[&>div]:-translate-y-0.5 hover:[&>div]:scale-[1.02]">
+                            <EcommerceMetrics label="Tasks Overdue" value="0" />
+                        </div>
                     </div>
                 </div>
 

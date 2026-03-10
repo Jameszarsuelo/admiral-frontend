@@ -10,9 +10,11 @@ import { Modal } from "@/components/ui/modal";
 import Spinner from "@/components/ui/spinner/Spinner";
 import SupplierContactsTable from "./SupplierContactsTable/SupplierContactTable";
 import SupplierDocumentsTable from "./SupplierDocumentTable/SupplierDocumentsTable";
+import { usePermissions } from "@/hooks/usePermissions";
 
 export default function SupplierIndex() {
     const navigate = useNavigate();
+    const { can } = usePermissions();
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [isStaffModalOpen, setIsStaffModelOpen] = useState(false);
     const [isContactModalOpen, setIsContactModalOpen] = useState(false);
@@ -78,7 +80,7 @@ export default function SupplierIndex() {
         handleDeleteClick,
         refetch,
         handleStaffModal,
-        handleContactModal
+        handleContactModal,
     );
 
     return (
@@ -96,14 +98,16 @@ export default function SupplierIndex() {
                             </p>
                         </div>
                         <div className="flex shrink-0 items-center gap-2">
-                            <Button
-                                size="sm"
-                                onClick={() =>
-                                    navigate("/supplier-directory/create")
-                                }
-                            >
-                                Add New Supplier
-                            </Button>
+                            {can("supplier_directory.create") && (
+                                <Button
+                                    size="sm"
+                                    onClick={() =>
+                                        navigate("/supplier-directory/create")
+                                    }
+                                >
+                                    Add New Supplier
+                                </Button>
+                            )}
                         </div>
                     </div>
 
@@ -161,7 +165,8 @@ export default function SupplierIndex() {
                 </div>
             </Modal>
 
-            <Modal isOpen={isContactModalOpen}
+            <Modal
+                isOpen={isContactModalOpen}
                 onClose={() => setIsContactModalOpen((prev) => !prev)}
                 className="w-auto! m-4"
             >

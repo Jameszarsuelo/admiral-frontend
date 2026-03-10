@@ -1,6 +1,8 @@
 import PageBreadcrumb from "@/components/common/PageBreadCrumb";
 import EcommerceMetrics from "@/components/ecommerce/EcommerceMetrics";
 import { DataTable } from "@/components/ui/DataTable";
+import Button from "@/components/ui/button/Button";
+import { Modal } from "@/components/ui/modal";
 import { useNavigate } from "react-router-dom";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
@@ -15,7 +17,14 @@ import {
     fetchTimBotSnapshot,
     fetchTimTodaySnapshot,
 } from "@/database/overview_api";
-import { queueBordereauForBpc } from "@/database/bordereau_api";
+import {
+    abortBordereau,
+    deleteBordereau,
+    exportBordereauActivities,
+    pauseBordereau,
+    queueBordereauForBpc,
+    unpauseBordereau,
+} from "@/database/bordereau_api";
 import {
     getOverviewQueuedColumns,
     type OverviewQueuedRow,
@@ -177,7 +186,139 @@ export default function OverviewIndex() {
         },
     });
 
-    const queuedRows: OverviewQueuedRow[] = queueListData?.rows ?? [];
+    const pauseMutation = useMutation({
+        mutationFn: async (vars: { bordereauId: number; nextPaused: boolean }) => {
+            if (vars.nextPaused) {
+                await pauseBordereau({ bordereau_id: vars.bordereauId });
+                return;
+            }
+            await unpauseBordereau({ bordereau_id: vars.bordereauId });
+        },
+        onSuccess: (_data, vars) => {
+            toast.success(vars.nextPaused ? "Bordereau paused" : "Bordereau unpaused");
+            void queryClient.invalidateQueries({ queryKey: ["overview", "queue-list"] });
+            void queryClient.refetchQueries({ queryKey: ["overview", "queue-list"] });
+        },
+        onError: (error) => {
+            const message =
+                error instanceof Error
+                    ? error.message
+                    : "Failed to update bordereau pause state";
+            toast.error(message);
+        },
+    });
+
+    const abortMutation = useMutation({
+        mutationFn: async (vars: { bordereauId: number }) => {
+            await abortBordereau({ bordereau_id: vars.bordereauId });
+        },
+        onSuccess: () => {
+            toast.success("Bordereau aborted");
+            void queryClient.invalidateQueries({ queryKey: ["overview", "queue-list"] });
+            void queryClient.refetchQueries({ queryKey: ["overview", "queue-list"] });
+        },
+        onError: (error) => {
+            const message =
+                error instanceof Error
+                    ? error.message
+                    : "Failed to abort bordereau";
+            toast.error(message);
+        },
+    });
+
+    const exportMutation = useMutation({
+        mutationFn: async (vars: { bordereauId: number }) => {
+            return await exportBordereauActivities(vars.bordereauId);
+        },
+        onSuccess: (blob, vars) => {
+            const date = new Date().toISOString().slice(0, 10);
+            const filename = `bordereau-activities-${vars.bordereauId}-${date}.xls`;
+
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement("a");
+            link.href = url;
+            link.download = filename;
+            document.body.appendChild(link);
+            link.click();
+            link.remove();
+
+            window.setTimeout(() => {
+                try {
+                    URL.revokeObjectURL(url);
+                } catch {
+                    // ignore
+                }
+            }, 30_000);
+        },
+        onError: (error) => {
+            const message =
+                error instanceof Error
+                    ? error.message
+                    : "Failed to export bordereau activities";
+            toast.error(message);
+        },
+    });
+
+    const [deleteTarget, setDeleteTarget] = useState<OverviewQueuedRow | null>(
+        null,
+    );
+    const [isDeleteModalOpen, setIsDeleteModalOpen] = useState<boolean>(false);
+
+    const deleteMutation = useMutation({
+        mutationFn: async (vars: { bordereauId: number }) => {
+            return await deleteBordereau(vars.bordereauId);
+        },
+        onSuccess: () => {
+            toast.success("Bordereau deleted");
+            setIsDeleteModalOpen(false);
+            setDeleteTarget(null);
+            void queryClient.invalidateQueries({
+                queryKey: ["overview", "queue-list"],
+            });
+            void queryClient.refetchQueries({ queryKey: ["overview", "queue-list"] });
+        },
+        onError: (error) => {
+            const message =
+                typeof error === "string"
+                    ? error
+                    : (error as any)?.message
+                        ? String((error as any).message)
+                        : "Failed to delete bordereau";
+            toast.error(message);
+        },
+    });
+
+    const normalizedQueuedRows: OverviewQueuedRow[] = useMemo(() => {
+        const processingIds = new Set([6, 7, 15, 16, 17, 18]);
+        const queuedIds = new Set([1, 3]);
+
+        return (queueListData?.rows ?? []).map((row) => {
+            const statusIdFromField = row.bordereau_status_id;
+            const statusIdFromLabel = Number(row.bordereau_status);
+            const statusId = Number.isFinite(Number(statusIdFromField))
+                ? Number(statusIdFromField)
+                : Number.isFinite(statusIdFromLabel)
+                    ? statusIdFromLabel
+                    : NaN;
+
+            if (Number.isFinite(statusId)) {
+                const statusLabel = processingIds.has(statusId)
+                    ? "Processing"
+                    : queuedIds.has(statusId)
+                        ? "Queued"
+                        : "Completed";
+
+                return {
+                    ...row,
+                    bordereau_status: statusLabel,
+                    is_completed: statusLabel === "Completed",
+                } as OverviewQueuedRow;
+            }
+
+            // Fallback: keep backend-provided label and completion flag.
+            return row as OverviewQueuedRow;
+        });
+    }, [queueListData?.rows]);
 
     const queuePageCount = (() => {
         const total = Number(queueListData?.total ?? 0);
@@ -192,9 +333,33 @@ export default function OverviewIndex() {
             getOverviewQueuedColumns({
                 onProcessNext: (bordereauId: number) =>
                     processNextMutation.mutate(bordereauId),
-                processNextPending: processNextMutation.isPending,
+                processNextPendingBordereauId: processNextMutation.isPending
+                    ? (processNextMutation.variables ?? null)
+                    : null,
+                onTogglePause: (bordereauId: number, nextPaused: boolean) =>
+                    pauseMutation.mutate({ bordereauId, nextPaused }),
+                pausePendingBordereauId: pauseMutation.isPending
+                    ? (pauseMutation.variables?.bordereauId ?? null)
+                    : null,
+                onExport: (bordereauId: number) =>
+                    exportMutation.mutate({ bordereauId }),
+                exportPendingBordereauId: exportMutation.isPending
+                    ? (exportMutation.variables?.bordereauId ?? null)
+                    : null,
+                onAbort: (bordereauId: number) =>
+                    abortMutation.mutate({ bordereauId }),
+                abortPendingBordereauId: abortMutation.isPending
+                    ? (abortMutation.variables?.bordereauId ?? null)
+                    : null,
+                onRequestDelete: (row) => {
+                    setDeleteTarget(row);
+                    setIsDeleteModalOpen(true);
+                },
+                deletePendingBordereauId: deleteMutation.isPending
+                    ? (deleteMutation.variables?.bordereauId ?? null)
+                    : null,
             }),
-        [processNextMutation],
+        [processNextMutation, pauseMutation, exportMutation, abortMutation, deleteMutation],
     );
 
     return (
@@ -205,7 +370,7 @@ export default function OverviewIndex() {
                 <div className="col-span-12 sm:col-span-6 xl:col-span-3">
                     <button
                         type="button"
-                        className="w-full text-left"
+                        className="w-full text-left [&>div]:transition-all [&>div]:duration-200 [&>div]:ease-out [&>div]:transform-gpu hover:[&>div]:shadow-theme-md hover:[&>div]:-translate-y-0.5 hover:[&>div]:scale-[1.02] focus-visible:outline-hidden focus-visible:ring-3 focus-visible:ring-brand-500/10"
                         onClick={() => navigate(withDepartmentQuery("/overview/headcount"))}
                     >
                         <EcommerceMetrics
@@ -217,7 +382,7 @@ export default function OverviewIndex() {
                 <div className="col-span-12 sm:col-span-6 xl:col-span-3">
                     <button
                         type="button"
-                        className="w-full text-left"
+                        className="w-full text-left [&>div]:transition-all [&>div]:duration-200 [&>div]:ease-out [&>div]:transform-gpu hover:[&>div]:shadow-theme-md hover:[&>div]:-translate-y-0.5 hover:[&>div]:scale-[1.02] focus-visible:outline-hidden focus-visible:ring-3 focus-visible:ring-brand-500/10"
                         onClick={() => navigate(withDepartmentQuery("/overview/production-line"))}
                     >
                         <EcommerceMetrics
@@ -229,7 +394,7 @@ export default function OverviewIndex() {
                 <div className="col-span-12 sm:col-span-6 xl:col-span-3">
                     <button
                         type="button"
-                        className="w-full text-left"
+                        className="w-full text-left [&>div]:transition-all [&>div]:duration-200 [&>div]:ease-out [&>div]:transform-gpu hover:[&>div]:shadow-theme-md hover:[&>div]:-translate-y-0.5 hover:[&>div]:scale-[1.02] focus-visible:outline-hidden focus-visible:ring-3 focus-visible:ring-brand-500/10"
                         onClick={() => navigate(withDepartmentQuery("/overview/outstanding-queries"))}
                     >
                         <EcommerceMetrics
@@ -250,7 +415,7 @@ export default function OverviewIndex() {
                 <div className="col-span-12 sm:col-span-6 xl:col-span-3">
                     <button
                         type="button"
-                        className="w-full text-left"
+                        className="w-full text-left [&>div]:transition-all [&>div]:duration-200 [&>div]:ease-out [&>div]:transform-gpu hover:[&>div]:shadow-theme-md hover:[&>div]:-translate-y-0.5 hover:[&>div]:scale-[1.02] focus-visible:outline-hidden focus-visible:ring-3 focus-visible:ring-brand-500/10"
                         onClick={() => navigate(withDepartmentQuery("/overview/tim-today"))}
                     >
                         <EcommerceMetrics label="TIM (Today)" value={timTodayValue} />
@@ -259,7 +424,7 @@ export default function OverviewIndex() {
                 <div className="col-span-12 sm:col-span-6 xl:col-span-3">
                     <button
                         type="button"
-                        className="w-full text-left"
+                        className="w-full text-left [&>div]:transition-all [&>div]:duration-200 [&>div]:ease-out [&>div]:transform-gpu hover:[&>div]:shadow-theme-md hover:[&>div]:-translate-y-0.5 hover:[&>div]:scale-[1.02] focus-visible:outline-hidden focus-visible:ring-3 focus-visible:ring-brand-500/10"
                         onClick={() => navigate(withDepartmentQuery("/overview/tim-bot"))}
                     >
                         <EcommerceMetrics label="TIM (BoT)" value={timBotValue} />
@@ -268,14 +433,16 @@ export default function OverviewIndex() {
                 <div className="col-span-12 sm:col-span-6 xl:col-span-3">
                     <button
                         type="button"
-                        className="w-full text-left"
+                        className="w-full text-left [&>div]:transition-all [&>div]:duration-200 [&>div]:ease-out [&>div]:transform-gpu hover:[&>div]:shadow-theme-md hover:[&>div]:-translate-y-0.5 hover:[&>div]:scale-[1.02] focus-visible:outline-hidden focus-visible:ring-3 focus-visible:ring-brand-500/10"
                         onClick={() => navigate(withDepartmentQuery("/overview/forecast"))}
                     >
                         <EcommerceMetrics label="Forecast" value={forecastValue} />
                     </button>
                 </div>
                 <div className="col-span-12 sm:col-span-6 xl:col-span-3">
-                    <EcommerceMetrics label="Outstanding Referrals" value="0" />
+                    <div className="w-full [&>div]:transition-all [&>div]:duration-200 [&>div]:ease-out [&>div]:transform-gpu hover:[&>div]:shadow-theme-md hover:[&>div]:-translate-y-0.5 hover:[&>div]:scale-[1.02]">
+                        <EcommerceMetrics label="Outstanding Referrals" value="0" />
+                    </div>
                 </div>
 
                 <div className="col-span-12">
@@ -319,7 +486,7 @@ export default function OverviewIndex() {
                             <div className="min-w-[1000px] xl:min-w-full px-2">
                                 <DataTable
                                     columns={overviewQueuedColumns}
-                                    data={queuedRows}
+                                    data={normalizedQueuedRows}
                                     manualPagination
                                     manualFiltering
                                     globalFilter={queueSearch}
@@ -363,6 +530,44 @@ export default function OverviewIndex() {
                     </div>
                 </div>
             </div>
+
+            <Modal
+                isOpen={isDeleteModalOpen}
+                onClose={() => {
+                    if (deleteMutation.isPending) return;
+                    setIsDeleteModalOpen(false);
+                    setDeleteTarget(null);
+                }}
+                className="w-lg m-4"
+            >
+                <div className="relative w-full p-4 overflow-y-auto bg-white no-scrollbar rounded-3xl dark:bg-gray-900 lg:p-11">
+                    <div className="px-2 pr-14">
+                        <h4 className="mb-2 text-2xl font-semibold text-gray-800 dark:text-white/90">
+                            Delete Confirmation
+                        </h4>
+                        <p className="mb-6 text-sm text-gray-500 dark:text-gray-400 lg:mb-7">
+                            Are you sure to delete this Bordereau? This will delete
+                            the Bordereau and all line items.
+                        </p>
+                        <Button
+                            size="sm"
+                            variant="danger"
+                            disabled={!deleteTarget || deleteMutation.isPending}
+                            onClick={() => {
+                                if (!deleteTarget) return;
+                                deleteMutation.mutate({
+                                    bordereauId: deleteTarget.bordereau_id,
+                                });
+                            }}
+                        >
+                            {deleteMutation.isPending
+                                ? "Deleting..."
+                                : "Confirm Delete"}
+                        </Button>
+                    </div>
+                </div>
+            </Modal>
         </>
     );
 }
+

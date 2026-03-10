@@ -69,9 +69,19 @@ export default function useBpcNotifications(bpcId?: number, options?: Options) {
                 // in the wrapped shape `{ bordereau, validation_fields }` so
                 // components that expect the wrapped response update correctly.
                 if (incomingBordereau) {
+                    const normalizeValidationFields = (raw: unknown): Record<string, unknown> | null => {
+                        if (!raw) return null;
+                        if (Array.isArray(raw)) return null;
+                        if (typeof raw !== "object") return null;
+
+                        const obj = raw as Record<string, unknown>;
+                        if (Object.keys(obj).length === 0) return null;
+                        return obj;
+                    };
+
                     const wrapped = {
                         bordereau: incomingBordereau,
-                        validation_fields: payload?.validation_fields ?? null,
+                        validation_fields: normalizeValidationFields(payload?.validation_fields ?? null),
                     };
 
                     const current = queryClient.getQueryData<any>(cacheKey);

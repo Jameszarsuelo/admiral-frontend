@@ -7,10 +7,14 @@ import BordereauDetailsView from "./BordereauDetailsView";
 export default function BordereauView() {
     const { id } = useParams();
 
+    const bordereauId = Number(id);
+    const hasValidId = Number.isFinite(bordereauId) && bordereauId > 0;
+
     const { data: bordereauDetail, isLoading } = useQuery({
-        queryKey: ["bordereauDetail"],
+        queryKey: ["bordereauDetail", bordereauId],
+        enabled: hasValidId,
         queryFn: async () => {
-            return await fetchBordereauById(id as unknown as number);
+            return await fetchBordereauById(bordereauId);
         },
     });
 

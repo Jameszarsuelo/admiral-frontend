@@ -12,6 +12,9 @@ const OverviewOutstandingQueries = lazy(() => import("@/pages/Overview/Outstandi
 const OverviewForecast = lazy(() => import("@/pages/Overview/ForecastIndex"));
 const OverviewTimToday = lazy(() => import("@/pages/Overview/TimTodayIndex"));
 const OverviewTimBot = lazy(() => import("@/pages/Overview/TimBotIndex"));
+const UploadExceptionActivitiesIndex = lazy(
+    () => import("@/pages/UploadExceptions/UploadExceptionActivitiesIndex"),
+);
 
 export const AuthenticatedRoutes = () => {
     const { modules, loading } = usePermissions();
@@ -96,6 +99,9 @@ export const AuthenticatedRoutes = () => {
     });
 
     const hasOverviewModule = modules.some((m) => m.code === "overview");
+    const hasUploadExceptionsModule = modules.some(
+        (m) => m.code === "upload_exceptions",
+    );
 
     return [
         <Route key="protected" element={<ProtectedRoute />}>
@@ -165,6 +171,17 @@ export const AuthenticatedRoutes = () => {
                         element={
                             <ProtectedRoute permission="overview.view">
                                 <OverviewTimBot />
+                            </ProtectedRoute>
+                        }
+                    />
+                )}
+
+                {hasUploadExceptionsModule && (
+                    <Route
+                        path="/upload-exceptions/batch/:uploadBatchNumber"
+                        element={
+                            <ProtectedRoute permission="upload_exceptions.view">
+                                <UploadExceptionActivitiesIndex />
                             </ProtectedRoute>
                         }
                     />

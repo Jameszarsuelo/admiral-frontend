@@ -12,13 +12,24 @@ export interface OverviewQueuedRow {
     work_type: string;
     bdx_type: string;
     bordereau_name: string;
+    bordereau_status_id?: number;
     bordereau_status: string;
+    is_paused?: boolean;
+    can_delete?: boolean;
     is_completed: boolean;
 }
 
 export function getOverviewQueuedColumns(options: {
     onProcessNext: (bordereauId: number) => void;
-    processNextPending?: boolean;
+    processNextPendingBordereauId?: number | null;
+    onTogglePause: (bordereauId: number, nextPaused: boolean) => void;
+    pausePendingBordereauId?: number | null;
+    onExport: (bordereauId: number) => void;
+    exportPendingBordereauId?: number | null;
+    onAbort: (bordereauId: number) => void;
+    abortPendingBordereauId?: number | null;
+    onRequestDelete: (row: OverviewQueuedRow) => void;
+    deletePendingBordereauId?: number | null;
 }): ColumnDef<OverviewQueuedRow>[] {
     return [
     {
@@ -74,47 +85,77 @@ export function getOverviewQueuedColumns(options: {
         header: () => <div>Actions</div>,
         cell: ({ row }) => {
             const bordereauId = row.original.bordereau_id;
+            const canDelete = Boolean(row.original.can_delete);
+            const deletePending = options.deletePendingBordereauId === bordereauId;
+            const abortPending = options.abortPendingBordereauId === bordereauId;
+            const exportPending = options.exportPendingBordereauId === bordereauId;
 
             return (
-                <div className="flex gap-2">
+                <div className="flex gap-1">
                     <Button
                         variant="primary"
-                        size="sm"
+                        size="xs"
                         onClick={() => {
-                            const params = new URLSearchParams({
-                                search: row.original.bordereau_name,
-                                supplier_id: String(row.original.supplier_id ?? ""),
-                            });
-
-                            const targetUrl = `/bordereau-detail?${params.toString()}`;
-                            const opened = window.open(
+                            const targetUrl = `/bordereau-detail/view/${bordereauId}`;
+                            window.open(
                                 targetUrl,
                                 "_blank",
                                 "noopener,noreferrer,width=1200,height=900",
                             );
-
-                            if (!opened) {
-                                window.location.href = targetUrl;
-                            }
                         }}
                     >
                         View
                     </Button>
                     <Button
                         variant="warning"
-                        size="sm"
+                        size="xs"
                         onClick={() => options.onProcessNext(bordereauId)}
                         disabled={
-                            options.processNextPending || row.original.is_completed
+                            row.original.is_completed ||
+                            options.processNextPendingBordereauId === bordereauId
                         }
                     >
                         Process Next
                     </Button>
-                    <Button variant="outline" size="sm" disabled>
-                        Pause
+                    <Button
+                        variant="outline"
+                        size="xs"
+                        onClick={() => options.onExport(bordereauId)}
+                        disabled={exportPending}
+                    >
+                        {exportPending ? "Exporting..." : "Export"}
                     </Button>
-                    <Button variant="danger" size="sm" disabled>
-                        Delete
+                    <Button
+                        variant="danger"
+                        size="xs"
+                        onClick={() => options.onAbort(bordereauId)}
+                        disabled={row.original.is_completed || abortPending}
+                    >
+                        {abortPending ? "Aborting..." : "Abort"}
+                    </Button>
+                    <Button
+                        variant="danger"
+                        size="xs"
+                        onClick={() => options.onRequestDelete(row.original)}
+                        disabled={row.original.is_completed || !canDelete || deletePending}
+                    >
+                        {deletePending ? "Deleting..." : "Delete"}
+                    </Button>
+                    <Button
+                        variant={row.original.is_paused ? "success" : "outline"}
+                        size="xs"
+                        onClick={() =>
+                            options.onTogglePause(
+                                bordereauId,
+                                !Boolean(row.original.is_paused),
+                            )
+                        }
+                        disabled={
+                            row.original.is_completed ||
+                            options.pausePendingBordereauId === bordereauId
+                        }
+                    >
+                        {row.original.is_paused ? "Unpause" : "Pause"}
                     </Button>
                 </div>
             );

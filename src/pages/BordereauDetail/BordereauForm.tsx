@@ -8,28 +8,44 @@ import Combobox from "@/components/form/Combobox";
 import { Field, FieldGroup } from "@/components/ui/field";
 import { Controller, useForm } from "react-hook-form";
 import Button from "@/components/ui/button/Button";
-import { useNavigate, useParams } from "react-router";
-import { useState } from "react";
+import { useLocation, useNavigate, useParams } from "react-router";
+import { useEffect } from "react";
 import Spinner from "@/components/ui/spinner/Spinner";
 import DatePicker from "@/components/form/date-picker";
 import TextArea from "@/components/form/input/TextArea";
 import { useQuery } from "@tanstack/react-query";
 import {
     fetchBordereauViewData,
+    fetchBordereauById,
     upsertBordereau,
     fetchBordereauValidationViewData,
+    unpauseBordereau,
 } from "@/database/bordereau_api";
 import { fetchDepartmentList } from "@/database/department_api";
 import { fetchBordereauTypeList } from "@/database/bordereau_type_api";
 import { handleValidationErrors } from "@/helper/validationError";
 import { BordereauFormSchema, IBordereauForm } from "@/types/BordereauSchema";
+import { fetchUploadExceptionActivities } from "@/database/upload_exceptions_api";
 // import { useAuth } from "@/hooks/useAuth";
 
 export default function BordereauForm() {
     const { id } = useParams();
     // const { user } = useAuth();
     const navigate = useNavigate();
-    const [isLoading] = useState(false);
+    const location = useLocation();
+
+    const bordereauId = id && !Number.isNaN(Number(id)) ? Number(id) : null;
+
+    const searchParams = new URLSearchParams(location.search);
+    const from = searchParams.get("from");
+    const uploadBatchNumberRaw = searchParams.get("uploadBatchNumber");
+    const uploadBatchNumber = uploadBatchNumberRaw
+        ? Number(uploadBatchNumberRaw)
+        : Number.NaN;
+    const isUploadExceptionCorrection =
+        from === "upload-exceptions" &&
+        Number.isFinite(uploadBatchNumber) &&
+        uploadBatchNumber > 0;
 
     const { handleSubmit, control, reset, setError } = useForm<IBordereauForm>({
         defaultValues: {
@@ -116,6 +132,86 @@ export default function BordereauForm() {
         },
     });
 
+    const { data: existingBordereau, isLoading: isExistingLoading } = useQuery({
+        queryKey: ["bordereau", bordereauId],
+        enabled: Number.isFinite(bordereauId) && (bordereauId ?? 0) > 0,
+        queryFn: async () => {
+            return await fetchBordereauById(bordereauId as number);
+        },
+        refetchOnWindowFocus: false,
+        staleTime: 0,
+    });
+
+    const isLoading = Boolean(bordereauId) && isExistingLoading;
+
+    useEffect(() => {
+        if (!existingBordereau) return;
+
+        const asDate = (value: unknown): string => {
+            if (value === null || value === undefined) return "";
+            const str = String(value);
+            // Backend often returns ISO8601; DatePicker expects YYYY-MM-DD.
+            return str.length >= 10 ? str.slice(0, 10) : str;
+        };
+
+        const asNumber = (value: unknown): number | undefined => {
+            if (value === null || value === undefined || value === "") return undefined;
+            const num = Number(value);
+            return Number.isFinite(num) ? num : undefined;
+        };
+
+        reset({
+            id: existingBordereau.id,
+            supplier_id:
+                (existingBordereau as any).supplier_id ??
+                (existingBordereau as any)?.supplier?.id ??
+                null,
+            bordereau_department_id:
+                (existingBordereau as any).bordereau_department_id ?? null,
+            claim_number: (existingBordereau as any).claim_number ?? "",
+            name: (existingBordereau as any).name ?? "",
+            supplier_ref: (existingBordereau as any).supplier_ref ?? "",
+            registration_number: (existingBordereau as any).registration_number ?? "",
+            invoice_date: asDate((existingBordereau as any).invoice_date),
+            lot_number: (existingBordereau as any).lot_number ?? "",
+            invoice_number: (existingBordereau as any).invoice_number ?? "",
+            branch_name: (existingBordereau as any).branch_name ?? "",
+            out_of_hours: (existingBordereau as any).out_of_hours ?? "",
+            ph_name: (existingBordereau as any).ph_name ?? "",
+            tp_name: (existingBordereau as any).tp_name ?? "",
+            customer_name: (existingBordereau as any).customer_name ?? "",
+            payment_code_job_type: (existingBordereau as any).payment_code_job_type ?? "",
+            total_payment_amount: asNumber(
+                (existingBordereau as any).total_payment_amount,
+            ),
+            copart_comments: (existingBordereau as any).copart_comments ?? "",
+            location: (existingBordereau as any).location ?? "",
+            abi_group: (existingBordereau as any).abi_group ?? "",
+            repair_excess: asNumber((existingBordereau as any).repair_excess),
+            replace_excess: asNumber((existingBordereau as any).replace_excess),
+            incident_start: asDate((existingBordereau as any).incident_start),
+            hire_start_date: asDate((existingBordereau as any).hire_start_date),
+            hire_end_date: asDate((existingBordereau as any).hire_end_date),
+            hire_daily_rate: asNumber((existingBordereau as any).hire_daily_rate),
+            qty_days_in_hire: asNumber((existingBordereau as any).qty_days_in_hire),
+            group_hire_rate: asNumber((existingBordereau as any).group_hire_rate),
+            admiral_invoice_type: (existingBordereau as any).admiral_invoice_type,
+            bordereau_type_id: (existingBordereau as any).bordereau_type_id ?? null,
+            amount_banked: asNumber((existingBordereau as any).amount_banked),
+            comment: "",
+            bordereau: (existingBordereau as any).bordereau ?? "",
+            task_type: (existingBordereau as any).task_type ?? "",
+            rejection_reasons: (existingBordereau as any).rejection_reasons ?? "",
+            additional_information:
+                (existingBordereau as any).additional_information ?? "",
+            make_and_model: (existingBordereau as any).make_and_model ?? "",
+            postcode: (existingBordereau as any).postcode ?? "",
+            date: asDate((existingBordereau as any).date),
+            cat: (existingBordereau as any).cat ?? "",
+            value: asNumber((existingBordereau as any).value),
+        });
+    }, [existingBordereau, reset]);
+
     // useEffect(() => {
     //     // placeholder for loading existing invoice when editing
     //     // fetch and reset form if id is present
@@ -127,21 +223,52 @@ export default function BordereauForm() {
     }
 
     async function onSubmit(data: IBordereauForm) {
-        console.log("Submitted invoice:", data);
-        toast.promise(upsertBordereau(data), {
-            loading: id ? "Updating Bordereau..." : "Creating Bordereau...",
-            success: () => {
-                setTimeout(() => {
-                    navigate("/bordereau-detail");
-                }, 2000);
-                return id
-                    ? "Bordereau updated successfully!"
-                    : "Bordereau created successfully!";
+        const payload: IBordereauForm = {
+            ...data,
+            ...(bordereauId ? { id: bordereauId } : {}),
+        };
+
+        toast.promise(
+            (async () => {
+                await upsertBordereau(payload);
+
+                if (isUploadExceptionCorrection) {
+                    const remaining = await fetchUploadExceptionActivities(
+                        uploadBatchNumber,
+                        { page: 1, per_page: 1, only_errors: true },
+                    );
+
+                    const remainingCount = Number(
+                        remaining.total ?? remaining.rows?.length ?? 0,
+                    );
+
+                    if (remainingCount <= 0) {
+                        await unpauseBordereau({
+                            bordereau_id: bordereauId as number,
+                        });
+                        navigate("/upload-exceptions");
+                        return;
+                    }
+
+                    navigate(`/upload-exceptions/batch/${uploadBatchNumber}`);
+                    return;
+                }
+
+                navigate("/bordereau-detail");
+            })(),
+            {
+                loading: id ? "Updating Bordereau..." : "Creating Bordereau...",
+                success: () =>
+                    isUploadExceptionCorrection
+                        ? "Bordereau corrected successfully!"
+                        : id
+                            ? "Bordereau updated successfully!"
+                            : "Bordereau created successfully!",
+                error: (error: unknown) => {
+                    return handleValidationErrors(error, setError);
+                },
             },
-            error: (error: unknown) => {
-                return handleValidationErrors(error, setError);
-            },
-        });
+        );
     }
 
     return (
@@ -588,6 +715,7 @@ export default function BordereauForm() {
                                                     id="invoice_date"
                                                     placement="top"
                                                     placeholder="Select invoice date"
+                                                    defaultDate={field.value || undefined}
                                                     onChange={(
                                                         _,
                                                         currentDateString,
@@ -1221,6 +1349,7 @@ export default function BordereauForm() {
                                                     id="incident_start"
                                                     placement="top"
                                                     placeholder="Select incident start"
+                                                    defaultDate={field.value || undefined}
                                                     onChange={(
                                                         _,
                                                         currentDateString,
@@ -1259,6 +1388,7 @@ export default function BordereauForm() {
                                                     id="hire_start_date"
                                                     placement="top"
                                                     placeholder="Select hire start date"
+                                                    defaultDate={field.value || undefined}
                                                     onChange={(
                                                         _,
                                                         currentDateString,
@@ -1297,6 +1427,7 @@ export default function BordereauForm() {
                                                     id="hire_end_date"
                                                     placement="top"
                                                     placeholder="Select hire end date"
+                                                    defaultDate={field.value || undefined}
                                                     onChange={(
                                                         _,
                                                         currentDateString,
@@ -1425,6 +1556,7 @@ export default function BordereauForm() {
                                                     id="date"
                                                     placement="top"
                                                     placeholder="Select date"
+                                                    defaultDate={field.value || undefined}
                                                     onChange={(
                                                         _,
                                                         currentDateString,
@@ -1514,7 +1646,18 @@ export default function BordereauForm() {
 
                 {!isLoading && (
                     <div className="mt-6 flex justify-end gap-3">
-                        <Button variant="danger" onClick={() => navigate(-1)}>
+                        <Button
+                            variant="danger"
+                            onClick={() => {
+                                if (isUploadExceptionCorrection) {
+                                    navigate(
+                                        `/upload-exceptions/batch/${uploadBatchNumber}`,
+                                    );
+                                    return;
+                                }
+                                navigate(-1);
+                            }}
+                        >
                             Cancel
                         </Button>
                         {!id && (
@@ -1524,7 +1667,11 @@ export default function BordereauForm() {
                         )}
 
                         <Button type="submit" form="form-bordereau">
-                            {id ? "Update" : "Submit"}
+                            {isUploadExceptionCorrection
+                                ? "Submit"
+                                : id
+                                    ? "Update"
+                                    : "Submit"}
                         </Button>
                     </div>
                 )}

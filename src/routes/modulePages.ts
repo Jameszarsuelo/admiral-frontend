@@ -156,6 +156,10 @@ const TaskQueuesView = lazy(
 
 const OverviewIndex = lazy(() => import("@/pages/Overview/OverviewIndex"));
 
+const UploadExceptionsIndex = lazy(
+    () => import("@/pages/UploadExceptions/UploadExceptionsIndex"),
+);
+
 const NotFound = lazy(() => import("../pages/OtherPage/NotFound"));
 
 export interface ModuleComponents {
@@ -292,6 +296,10 @@ export const modulePageMap: Record<string, ModuleComponents> = {
     },
     overview: {
         main: OverviewIndex,
+    },
+
+    upload_exceptions: {
+        main: UploadExceptionsIndex,
     },
     not_found: {
         main: NotFound,

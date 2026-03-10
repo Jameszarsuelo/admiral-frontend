@@ -1,6 +1,12 @@
 import { dateFormat } from "@/helper/dateFormat";
 import { IBordereauIndex } from "@/types/BordereauSchema";
 import { useAuth } from "@/hooks/useAuth";
+import {
+    BuildingOffice2Icon,
+    DocumentTextIcon,
+    QueueListIcon,
+    TableCellsIcon,
+} from "@heroicons/react/24/outline";
 
 interface Props {
     bordereau?: IBordereauIndex | null;
@@ -21,17 +27,18 @@ export default function BordereauSummaryGrid({ bordereau }: Props) {
             return "-";
         }
 
-        return `${outstanding} / ${total}`;
+        const completed = Math.max(0, Math.min(total, total - outstanding));
+        return `${completed} / ${total}`;
     })();
 
     const cards: { title: string; value: string | number }[] = [
         // { title: "", value: `${import.meta.env.VITE_API_URL}/storage/${bordereau?.supplier?.logo}` },
         {
-            title: "Admiral Bordereau Type",
+            title: "Work Type",
             value: bordereau?.bordereau_validations?.type ?? "-",
         },
         { title: "Supplier", value: bordereau?.supplier?.name ?? "-" },
-        { title: "Bordereau", value: bordereau?.bordereau ?? "-" },
+        { title: "Bordereau Name", value: bordereau?.bordereau ?? "-" },
         { title: "Outstanding", value: outstandingDisplay },
         { title: "Status", value: bordereau?.bordereau_status?.status ?? "-" },
         {
@@ -93,15 +100,69 @@ export default function BordereauSummaryGrid({ bordereau }: Props) {
 
     // If hide condition is met, render only the core cards (keeps supplier logo visible)
     const coreTitles = [
-        "Admiral Bordereau Type",
+        "Work Type",
         "Supplier",
-        "Bordereau",
+        "Bordereau Name",
         "Outstanding",
     ];
 
     const visibleCards = hideCards
         ? cards.filter((c) => coreTitles.includes(c.title))
         : cards;
+
+    const iconForCard = (title: string) => {
+        const className = "h-6 w-6 text-cyan-600 dark:text-cyan-300";
+
+        switch (title) {
+            case "Work Type":
+                return <DocumentTextIcon className={className} />;
+            case "Supplier":
+                return <BuildingOffice2Icon className={className} />;
+            case "Bordereau Name":
+                return <TableCellsIcon className={className} />;
+            case "Outstanding":
+                return <QueueListIcon className={className} />;
+            default:
+                return (
+                    <svg
+                        className={className}
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        xmlns="http://www.w3.org/2000/svg"
+                        aria-hidden
+                    >
+                        <path
+                            d="M20 12v7a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2v-7"
+                            stroke="currentColor"
+                            strokeWidth="1.5"
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                        />
+                        <path
+                            d="M2 7h20v5H2z"
+                            stroke="currentColor"
+                            strokeWidth="1.5"
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                        />
+                        <path
+                            d="M12 7v10"
+                            stroke="currentColor"
+                            strokeWidth="1.5"
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                        />
+                        <path
+                            d="M8 4c1.333-1.333 3-1 4 0s2.667 1.333 4 0"
+                            stroke="currentColor"
+                            strokeWidth="1.5"
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                        />
+                    </svg>
+                );
+        }
+    };
 
     return (
         <div className="w-full">
@@ -121,54 +182,19 @@ export default function BordereauSummaryGrid({ bordereau }: Props) {
                     return (
                         <div
                             key={`${c.title}-${idx}`}
-                            className="flex items-center gap-4 rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 p-4 shadow-md"
+                            className="flex items-start gap-4 rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 p-4 shadow-md min-h-24"
                         >
                             <div className="shrink-0">
                                 <div className="h-12 w-12 rounded-full bg-cyan-50 dark:bg-cyan-900 flex items-center justify-center overflow-hidden p-1">
-                                    <svg
-                                        className="h-6 w-6 text-cyan-600 dark:text-cyan-300"
-                                        viewBox="0 0 24 24"
-                                        fill="none"
-                                        xmlns="http://www.w3.org/2000/svg"
-                                        aria-hidden
-                                    >
-                                        <path
-                                            d="M20 12v7a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2v-7"
-                                            stroke="currentColor"
-                                            strokeWidth="1.5"
-                                            strokeLinecap="round"
-                                            strokeLinejoin="round"
-                                        />
-                                        <path
-                                            d="M2 7h20v5H2z"
-                                            stroke="currentColor"
-                                            strokeWidth="1.5"
-                                            strokeLinecap="round"
-                                            strokeLinejoin="round"
-                                        />
-                                        <path
-                                            d="M12 7v10"
-                                            stroke="currentColor"
-                                            strokeWidth="1.5"
-                                            strokeLinecap="round"
-                                            strokeLinejoin="round"
-                                        />
-                                        <path
-                                            d="M8 4c1.333-1.333 3-1 4 0s2.667 1.333 4 0"
-                                            stroke="currentColor"
-                                            strokeWidth="1.5"
-                                            strokeLinecap="round"
-                                            strokeLinejoin="round"
-                                        />
-                                    </svg>
+                                    {iconForCard(c.title)}
                                 </div>
                             </div>
 
                             <div className="flex flex-col min-w-0">
-                                <div className="text-sm text-slate-500 dark:text-slate-300 font-medium truncate">
+                                <div className="text-sm text-slate-500 dark:text-slate-300 font-medium whitespace-normal wrap-break-word leading-snug">
                                     {c.title}
                                 </div>
-                                <div className="mt-1 text-base font-semibold text-slate-900 dark:text-white truncate">
+                                <div className="mt-1 text-lg font-bold text-slate-900 dark:text-white whitespace-normal wrap-break-word leading-snug">
                                     {c.value}
                                 </div>
                             </div>

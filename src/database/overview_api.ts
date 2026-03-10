@@ -71,7 +71,10 @@ export interface OverviewQueueRow {
     work_type: string;
     bdx_type: string;
     bordereau_name: string;
+    bordereau_status_id?: number;
     bordereau_status: string;
+    is_paused?: boolean;
+    can_delete?: boolean;
     is_completed: boolean;
 }
 

@@ -110,9 +110,20 @@ export default function Workplace() {
             ? bordereauResponse.bordereau
             : (bordereauResponse as IBordereauIndex | null);
 
+    const normalizeValidationFields = (raw: unknown): Record<string, unknown> | null => {
+        if (!raw) return null;
+        if (Array.isArray(raw)) return null;
+        if (typeof raw !== "object") return null;
+
+        const obj = raw as Record<string, unknown>;
+        // If it has no keys, treat it as "no gating" (show all fields).
+        if (Object.keys(obj).length === 0) return null;
+        return obj;
+    };
+
     const validationFields: Record<string, unknown> | null =
         bordereauResponse && isWrappedResponse(bordereauResponse)
-            ? bordereauResponse.validation_fields ?? null
+            ? normalizeValidationFields(bordereauResponse.validation_fields)
             : null;
 
     useEffect(() => {
@@ -895,6 +906,15 @@ export default function Workplace() {
                                             </div>
                                         ) : null}
 
+                                        <div className="mt-6">
+                                            <h4 className="text-lg font-semibold text-gray-800 dark:text-white/90">
+                                                Outcome
+                                            </h4>
+                                            <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
+                                                Please select an outcome from one of the drop-down boxes.
+                                            </p>
+                                        </div>
+
                                         <div className="flex flex-row w-full justify-center mt-4">
                                             {bordereauDetails && (
                                                 <div
@@ -1076,7 +1096,7 @@ export default function Workplace() {
                                             <div className="p-5 border border-gray-200 rounded-2xl dark:border-gray-800 lg:p-6 col-span-1">
                                                 <div className="mb-10">
                                                     <h4 className="text-lg font-semibold text-gray-800 dark:text-white/90 lg:mb-6">
-                                                        Bordereau Comments
+                                                        Activity Comments
                                                     </h4>
                                                     <div className="grid grid-cols-1 gap-4 lg:grid-cols-1 lg:gap-7">
                                                         <div>
@@ -1092,7 +1112,7 @@ export default function Workplace() {
                                             <div className="p-5 border border-gray-200 rounded-2xl dark:border-gray-800 lg:p-6 col-span-1">
                                                 <div className="mb-5">
                                                     <h4 className="text-lg font-semibold text-gray-800 dark:text-white/90 lg:mb-6">
-                                                        Bordereau Audit
+                                                        Activity Audit
                                                     </h4>
                                                     <div className="grid grid-cols-1 gap-4 lg:grid-cols-1 lg:gap-7">
                                                         <div className="grid grid-cols-2">

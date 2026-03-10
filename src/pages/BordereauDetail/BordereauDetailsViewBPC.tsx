@@ -12,9 +12,21 @@ export default function BordereauDetailsViewBPC({
     validationFields?: Record<string, unknown> | null;
 }) {
 
+    // Work Types (bordereau_validation flags) don't perfectly match the bordereau payload keys
+    // used in this details grid. Normalize common aliases so checked fields actually display.
+    const validationKeyAliases: Record<string, string[]> = {
+        lot_number: ["lot_number", "lot_no"],
+        hire_daily_rate: ["hire_daily_rate", "daily_hire_rate", "daily_rate"],
+        qty_days_in_hire: ["qty_days_in_hire", "number_of_days_in_hire"],
+        copart_comments: ["copart_comments", "comments", "comment"],
+        group_hire_rate: ["group_hire_rate", "group_rate"],
+    };
+
     const shouldShow = (key: string): boolean => {
         if (!validationFields) return true;
-        return Boolean(validationFields[key]);
+
+        const keysToCheck = validationKeyAliases[key] ?? [key];
+        return keysToCheck.some((k) => Boolean(validationFields[k]));
     };
     return (
         <div className="min-w-full xl:min-w-full px-2">
@@ -44,6 +56,7 @@ export default function BordereauDetailsViewBPC({
                                     ["out_of_hours", "Out-of-Hours"],
                                     ["ph_name", "PH Name"],
                                     ["tp_name", "TP Name"],
+                                    ["customer_name", "Customer Name"],
                                     ["payment_code_job_type", "Payment Code / Job Type"],
                                     ["total_payment_amount", "Total Payment Amount"],
                                     ["copart_comments", "Copart Comments"],
@@ -53,6 +66,7 @@ export default function BordereauDetailsViewBPC({
                                     ["repair_excess", "Repair Excess"],
                                     ["replace_excess", "Replace Excess"],
                                     ["incident_start", "Incident Start"],
+                                    ["incident_date", "Incident Date"],
                                     ["hire_start_date", "Hire Start"],
                                     ["hire_end_date", "Hire End"],
                                     ["qty_days_in_hire", "QTY Days In Hire"],
@@ -60,6 +74,14 @@ export default function BordereauDetailsViewBPC({
                                     ["group_hire_rate", "Group Hire Rate"],
                                     ["admiral_invoice_type", "Admiral Invoice Type"],
                                     ["amount_banked", "Amount Banked"],
+                                    ["task_type", "Task Type"],
+                                    ["rejection_reasons", "Rejection Reasons"],
+                                    ["additional_information", "Additional Information"],
+                                    ["make_and_model", "Make and Model"],
+                                    ["postcode", "Postcode"],
+                                    ["date", "Date"],
+                                    ["cat", "Cat"],
+                                    ["value", "Value"],
                                 ] as Array<[string, string]>
                             ).map(([key, label]) =>
                                 shouldShow(key) ? (
@@ -67,7 +89,7 @@ export default function BordereauDetailsViewBPC({
                                         <p className="mb-2 text-xs leading-normal text-gray-500 dark:text-gray-400">
                                             {label}
                                         </p>
-                                        <p className="text-sm font-medium text-gray-800 dark:text-white/90">
+                                        <p className="text-base font-bold text-gray-800 dark:text-white/90">
                                             {String(((bordereauDetail as Record<string, unknown>)?.[key] ?? "-"))}
                                         </p>
                                     </div>

@@ -210,6 +210,80 @@ export async function queueBordereauForBpc(params: {
     }
 }
 
+export async function pauseBordereau(params: {
+    bordereau_id: number;
+}): Promise<void> {
+    try {
+        const response = await api.post(`/bordereau/pause`, params);
+        return response.data;
+    } catch (error) {
+        if (error instanceof AxiosError && error.response?.data) {
+            throw error.response.data;
+        }
+        throw error;
+    }
+}
+
+export async function unpauseBordereau(params: {
+    bordereau_id: number;
+}): Promise<void> {
+    try {
+        const response = await api.post(`/bordereau/unpause`, params);
+        return response.data;
+    } catch (error) {
+        if (error instanceof AxiosError && error.response?.data) {
+            throw error.response.data;
+        }
+        throw error;
+    }
+}
+
+export async function abortBordereau(params: {
+    bordereau_id: number;
+}): Promise<void> {
+    try {
+        const response = await api.post(`/bordereau/abort`, params);
+        return response.data;
+    } catch (error) {
+        if (error instanceof AxiosError && error.response?.data) {
+            throw error.response.data;
+        }
+        throw error;
+    }
+}
+
+export async function exportBordereauActivities(bordereauId: number): Promise<Blob> {
+    try {
+        const response = await api.get(`/bordereau/${bordereauId}/export-activities`, {
+            responseType: "blob",
+        });
+        return response.data;
+    } catch (error) {
+        if (error instanceof AxiosError && error.response?.data) {
+            throw error.response.data;
+        }
+        throw error;
+    }
+}
+
+export type DeleteBordereauResponse = {
+    bordereau_id: number;
+    upload_batch_number: number | null;
+    deleted_count: number;
+};
+
+export async function deleteBordereau(bordereauId: number): Promise<DeleteBordereauResponse> {
+    try {
+        const response = await api.delete(`/bordereau/${bordereauId}`);
+        return response.data;
+    } catch (error) {
+        if (error instanceof AxiosError && error.response?.data) {
+            throw error.response.data;
+        }
+        throw error;
+    }
+}
+
 export async function assignBordereauInProgress(params: {
     bordereau_id: number;
     bpc_id: number;
