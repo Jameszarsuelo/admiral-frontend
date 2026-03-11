@@ -340,7 +340,7 @@ export default function SignInForm() {
 
                         <div className="mt-5">
                             <p className="text-sm font-normal text-center text-gray-700 dark:text-gray-400 sm:text-start">
-                                Version: 0.0.0 Not for Release
+                                Version: 1.0.0
                             </p>
                         </div>
                     </div>
