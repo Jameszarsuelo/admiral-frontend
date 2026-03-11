@@ -232,7 +232,7 @@ export default function OverviewIndex() {
         },
         onSuccess: (blob, vars) => {
             const date = new Date().toISOString().slice(0, 10);
-            const filename = `bordereau-activities-${vars.bordereauId}-${date}.xls`;
+            const filename = `bordereau-activities-${vars.bordereauId}-${date}.csv`;
 
             const url = URL.createObjectURL(blob);
             const link = document.createElement("a");
