@@ -76,9 +76,6 @@ export default function SignInForm() {
                         <h1 className="text-6xl mb-2 font-bold text-gray-900 dark:text-white">
                             Alloc8
                         </h1>
-                        <p className="text-4xl font-normal text-gray-900 dark:text-white">
-                            Borderau Processing Tool
-                        </p>
                     </div>
                     <div className="mb-5 sm:mb-8">
                         <h1 className="mb-2 font-semibold text-gray-800 text-title-sm dark:text-white/90 sm:text-title-md">

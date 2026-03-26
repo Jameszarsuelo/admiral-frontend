@@ -465,9 +465,6 @@ const AppSidebar: React.FC = () => {
                                     <h1 className="text-xl font-bold text-gray-900">
                                         Alloc8
                                     </h1>
-                                    <p className="text-xs text-gray-500 font-medium">
-                                        Bordereau Processing Tool
-                                    </p>
                                 </div>
                             </div>
                             <div className="hidden dark:flex items-center gap-3">
