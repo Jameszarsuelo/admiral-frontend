@@ -22,6 +22,10 @@ import {
 import { changeBpcStatus } from "@/database/bpc_api";
 import useBpcNotifications from "@/hooks/useBpcNotifications";
 import useBpcTimer from "@/hooks/useBpcTimer";
+import {
+    getBpcSelectableStatusOptions,
+    getBpcStatusColorHex,
+} from "@/data/bpcStatusUtils";
 import Button from "@/components/ui/button/Button";
 import BordereauDetailsViewBPC from "../BordereauDetail/BordereauDetailsViewBPC";
 import CommentSection from "@/components/bordereau/CommentSection";
@@ -47,28 +51,14 @@ export default function Workplace() {
     const [selectedStatusId, setSelectedStatusId] = useState<string>("");
     const [isUpdatingStatus, setIsUpdatingStatus] = useState(false);
 
-    const statusOptions = useMemo(() => {
-        const list = (bpcStatusData || []) as IBPCStatus[];
-
-        // Base selectable statuses
-        const baseSelectable = new Set([1, 5, 6, 7]);
-
-        const curId = Number(selectedStatusId);
-        // Include status 2 in dropdown only when the current status is one of base selectable
-        const includeStatus2 = baseSelectable.has(curId);
-
-        const opts: { value: string; label: string; disabled?: boolean }[] =
-            list
-                .filter((s) => {
-                    if (typeof s.id !== "number") return false;
-                    if (baseSelectable.has(s.id)) return true;
-                    if (s.id === 2 && includeStatus2) return true;
-                    return false; // explicitly exclude 3 and 4 and any others
-                })
-                .map((s) => ({ value: String(s.id), label: s.status }));
-
-        return opts;
-    }, [bpcStatusData, selectedStatusId]);
+    const statusOptions = useMemo(
+        () =>
+            getBpcSelectableStatusOptions(
+                (bpcStatusData || []) as IBPCStatus[],
+                selectedStatusId,
+            ),
+        [bpcStatusData, selectedStatusId],
+    );
 
     const status2Label = useMemo(() => {
         const list = (bpcStatusData || []) as IBPCStatus[];
@@ -142,27 +132,10 @@ export default function Workplace() {
         return list.find((s) => String(s.id) === selectedStatusId);
     }, [bpcStatusData, selectedStatusId]);
 
-    // Map specific status IDs to fixed hex colors.
-    // If a status id is not listed here (e.g. 1), we fall back to the
-    // previous behavior (using `wfm` to pick emerald vs gray).
-    const statusColorHex = useMemo(() => {
-        const id = Number(selectedStatus?.id ?? selectedStatusId ?? NaN);
-        if (Number.isNaN(id)) return undefined;
-        switch (id) {
-            case 3:
-                return "#00B0F0"; // light blue
-            case 4:
-                return "#002060"; // dark blue
-            case 2:
-                return "#00B050"; // green
-            case 5:
-            case 6:
-            case 7:
-                return "#FF0000"; // red
-            default:
-                return undefined; // keep current behavior (status 1 etc.)
-        }
-    }, [selectedStatusId, selectedStatus]);
+    const statusColorHex = useMemo(
+        () => getBpcStatusColorHex(selectedStatus),
+        [selectedStatus],
+    );
 
     // subscribe to notifications and update caches / status
     useBpcNotifications(bpcUser?.id, {
@@ -364,7 +337,11 @@ export default function Workplace() {
     const isRefetchingBordereau =
         useIsFetching({ queryKey: ["current-bordereau", bpcUser?.id] }) > 0;
 
-    const { currentFmt, totalFmt } = useBpcTimer(bpcUser?.id, selectedStatusId);
+    const { currentFmt, totalFmt } = useBpcTimer(
+        bpcUser?.id,
+        selectedStatusId,
+        (bpcStatusData || []) as IBPCStatus[],
+    );
 
     // fetch outcomes for dropdown
     useEffect(() => {
@@ -592,7 +569,7 @@ export default function Workplace() {
                 <div className="col-span-12 xl:col-span-6 flex flex-col h-full">
                     <div className="grid grid-cols-1 gap-4 sm:grid-cols-1 md:gap-6 flex-1">
                         <div className="rounded-2xl overflow-hidden shadow-md h-full flex flex-col">
-                            <div className="text-black px-6 py-6 sm:px-8 sm:py-8">
+                            <div className="text-gray-900 dark:text-white px-6 py-6 sm:px-8 sm:py-8">
                                 <div className="flex items-start justify-between gap-4">
                                     <div className="flex items-start gap-4">
                                         <div className="w-14 h-14 rounded-lg bg-black/20 flex items-center justify-center">

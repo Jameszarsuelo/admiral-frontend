@@ -1,8 +1,7 @@
 import Button from "@/components/ui/button/Button";
-import { Button as CustomButton } from "@/components/ui/button";
 import { IContactHeaderSchema } from "@/types/ContactSchema";
 import { ColumnDef } from "@tanstack/react-table";
-import { ArrowUpDown, BadgeCheckIcon } from "lucide-react";
+import { BadgeCheckIcon } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import Can from "@/components/auth/Can";
 
@@ -13,7 +12,7 @@ export const getContactHeaders = (
     {
         accessorKey: "salutation",
         accessorFn: (row) => row.salutation,
-        header: () => <div className="ml-4">Salutation</div>,
+        header: "Salutation",
         cell: ({ row }) => (
             <div className="capitalize dark:text-white ml-4">
                 {row.getValue("salutation")}.
@@ -23,7 +22,7 @@ export const getContactHeaders = (
     {
         accessorKey: "name",
         accessorFn: (row) => `${row.firstname} ${row.lastname}`,
-        header: () => <div className="ml-4">Firstname</div>,
+        header: "Name",
         cell: ({ row }) => (
             <div className="capitalize dark:text-white ml-4">
                 {row.getValue("name")}
@@ -33,19 +32,7 @@ export const getContactHeaders = (
     {
         accessorKey: "email",
         accessorFn: (row) => row.email,
-        header: ({ column }) => {
-            return (
-                <CustomButton
-                    variant="ghost"
-                    onClick={() =>
-                        column.toggleSorting(column.getIsSorted() === "asc")
-                    }
-                >
-                    Email
-                    <ArrowUpDown />
-                </CustomButton>
-            );
-        },
+        header: "Email",
         cell: ({ row }) => (
             <div className=" dark:text-white ml-4">{row.getValue("email")}</div>
         ),
@@ -53,7 +40,7 @@ export const getContactHeaders = (
     {
         accessorKey: "organisation",
         accessorFn: (row) => row.organisation,
-        header: () => <div className="ml-4">Organisation</div>,
+        header: "Organisation",
         cell: ({ row }) => (
             <div className="capitalize dark:text-white ml-4">
                 {row.getValue("organisation")}
@@ -63,7 +50,7 @@ export const getContactHeaders = (
     {
         accessorKey: "mobile",
         accessorFn: (row) => row.mobile,
-        header: () => <div className="ml-4">Mobile</div>,
+        header: "Mobile",
         cell: ({ row }) => (
             <div className="capitalize dark:text-white ml-4">
                 {row.getValue("mobile")}
@@ -73,7 +60,7 @@ export const getContactHeaders = (
     {
         accessorKey: "phone",
         accessorFn: (row) => row.phone,
-        header: () => <div className="ml-4">Landline</div>,
+        header: "Landline",
         cell: ({ row }) => (
             <div className="capitalize dark:text-white ml-4">
                 {row.getValue("phone")}
@@ -83,11 +70,30 @@ export const getContactHeaders = (
     {
         accessorKey: "type",
         accessorFn: (row) => row.type,
-        header: () => <div className="ml-4">Contact Type</div>,
+        header: "Contact Type",
         cell: ({ row }) => {
-            const type = row.getValue("type") as number;
-            const bgColor = type === 1 ? "#97e3ff" : type === 2 ? "#ffbbf7" : "#92D050";
-            // const textColor = type === 2 ? "#000000" : "#FFFFFF";
+            const typeRaw = row.getValue("type");
+            const type = Number(typeRaw);
+
+            const user = row.original.user as any | undefined;
+            const isBpcUser = !!user?.bpc;
+
+            const bgColor = type === 1
+                ? "#97e3ff"
+                : type === 2
+                    ? "#ffbbf7"
+                    : isBpcUser
+                        ? "#818cf8"
+                        : "#92D050";
+
+            let label: string;
+            if (type === 1) {
+                label = "Contact";
+            } else if (type === 2) {
+                label = "Supplier";
+            } else {
+                label = isBpcUser ? "BPC User" : "User";
+            }
 
             return (
                 <Badge 
@@ -95,7 +101,7 @@ export const getContactHeaders = (
                     style={{ backgroundColor: bgColor, color: "#000000" }}
                 >
                     <BadgeCheckIcon className="mr-1 inline-block" />
-                    {type === 1 ? "Contact" : type === 2 ? "Supplier" : "User"}
+                    {label}
                 </Badge>
             );
         },

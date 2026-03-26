@@ -24,11 +24,14 @@ import {
 } from "@/components/ui/table";
 import Button from "./button/Button";
 import { Input } from "./input";
+import { ArrowDown, ArrowUp, ArrowUpDown } from "lucide-react";
 
 interface DataTableProps<TData, TValue> {
     columns: ColumnDef<TData, TValue>[];
     data: TData[];
     onRowSelectionChange?: (selected: TData[]) => void;
+    onExportCsv?: () => void | Promise<void>;
+    exportCsvDisabled?: boolean;
     /**
      * When provided, DataTable becomes pagination-controlled (useful for server-side pagination).
      * pageIndex is 0-based.
@@ -56,6 +59,8 @@ export function DataTable<TData, TValue>({
     columns,
     data,
     onRowSelectionChange,
+    onExportCsv,
+    exportCsvDisabled,
     pagination: paginationProp,
     onPaginationChange: onPaginationChangeProp,
     pageCount,
@@ -212,8 +217,10 @@ export function DataTable<TData, TValue>({
                     <Button
                         variant="outline"
                         size="sm"
-                        onClick={exportCsv}
-                        disabled={table.getRowModel().rows.length === 0}
+                        onClick={() => {
+                            void (onExportCsv ? onExportCsv() : exportCsv());
+                        }}
+                        disabled={table.getRowModel().rows.length === 0 || Boolean(exportCsvDisabled)}
                     >
                         Export CSV
                     </Button>
@@ -225,15 +232,57 @@ export function DataTable<TData, TValue>({
                         {table.getHeaderGroups().map((headerGroup) => (
                             <TableRow key={headerGroup.id}>
                                 {headerGroup.headers.map((header) => {
+                                    const canSort = header.column.getCanSort();
+                                    const headerDef = header.column.columnDef.header;
+                                    const isSimpleHeader =
+                                        typeof headerDef === "string" ||
+                                        headerDef === undefined;
+
                                     return (
                                         <TableHead key={header.id} >
                                             {header.isPlaceholder
                                                 ? null
-                                                : flexRender(
-                                                      header.column.columnDef
-                                                          .header,
-                                                      header.getContext(),
-                                                  )}
+                                                : canSort && isSimpleHeader
+                                                  ? (() => {
+                                                        const sorted =
+                                                            header.column.getIsSorted();
+                                                        const Icon =
+                                                            sorted === "asc"
+                                                                ? ArrowUp
+                                                                : sorted ===
+                                                                      "desc"
+                                                                  ? ArrowDown
+                                                                  : ArrowUpDown;
+
+                                                        const label =
+                                                            typeof headerDef ===
+                                                                "string" &&
+                                                            headerDef.trim()
+                                                                ? headerDef
+                                                                : header.column
+                                                                      .id;
+
+                                                        return (
+                                                            <button
+                                                                type="button"
+                                                                className="inline-flex items-center gap-1 text-left text-xs font-medium text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white/90"
+                                                                onClick={() =>
+                                                                    header.column.toggleSorting(
+                                                                        sorted ===
+                                                                            "asc",
+                                                                    )
+                                                                }
+                                                            >
+                                                                <span>{label}</span>
+                                                                <Icon className="h-3 w-3" />
+                                                            </button>
+                                                        );
+                                                    })()
+                                                  : flexRender(
+                                                        header.column
+                                                            .columnDef.header,
+                                                        header.getContext(),
+                                                    )}
                                         </TableHead>
                                     );
                                 })}

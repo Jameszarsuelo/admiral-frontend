@@ -1,4 +1,5 @@
 import axios from "axios";
+import { resolveAuditPageLabel } from "@/lib/navigationAudit";
 
 // Prefer VITE_API_URL from .env (Vite exposes env vars via import.meta.env).
 // Fall back to the hardcoded local IP if not provided.
@@ -75,9 +76,44 @@ api.interceptors.request.use(
     (error) => Promise.reject(error),
 );
 
-// Response interceptor: normalize common auth/session errors
+// Response interceptor: normalize common auth/session errors and record mutation audits
 api.interceptors.response.use(
-    (response) => response,
+    (response) => {
+        try {
+            const config = response.config ?? {};
+            const method = (config.method || "get").toLowerCase();
+            const isMutating = ["post", "put", "patch", "delete"].includes(
+                method,
+            );
+
+            if (isMutating) {
+                const url = typeof config.url === "string" ? config.url : "";
+
+                // Avoid recursively logging the navigation audit endpoint itself
+                if (!url.includes("/navigation-audit-logs/track")) {
+                    const pagePath =
+                        typeof window !== "undefined"
+                            ? window.location.pathname
+                            : "";
+
+                    void api
+                        .post("/navigation-audit-logs/track", {
+                            page: resolveAuditPageLabel(pagePath || url || "-"),
+                            method: method.toUpperCase(),
+                            uri: url,
+                            allowed: true,
+                        })
+                        .catch(() => {
+                            // Never block main response flow if auditing fails.
+                        });
+                }
+            }
+        } catch {
+            // Swallow any audit-side errors; core response still goes through.
+        }
+
+        return response;
+    },
     (error) => {
         const status = error?.response?.status;
         // 401 Unauthorized or 419 CSRF token mismatch -> surface to caller
@@ -87,6 +123,39 @@ api.interceptors.response.use(
                 window.dispatchEvent(new CustomEvent("auth:unauthorized"));
             }
         }
+
+        try {
+            const config = error.config ?? {};
+            const method = (config.method || "get").toLowerCase();
+            const isMutating = ["post", "put", "patch", "delete"].includes(
+                method,
+            );
+
+            if (isMutating) {
+                const url = typeof config.url === "string" ? config.url : "";
+
+                if (!url.includes("/navigation-audit-logs/track")) {
+                    const pagePath =
+                        typeof window !== "undefined"
+                            ? window.location.pathname
+                            : "";
+
+                    void api
+                        .post("/navigation-audit-logs/track", {
+                            page: resolveAuditPageLabel(pagePath || url || "-"),
+                            method: method.toUpperCase(),
+                            uri: url,
+                            allowed: false,
+                        })
+                        .catch(() => {
+                            // Do not interfere with error propagation if auditing fails.
+                        });
+                }
+            }
+        } catch {
+            // Ignore audit-side failures here as well.
+        }
+
         return Promise.reject(error);
     },
 );

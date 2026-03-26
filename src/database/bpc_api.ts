@@ -53,9 +53,11 @@ export async function deleteBpc(id: number): Promise<void> {
 }
 
 
-export async function fetchBpcOptions(): Promise<{ value: number; label: string }[]> {
+export async function fetchBpcOptions(departmentId?: number): Promise<{ value: number; label: string }[]> {
     try {
-        const response = await api.get(`/bpc-options`);
+        const response = await api.get(`/bpc-options`, {
+            params: departmentId ? { department_id: departmentId } : undefined,
+        });
         return response.data;
     } catch (error) {
         if (error instanceof AxiosError && error.response?.data) {

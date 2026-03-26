@@ -32,7 +32,8 @@ export const getBordereauTypeHeaders = (
     },
     {
         id: "actions",
-        header: () => <div>Actions</div>,
+        header: "Actions",
+        enableSorting: false,
         cell: ({ row }) => {
             const item = row.original;
 

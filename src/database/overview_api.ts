@@ -69,9 +69,12 @@ export interface OverviewQueueRow {
     import_date: string;
     department: string;
     supplier: string;
-    work_type: string;
     bdx_type: string;
     bordereau_name: string;
+    activity_qty: number;
+    activity_outstanding: number;
+    activity_with_query: number;
+    activity_percent: number;
     bordereau_status_id?: number;
     bordereau_status: string;
     is_paused?: boolean;

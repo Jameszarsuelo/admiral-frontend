@@ -1,7 +1,5 @@
 import Button from "@/components/ui/button/Button";
-import { Button as CustomButton } from "@/components/ui/button";
 import { ColumnDef } from "@tanstack/react-table";
-import { ArrowUpDown } from "lucide-react";
 import { IBPCSchema } from "@/types/BPCSchema";
 
 export const getBPCHeaders = (
@@ -22,7 +20,7 @@ export const getBPCHeaders = (
     {
         accessorKey: "firstname",
         accessorFn: (row) => row.contact.firstname,
-        header: () => <div className="ml-4">Firstname</div>,
+        header: "Firstname",
         cell: ({ row }) => (
             <div className="capitalize dark:text-white ml-4">
                 {row.getValue("firstname")}
@@ -32,7 +30,7 @@ export const getBPCHeaders = (
     {
         accessorKey: "lastname",
         accessorFn: (row) => row.contact.lastname,
-        header: () => <div className="ml-4">Lastname</div>,
+        header: "Lastname",
         cell: ({ row }) => (
             <div className="capitalize dark:text-white ml-4">
                 {row.getValue("lastname")}
@@ -42,19 +40,7 @@ export const getBPCHeaders = (
     {
         accessorKey: "email",
         accessorFn: (row) => row.contact.email,
-        header: ({ column }) => {
-            return (
-                <CustomButton
-                    variant="ghost"
-                    onClick={() =>
-                        column.toggleSorting(column.getIsSorted() === "asc")
-                    }
-                >
-                    Email
-                    <ArrowUpDown />
-                </CustomButton>
-            );
-        },
+        header: "Email",
         cell: ({ row }) => (
             <div className=" dark:text-white ml-4">{row.getValue("email")}</div>
         ),
@@ -62,7 +48,7 @@ export const getBPCHeaders = (
     {
         accessorKey: "mobile",
         accessorFn: (row) => row.contact.mobile,
-        header: () => <div className="ml-4">Mobile</div>,
+        header: "Mobile",
         cell: ({ row }) => (
             <div className="capitalize dark:text-white ml-4">
                 {row.getValue("mobile")}
@@ -71,7 +57,7 @@ export const getBPCHeaders = (
     },
     {
         accessorKey: "address",
-        header: () => <div className="ml-4">Address</div>,
+        header: "Address",
         cell: ({ row }) => (
             <div className="capitalize dark:text-white ml-4">
                 {row.original.contact.city}, {row.original.contact.country},{" "}
@@ -81,7 +67,8 @@ export const getBPCHeaders = (
     },
     {
         id: "actions",
-        header: () => <div>Actions</div>,
+        header: "Actions",
+        enableSorting: false,
         cell: ({ row }) => {
             const bpc = row.original;
 

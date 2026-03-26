@@ -19,14 +19,14 @@ export const getSupplierDocumentHeaders = (
 ): ColumnDef<ISupplierDocumentSchema>[] => [
     {
         accessorKey: "name",
-        header: () => <div className="ml-4">Document Name</div>,
+        header: "Document Name",
         cell: ({ row }) => (
             <div className=" dark:text-white ml-4">{row.getValue("name")}</div>
         ),
     },
     {
         accessorKey: "description",
-        header: () => <div className="ml-4">Description</div>,
+        header: "Description",
         cell: ({ row }) => (
             <div className=" dark:text-white ml-4">
                 {row.getValue("description")}
@@ -35,7 +35,7 @@ export const getSupplierDocumentHeaders = (
     },
     {
         accessorKey: "expiry_date",
-        header: () => <div className="ml-4">Expiry Date</div>,
+        header: "Expiry Date",
         cell: ({ row }) => (
             <div className=" dark:text-white ml-4">
                 {row.getValue("expiry_date")

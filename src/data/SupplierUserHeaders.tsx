@@ -1,7 +1,6 @@
 import Button from "@/components/ui/button/Button";
-import { Button as CustomButton } from "@/components/ui/button";
 import { ColumnDef } from "@tanstack/react-table";
-import { ArrowUpDown, BadgeCheckIcon } from "lucide-react";
+import { BadgeCheckIcon } from "lucide-react";
 import { IUserBase } from "@/types/UserSchema";
 import { Badge } from "@/components/ui/badge";
 
@@ -14,7 +13,7 @@ export const getSupplierUserHeaders = (
     {
         accessorKey: "salutation",
         accessorFn: (row) => row.contact?.salutation,
-        header: () => <div className="ml-4">Salutation</div>,
+        header: "Salutation",
         cell: ({ row }) => (
             <div className="capitalize dark:text-white ml-4">
                 {row.getValue("salutation")}.
@@ -24,7 +23,7 @@ export const getSupplierUserHeaders = (
     {
         accessorKey: "firstname",
         accessorFn: (row) => row.contact?.firstname,
-        header: () => <div className="ml-4">Firstname</div>,
+        header: "Firstname",
         cell: ({ row }) => (
             <div className="capitalize dark:text-white ml-4">
                 {row.getValue("firstname")}
@@ -34,7 +33,7 @@ export const getSupplierUserHeaders = (
     {
         accessorKey: "lastname",
         accessorFn: (row) => row.contact?.lastname,
-        header: () => <div className="ml-4">Lastname</div>,
+        header: "Lastname",
         cell: ({ row }) => (
             <div className="capitalize dark:text-white ml-4">
                 {row.getValue("lastname")}
@@ -44,19 +43,7 @@ export const getSupplierUserHeaders = (
     {
         accessorKey: "email",
         accessorFn: (row) => row.email,
-        header: ({ column }) => {
-            return (
-                <CustomButton
-                    variant="ghost"
-                    onClick={() =>
-                        column.toggleSorting(column.getIsSorted() === "asc")
-                    }
-                >
-                    Email
-                    <ArrowUpDown />
-                </CustomButton>
-            );
-        },
+        header: "Email",
         cell: ({ row }) => (
             <div className=" dark:text-white ml-4">{row.getValue("email")}</div>
         ),
@@ -64,7 +51,7 @@ export const getSupplierUserHeaders = (
     {
         accessorKey: "mobile",
         accessorFn: (row) => row.contact?.mobile,
-        header: () => <div className="ml-4">Mobile</div>,
+        header: "Mobile",
         cell: ({ row }) => (
             <div className="capitalize dark:text-white ml-4">
                 {row.getValue("mobile")}
@@ -74,7 +61,7 @@ export const getSupplierUserHeaders = (
     {
         accessorKey: "type",
         accessorFn: (row) => row.user_type?.type,
-        header: () => <div className="ml-4">User Type</div>,
+        header: "User Type",
         cell: ({ row }) => (
             <Badge
                 variant="secondary"
@@ -87,7 +74,7 @@ export const getSupplierUserHeaders = (
     },
     {
         accessorKey: "address",
-        header: () => <div className="ml-4">Address</div>,
+        header: "Address",
         cell: ({ row }) => (
             <div className="capitalize dark:text-white ml-4">
                 {row.original.contact?.city}, {row.original.contact?.country},{" "}
@@ -97,7 +84,8 @@ export const getSupplierUserHeaders = (
     },
     {
         id: "actions",
-        header: () => <div>Actions</div>,
+        header: "Actions",
+        enableSorting: false,
         cell: ({ row }) => {
             const userData = row.original;
 

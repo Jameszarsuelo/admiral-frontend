@@ -1,26 +1,20 @@
 import PageBreadcrumb from "@/components/common/PageBreadCrumb";
-import EcommerceMetrics from "@/components/ecommerce/EcommerceMetrics";
 import { DataTable } from "@/components/ui/DataTable";
 import Button from "@/components/ui/button/Button";
+import Select from "@/components/form/Select";
 import { Modal } from "@/components/ui/modal";
-import { useNavigate } from "react-router-dom";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import Label from "@/components/form/Label";
 import {
-    fetchForecastSnapshot,
-    fetchHeadcountToday,
-    fetchOutstandingQueries,
     fetchOverviewQueueList,
-    fetchProductionLineToday,
-    fetchTimBotSnapshot,
-    fetchTimTodaySnapshot,
 } from "@/database/overview_api";
 import {
     abortBordereau,
     deleteBordereau,
     exportBordereauActivities,
+    processBordereauBatchNow,
     pauseBordereau,
     queueBordereauForBpc,
     unpauseBordereau,
@@ -32,79 +26,15 @@ import {
 import type { PaginationState, Updater } from "@tanstack/react-table";
 import { useEffect, useMemo, useState } from "react";
 import { useOverviewDepartmentFilter } from "./useOverviewDepartmentFilter";
-import OverviewDepartmentFilterCard from "./OverviewDepartmentFilterCard";
 
 export default function OverviewIndex() {
-    const navigate = useNavigate();
     const queryClient = useQueryClient();
     const {
         departmentId,
         departmentIdNumber,
         departmentOptions,
         setDepartmentId,
-        withDepartmentQuery,
     } = useOverviewDepartmentFilter();
-
-    const { data: headcountToday } = useQuery({
-        queryKey: ["overview", "headcount", "today", "headline", departmentIdNumber],
-        queryFn: () => fetchHeadcountToday(departmentIdNumber, false),
-        refetchInterval: 15_000,
-        refetchIntervalInBackground: true,
-        staleTime: 0,
-    });
-
-    const { data: productionLineToday } = useQuery({
-        queryKey: ["overview", "production-line", "headline", departmentIdNumber],
-        queryFn: () => fetchProductionLineToday(departmentIdNumber),
-        refetchOnWindowFocus: false,
-        refetchOnReconnect: false,
-        staleTime: 60_000,
-    });
-
-    const { data: outstandingQueries } = useQuery({
-        queryKey: ["overview", "outstanding-queries", "headline", departmentIdNumber],
-        queryFn: () => fetchOutstandingQueries(departmentIdNumber),
-        refetchOnWindowFocus: false,
-        refetchOnReconnect: false,
-        staleTime: 60_000,
-    });
-
-    const { data: forecastSnapshot } = useQuery({
-        queryKey: ["overview", "forecast", "headline", departmentIdNumber],
-        queryFn: () => fetchForecastSnapshot(departmentIdNumber),
-        refetchOnWindowFocus: false,
-        refetchOnReconnect: false,
-        staleTime: 60_000,
-    });
-
-    const headcountValue = new Intl.NumberFormat().format(
-        headcountToday?.online_count ?? 0,
-    );
-    const productionLineValue = `${productionLineToday?.oldest_queued_days ?? 0} day(s)`;
-    const outstandingQueriesValue = new Intl.NumberFormat().format(
-        outstandingQueries?.query_activities_count ?? 0,
-    );
-    const forecastValue = `${Number(forecastSnapshot?.projected_days ?? 0).toFixed(2)} day(s)`;
-
-    const { data: timTodaySnapshot } = useQuery({
-        queryKey: ["overview", "tim-today", "headline", departmentIdNumber],
-        queryFn: () => fetchTimTodaySnapshot(departmentIdNumber),
-        refetchOnWindowFocus: false,
-        refetchOnReconnect: false,
-        staleTime: 60_000,
-    });
-
-    const timTodayValue = timTodaySnapshot?.headline_aht ?? "00:00:00";
-
-    const { data: timBotSnapshot } = useQuery({
-        queryKey: ["overview", "tim-bot", "headline", departmentIdNumber],
-        queryFn: () => fetchTimBotSnapshot(departmentIdNumber),
-        refetchOnWindowFocus: false,
-        refetchOnReconnect: false,
-        staleTime: 60_000,
-    });
-
-    const timBotValue = timBotSnapshot?.headline_aht ?? "00:00:00";
 
     const DEFAULT_PER_PAGE = 10;
     const [queuePagination, setQueuePagination] = useState<{
@@ -182,6 +112,24 @@ export default function OverviewIndex() {
                 error instanceof Error
                     ? error.message
                     : "Failed to queue bordereau for processing";
+            toast.error(message);
+        },
+    });
+
+    const processNowMutation = useMutation({
+        mutationFn: async (bordereauId: number) => {
+            await processBordereauBatchNow({ bordereau_id: bordereauId });
+        },
+        onSuccess: () => {
+            toast.success("Bordereau batch queued to process now");
+            void queryClient.invalidateQueries({ queryKey: ["overview", "queue-list"] });
+            void queryClient.refetchQueries({ queryKey: ["overview", "queue-list"] });
+        },
+        onError: (error) => {
+            const message =
+                error instanceof Error
+                    ? error.message
+                    : "Failed to process bordereau batch now";
             toast.error(message);
         },
     });
@@ -278,12 +226,15 @@ export default function OverviewIndex() {
             void queryClient.refetchQueries({ queryKey: ["overview", "queue-list"] });
         },
         onError: (error) => {
+            const fallbackMessage = "Failed to delete bordereau";
             const message =
-                typeof error === "string"
-                    ? error
-                    : (error as any)?.message
-                        ? String((error as any).message)
-                        : "Failed to delete bordereau";
+                error instanceof Error
+                    ? error.message
+                    : typeof error === "object" && error !== null && "message" in error
+                        ? String(
+                            (error as { message?: unknown }).message ?? fallbackMessage,
+                        )
+                        : fallbackMessage;
             toast.error(message);
         },
     });
@@ -293,30 +244,28 @@ export default function OverviewIndex() {
         const queuedIds = new Set([1, 3]);
 
         return (queueListData?.rows ?? []).map((row) => {
-            const statusIdFromField = row.bordereau_status_id;
-            const statusIdFromLabel = Number(row.bordereau_status);
-            const statusId = Number.isFinite(Number(statusIdFromField))
-                ? Number(statusIdFromField)
-                : Number.isFinite(statusIdFromLabel)
-                    ? statusIdFromLabel
-                    : NaN;
+            const statusId = Number(row.bordereau_status_id);
 
-            if (Number.isFinite(statusId)) {
-                const statusLabel = processingIds.has(statusId)
-                    ? "Processing"
-                    : queuedIds.has(statusId)
-                        ? "Queued"
-                        : "Completed";
-
-                return {
-                    ...row,
-                    bordereau_status: statusLabel,
-                    is_completed: statusLabel === "Completed",
-                } as OverviewQueuedRow;
+            if (!Number.isFinite(statusId)) {
+                return row as OverviewQueuedRow;
             }
 
-            // Fallback: keep backend-provided label and completion flag.
-            return row as OverviewQueuedRow;
+            let statusLabel = row.bordereau_status;
+
+            if (processingIds.has(statusId)) {
+                statusLabel = "Processing";
+            } else if (queuedIds.has(statusId)) {
+                statusLabel = "Queued";
+            } else if (row.is_completed) {
+                // Only show "Completed" when backend marks it completed
+                statusLabel = "Completed";
+            }
+
+            return {
+                ...row,
+                bordereau_status: statusLabel,
+                // IMPORTANT: do not override row.is_completed; backend owns this
+            } as OverviewQueuedRow;
         });
     }, [queueListData?.rows]);
 
@@ -335,6 +284,11 @@ export default function OverviewIndex() {
                     processNextMutation.mutate(bordereauId),
                 processNextPendingBordereauId: processNextMutation.isPending
                     ? (processNextMutation.variables ?? null)
+                    : null,
+                onProcessNow: (bordereauId: number) =>
+                    processNowMutation.mutate(bordereauId),
+                processNowPendingBordereauId: processNowMutation.isPending
+                    ? (processNowMutation.variables ?? null)
                     : null,
                 onTogglePause: (bordereauId: number, nextPaused: boolean) =>
                     pauseMutation.mutate({ bordereauId, nextPaused }),
@@ -359,173 +313,118 @@ export default function OverviewIndex() {
                     ? (deleteMutation.variables?.bordereauId ?? null)
                     : null,
             }),
-        [processNextMutation, pauseMutation, exportMutation, abortMutation, deleteMutation],
+        [
+            processNextMutation,
+            processNowMutation,
+            pauseMutation,
+            exportMutation,
+            abortMutation,
+            deleteMutation,
+        ],
     );
 
     return (
         <>
-            <PageBreadcrumb pageTitle="Overview" />
+            <PageBreadcrumb pageTitle="Bordereau Detail" />
 
-            <div className="grid grid-cols-12 gap-4 md:gap-6">
-                <div className="col-span-12 sm:col-span-6 xl:col-span-3">
-                    <button
-                        type="button"
-                        className="w-full text-left [&>div]:transition-all [&>div]:duration-200 [&>div]:ease-out [&>div]:transform-gpu hover:[&>div]:shadow-theme-md hover:[&>div]:-translate-y-0.5 hover:[&>div]:scale-[1.02] focus-visible:outline-hidden focus-visible:ring-3 focus-visible:ring-brand-500/10"
-                        onClick={() => navigate(withDepartmentQuery("/overview/headcount"))}
-                    >
-                        <EcommerceMetrics
-                            label="Headcount"
-                            value={headcountValue}
-                        />
-                    </button>
-                </div>
-                <div className="col-span-12 sm:col-span-6 xl:col-span-3">
-                    <button
-                        type="button"
-                        className="w-full text-left [&>div]:transition-all [&>div]:duration-200 [&>div]:ease-out [&>div]:transform-gpu hover:[&>div]:shadow-theme-md hover:[&>div]:-translate-y-0.5 hover:[&>div]:scale-[1.02] focus-visible:outline-hidden focus-visible:ring-3 focus-visible:ring-brand-500/10"
-                        onClick={() => navigate(withDepartmentQuery("/overview/production-line"))}
-                    >
-                        <EcommerceMetrics
-                            label="Production Line"
-                            value={productionLineValue}
-                        />
-                    </button>
-                </div>
-                <div className="col-span-12 sm:col-span-6 xl:col-span-3">
-                    <button
-                        type="button"
-                        className="w-full text-left [&>div]:transition-all [&>div]:duration-200 [&>div]:ease-out [&>div]:transform-gpu hover:[&>div]:shadow-theme-md hover:[&>div]:-translate-y-0.5 hover:[&>div]:scale-[1.02] focus-visible:outline-hidden focus-visible:ring-3 focus-visible:ring-brand-500/10"
-                        onClick={() => navigate(withDepartmentQuery("/overview/outstanding-queries"))}
-                    >
-                        <EcommerceMetrics
-                            label="Outstanding Queries"
-                            value={outstandingQueriesValue}
-                        />
-                    </button>
-                </div>
-
-                <div className="col-span-12 sm:col-span-6 xl:col-span-3">
-                    <OverviewDepartmentFilterCard
-                        value={departmentId}
-                        onChange={setDepartmentId}
-                        options={departmentOptions}
-                    />
-                </div>
-
-                <div className="col-span-12 sm:col-span-6 xl:col-span-3">
-                    <button
-                        type="button"
-                        className="w-full text-left [&>div]:transition-all [&>div]:duration-200 [&>div]:ease-out [&>div]:transform-gpu hover:[&>div]:shadow-theme-md hover:[&>div]:-translate-y-0.5 hover:[&>div]:scale-[1.02] focus-visible:outline-hidden focus-visible:ring-3 focus-visible:ring-brand-500/10"
-                        onClick={() => navigate(withDepartmentQuery("/overview/tim-today"))}
-                    >
-                        <EcommerceMetrics label="TIM (Today)" value={timTodayValue} />
-                    </button>
-                </div>
-                <div className="col-span-12 sm:col-span-6 xl:col-span-3">
-                    <button
-                        type="button"
-                        className="w-full text-left [&>div]:transition-all [&>div]:duration-200 [&>div]:ease-out [&>div]:transform-gpu hover:[&>div]:shadow-theme-md hover:[&>div]:-translate-y-0.5 hover:[&>div]:scale-[1.02] focus-visible:outline-hidden focus-visible:ring-3 focus-visible:ring-brand-500/10"
-                        onClick={() => navigate(withDepartmentQuery("/overview/tim-bot"))}
-                    >
-                        <EcommerceMetrics label="TIM (BoT)" value={timBotValue} />
-                    </button>
-                </div>
-                <div className="col-span-12 sm:col-span-6 xl:col-span-3">
-                    <button
-                        type="button"
-                        className="w-full text-left [&>div]:transition-all [&>div]:duration-200 [&>div]:ease-out [&>div]:transform-gpu hover:[&>div]:shadow-theme-md hover:[&>div]:-translate-y-0.5 hover:[&>div]:scale-[1.02] focus-visible:outline-hidden focus-visible:ring-3 focus-visible:ring-brand-500/10"
-                        onClick={() => navigate(withDepartmentQuery("/overview/forecast"))}
-                    >
-                        <EcommerceMetrics label="Forecast" value={forecastValue} />
-                    </button>
-                </div>
-                <div className="col-span-12 sm:col-span-6 xl:col-span-3">
-                    <div className="w-full [&>div]:transition-all [&>div]:duration-200 [&>div]:ease-out [&>div]:transform-gpu hover:[&>div]:shadow-theme-md hover:[&>div]:-translate-y-0.5 hover:[&>div]:scale-[1.02]">
-                        <EcommerceMetrics label="Outstanding Referrals" value="0" />
+            <div className="col-span-12">
+                <div className="rounded-2xl border border-gray-200 bg-white px-5 pb-5 pt-5 dark:border-gray-800 dark:bg-white/3 sm:px-6 sm:pt-6">
+                    <div className="mb-6">
+                        <h3 className="text-lg font-semibold text-gray-800 dark:text-white/90">
+                            List of Bordereau
+                        </h3>
                     </div>
-                </div>
 
-                <div className="col-span-12">
-                    <div className="rounded-2xl border border-gray-200 bg-white px-5 pb-5 pt-5 dark:border-gray-800 dark:bg-white/3 sm:px-6 sm:pt-6">
-                        <div className="flex flex-col gap-5 mb-6 sm:flex-row sm:justify-between">
-                            <div className="w-full">
-                                <h3 className="text-lg font-semibold text-gray-800 dark:text-white/90">
-                                    List of Bordereau
-                                </h3>
-                            </div>
-
-                            <div className="flex items-center gap-4">
-                                <div className="flex items-center gap-3">
-                                    <Label className="mb-0">Include Completed?</Label>
-                                    <RadioGroup
-                                        value={includeCompleted ? "yes" : "no"}
-                                        onValueChange={(v) =>
-                                            setIncludeCompleted(String(v) === "yes")
-                                        }
-                                    >
-                                        <div className="flex items-center gap-4">
-                                            <div className="flex items-center space-x-2">
-                                                <RadioGroupItem value="yes" id="include-completed-yes" />
-                                                <Label htmlFor="include-completed-yes" className="mb-0">
-                                                    Yes
-                                                </Label>
-                                            </div>
-                                            <div className="flex items-center space-x-2">
-                                                <RadioGroupItem value="no" id="include-completed-no" />
-                                                <Label htmlFor="include-completed-no" className="mb-0">
-                                                    No
-                                                </Label>
-                                            </div>
-                                        </div>
-                                    </RadioGroup>
-                                </div>
-                            </div>
+                    <div className="mb-6 grid grid-cols-1 gap-4 sm:grid-cols-2 xl:min-w-[560px]">
+                        <div className="rounded-xl border border-gray-200 bg-gray-50/80 p-4 dark:border-gray-800 dark:bg-white/5">
+                            <Label className="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">
+                                Department
+                            </Label>
+                            <p className="mb-3 text-xs text-gray-500 dark:text-gray-400">
+                                Limit the queue to one department, or leave it on all departments.
+                            </p>
+                            <Select
+                                value={departmentId}
+                                onChange={setDepartmentId}
+                                options={departmentOptions}
+                                placeholder="All departments"
+                            />
                         </div>
 
-                        <div className="max-w-full overflow-x-auto custom-scrollbar">
-                            <div className="min-w-[1000px] xl:min-w-full px-2">
-                                <DataTable
-                                    columns={overviewQueuedColumns}
-                                    data={normalizedQueuedRows}
-                                    manualPagination
-                                    manualFiltering
-                                    globalFilter={queueSearch}
-                                    onGlobalFilterChange={(value) => {
-                                        setQueueSearch(value);
-                                    }}
-                                    pageCount={queuePageCount}
-                                    pagination={{
-                                        pageIndex: Math.max(0, queuePagination.page - 1),
-                                        pageSize: queuePagination.per_page,
-                                    }}
-                                    onPaginationChange={(
-                                        updater: Updater<PaginationState>,
-                                    ) => {
-                                        setQueuePagination((prev) => {
-                                            const current: PaginationState = {
-                                                pageIndex: Math.max(0, prev.page - 1),
-                                                pageSize: prev.per_page,
-                                            };
+                        <div className="rounded-xl border border-gray-200 bg-gray-50/80 p-4 dark:border-gray-800 dark:bg-white/5">
+                            <Label className="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">
+                                Include Completed?
+                            </Label>
+                            <p className="mb-3 text-xs text-gray-500 dark:text-gray-400">
+                                Show completed bordereau rows in the table when needed.
+                            </p>
+                            <RadioGroup
+                                value={includeCompleted ? "yes" : "no"}
+                                onValueChange={(v) =>
+                                    setIncludeCompleted(String(v) === "yes")
+                                }
+                            >
+                                <div className="flex flex-wrap items-center gap-4">
+                                    <div className="flex items-center space-x-2 rounded-md border border-gray-200 bg-white px-3 py-2 dark:border-gray-700 dark:bg-gray-900">
+                                        <RadioGroupItem value="yes" id="include-completed-yes" />
+                                        <Label htmlFor="include-completed-yes" className="mb-0">
+                                            Yes
+                                        </Label>
+                                    </div>
+                                    <div className="flex items-center space-x-2 rounded-md border border-gray-200 bg-white px-3 py-2 dark:border-gray-700 dark:bg-gray-900">
+                                        <RadioGroupItem value="no" id="include-completed-no" />
+                                        <Label htmlFor="include-completed-no" className="mb-0">
+                                            No
+                                        </Label>
+                                    </div>
+                                </div>
+                            </RadioGroup>
+                        </div>
+                    </div>
 
-                                            const next: PaginationState =
-                                                typeof updater === "function"
-                                                    ? updater(current)
-                                                    : updater;
+                    <div className="max-w-full overflow-x-auto custom-scrollbar">
+                        <div className="min-w-[1000px] xl:min-w-full px-2">
+                            <DataTable
+                                columns={overviewQueuedColumns}
+                                data={normalizedQueuedRows}
+                                manualPagination
+                                manualFiltering
+                                globalFilter={queueSearch}
+                                onGlobalFilterChange={(value) => {
+                                    setQueueSearch(value);
+                                }}
+                                pageCount={queuePageCount}
+                                pagination={{
+                                    pageIndex: Math.max(0, queuePagination.page - 1),
+                                    pageSize: queuePagination.per_page,
+                                }}
+                                onPaginationChange={(
+                                    updater: Updater<PaginationState>,
+                                ) => {
+                                    setQueuePagination((prev) => {
+                                        const current: PaginationState = {
+                                            pageIndex: Math.max(0, prev.page - 1),
+                                            pageSize: prev.per_page,
+                                        };
 
-                                            const pageSizeChanged =
-                                                Number(next.pageSize) !==
-                                                Number(current.pageSize);
+                                        const next: PaginationState =
+                                            typeof updater === "function"
+                                                ? updater(current)
+                                                : updater;
 
-                                            return {
-                                                page: pageSizeChanged
-                                                    ? 1
-                                                    : Math.max(1, next.pageIndex + 1),
-                                                per_page: Math.max(1, next.pageSize),
-                                            };
-                                        });
-                                    }}
-                                />
-                            </div>
+                                        const pageSizeChanged =
+                                            Number(next.pageSize) !==
+                                            Number(current.pageSize);
+
+                                        return {
+                                            page: pageSizeChanged
+                                                ? 1
+                                                : Math.max(1, next.pageIndex + 1),
+                                            per_page: Math.max(1, next.pageSize),
+                                        };
+                                    });
+                                }}
+                            />
                         </div>
                     </div>
                 </div>

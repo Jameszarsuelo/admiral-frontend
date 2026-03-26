@@ -61,6 +61,7 @@ export default function ProfileIndex() {
         {
             id: "actions",
             header: "Actions",
+            enableSorting: false,
             cell: ({ row }) => {
                 const item = row.original as IProfileBase;
                 return (

@@ -1,4 +1,9 @@
-import { IBordereauForm, IBordereauIndex } from "@/types/BordereauSchema";
+import {
+    IBordereauForm,
+    IBordereauIndex,
+    TBordereauApiResponse,
+    DeleteBordereauResponse,
+} from "@/types/BordereauSchema";
 import api from "./api";
 import { AxiosError } from "axios";
 
@@ -61,12 +66,24 @@ export async function fetchBordereauList(params?: Record<string, unknown>): Prom
     try {
         const response = await api.get("/bordereau", { params });
         const payload = response.data as Record<string, unknown>;
+        const targetdateCount =
+            payload["targetdateCount"] ?? payload["targetDateCount"] ?? 0;
 
         return {
-            ...(payload as any),
+            ...payload,
             // Backend returns `targetDateCount`; frontend historically uses `targetdateCount`.
-            targetdateCount:
-                (payload as any).targetdateCount ?? (payload as any).targetDateCount ?? 0,
+            targetdateCount: Number(targetdateCount),
+        } as {
+            data: IBordereauIndex[];
+            total?: number;
+            page?: number;
+            per_page?: number;
+            overdueCount: number;
+            queryCount: number;
+            inProgressCount: number;
+            deadlineTomorrowCount: number;
+            targetdateCount: number;
+            queuedCount: number;
         };
     } catch (error) {
         if (error instanceof AxiosError && error.response?.data) {
@@ -117,11 +134,6 @@ export async function fetchBpcBordereauByBpcId(bpcId: number): Promise<IBorderea
     }
 }
 
-export type TBordereauApiResponse =
-    | IBordereauIndex
-    | { bordereau: IBordereauIndex; validation_fields?: Record<string, unknown> }
-    | null;
-
 export async function fetchBpcCustomBordereauByBpcId(bpcId: number): Promise<TBordereauApiResponse> {
     try {
         const response = await api.get(`/get-bpc-custom-bordereau/${bpcId}`);
@@ -143,6 +155,7 @@ export async function uploadBordereauCsv(data: {
     bordereau_department_id?: string;
     bordereau_type_id?: string;
     bordereau?: string;
+    override_import_date?: string;
 }): Promise<void> {
     try {
         const form = new FormData();
@@ -162,6 +175,9 @@ export async function uploadBordereauCsv(data: {
         }
         if (data.bordereau_type_id) {
             form.append("bordereau_type_id", String(data.bordereau_type_id));
+        }
+        if (data.override_import_date) {
+            form.append("override_import_date", String(data.override_import_date));
         }
 
         const response = await api.post("/bordereau/upload-csv", form, {
@@ -201,6 +217,20 @@ export async function queueBordereauForBpc(params: {
 }): Promise<void> {
     try {
         const response = await api.post(`/bordereau/process`, params);
+        return response.data;
+    } catch (error) {
+        if (error instanceof AxiosError && error.response?.data) {
+            throw error.response.data;
+        }
+        throw error;
+    }
+}
+
+export async function processBordereauBatchNow(params: {
+    bordereau_id: number;
+}): Promise<void> {
+    try {
+        const response = await api.post(`/bordereau/process-batch`, params);
         return response.data;
     } catch (error) {
         if (error instanceof AxiosError && error.response?.data) {
@@ -265,12 +295,6 @@ export async function exportBordereauActivities(bordereauId: number): Promise<Bl
         throw error;
     }
 }
-
-export type DeleteBordereauResponse = {
-    bordereau_id: number;
-    upload_batch_number: number | null;
-    deleted_count: number;
-};
 
 export async function deleteBordereau(bordereauId: number): Promise<DeleteBordereauResponse> {
     try {

@@ -1,6 +1,6 @@
 import React, { useEffect, useState, type MouseEvent } from "react";
 import { useLocation, useNavigate } from "react-router";
-import { Controller, useForm } from "react-hook-form";
+import { Controller, useForm, type FieldErrors, type Resolver } from "react-hook-form";
 import { Modal } from "@/components/ui/modal";
 import FileInput from "@/components/form/input/FileInput";
 import { toast } from "sonner";
@@ -14,9 +14,8 @@ import Spinner from "@/components/ui/spinner/Spinner";
 import Select from "@/components/form/Select";
 import DatePicker from "@/components/form/date-picker";
 import Label from "@/components/form/Label";
+import FilterFieldCard from "@/components/common/FilterFieldCard";
 // import { ArrowUpIcon, GroupIcon } from "@/icons";
-import Badge from "@/components/ui/badge/Badge";
-import { ArrowRight } from "lucide-react";
 import Can from "@/components/auth/Can";
 import {
     fetchBordereauList,
@@ -38,6 +37,39 @@ import { Field } from "@/components/ui/field";
 import Combobox from "@/components/form/Combobox";
 import Input from "@/components/form/input/InputField";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import {
+    CsvFormValues,
+    StatusItem,
+    SimpleOptionItem,
+    TFilterFormState,
+    TAppliedFilters,
+} from "@/types/BordereauIndexTypes";
+
+const csvResolver = async (
+    values: CsvFormValues,
+): Promise<{ values: CsvFormValues; errors: FieldErrors<CsvFormValues> }> => {
+    const errors: FieldErrors<CsvFormValues> = {};
+
+    if (values.override_import_date) {
+        const now = new Date();
+        const inputDate = new Date(
+            values.override_import_date.replace(/-/g, "/"),
+        );
+        const msInDay = 24 * 60 * 60 * 1000;
+        const diffDays = Math.abs((inputDate.getTime() - now.getTime()) / msInDay);
+        if (diffDays > 7) {
+            errors.override_import_date = {
+                type: "manual",
+                message: "Date must be within ±7 days of today.",
+            };
+        }
+    }
+
+    return {
+        values,
+        errors,
+    };
+};
 
 export default function BordereauIndex() {
     const navigate = useNavigate();
@@ -58,14 +90,7 @@ export default function BordereauIndex() {
         control: csvControl,
         handleSubmit: handleCsvSubmit,
         reset: resetCsv,
-    } = useForm<{
-        document?: File | null;
-        admiral_invoice_type?: string;
-        bordereau_type_id?: string;
-        supplier_id?: string;
-        bordereau_department_id?: string;
-        bordereau?: string;
-    }>({
+    } = useForm<CsvFormValues, undefined, CsvFormValues>({
         defaultValues: {
             document: undefined,
             admiral_invoice_type: "",
@@ -73,7 +98,11 @@ export default function BordereauIndex() {
             supplier_id: "",
             bordereau_department_id: "",
             bordereau: "",
+            override_import_date: "",
         },
+        mode: "onSubmit",
+        reValidateMode: "onChange",
+        resolver: csvResolver as unknown as Resolver<CsvFormValues>,
     });
 
     const {
@@ -104,9 +133,15 @@ export default function BordereauIndex() {
         defaultValues: { reason: "", notes: "", outcome: 16 },
     });
     const [isUploading, setIsUploading] = useState(false);
-    const [processReasonOptions, setProcessReasonOptions] = useState<{ value: number; label: string }[]>([]);
-    const [closeReasonOptions, setCloseReasonOptions] = useState<{ value: number; label: string }[]>([]);
-    const [closeOutcomeOptions, setCloseOutcomeOptions] = useState<{ value: number; label: string }[]>([]);
+    const [processReasonOptions, setProcessReasonOptions] = useState<
+        { value: number; label: string }[]
+    >([]);
+    const [closeReasonOptions, setCloseReasonOptions] = useState<
+        { value: number; label: string }[]
+    >([]);
+    const [closeOutcomeOptions, setCloseOutcomeOptions] = useState<
+        { value: number; label: string }[]
+    >([]);
 
     const handleDownloadSampleBordereauCsv = () => {
         // File lives in `frontend/public/files/sample bordereau.csv`
@@ -119,22 +154,6 @@ export default function BordereauIndex() {
         link.remove();
     };
 
-    type TFilterFormState = {
-        invoice_status: string;
-        supplier_id: string;
-        bpc_id: string;
-        date_from: string;
-        date_to: string;
-        search: string;
-    };
-
-    type TAppliedFilters = TFilterFormState & {
-        page: number;
-        per_page: number;
-        include_comments: boolean;
-        date_type?: string;
-    };
-
     const [filters, setFilters] = useState<TFilterFormState>({
         invoice_status: "",
         supplier_id: "",
@@ -145,12 +164,16 @@ export default function BordereauIndex() {
     });
 
     const DEFAULT_PER_PAGE = 10;
-    const [appliedFilters, setAppliedFilters] = useState<TAppliedFilters>(() => ({
-        ...filters,
-        page: 1,
-        per_page: DEFAULT_PER_PAGE,
-        include_comments: false,
-    }));
+    const [appliedFilters, setAppliedFilters] = useState<TAppliedFilters>(
+        () => ({
+            ...filters,
+            page: 1,
+            per_page: DEFAULT_PER_PAGE,
+            include_comments: false,
+            date_type: "created_at",
+            bordereau_status: "queued",
+        }),
+    );
 
     // DataTable's built-in search box (server-side)
     const [tableSearch, setTableSearch] = useState<string>("");
@@ -212,14 +235,15 @@ export default function BordereauIndex() {
         refetchIntervalInBackground: true,
     });
 
-    const {
-        data: bordereauSummary,
-        refetch: refetchSummary,
-    } = useQuery({
+    const { refetch: refetchSummary } = useQuery({
         queryKey: ["bordereau-summary"],
         queryFn: async () => {
             // Counts-only: avoid running the main list query.
-            return await fetchBordereauList({ summary_only: true, page: 1, per_page: 1 });
+            return await fetchBordereauList({
+                summary_only: true,
+                page: 1,
+                per_page: 1,
+            });
         },
         // Keep the cards fresh without hammering the full table query.
         refetchInterval: 15_000,
@@ -227,8 +251,6 @@ export default function BordereauIndex() {
         refetchOnWindowFocus: true,
         staleTime: 0,
     });
-
-    console.log(bordereauData);
 
     const {
         data: bpcData = [],
@@ -246,9 +268,7 @@ export default function BordereauIndex() {
         gcTime: 20000,
     });
 
-    const {
-        data: statusData = [],
-    } = useQuery({
+    const { data: statusData = [] } = useQuery({
         queryKey: ["bordereau-statuses"],
         queryFn: async () => {
             return await fetchBordereauStatusesAll();
@@ -261,6 +281,15 @@ export default function BordereauIndex() {
     const [invoiceStatus, setInvoiceStatus] = useState<string>("");
     const [bordereauStatus, setBordereauStatus] = useState<string>("queued");
     const [dateType, setDateType] = useState<string>("created_at");
+
+    useEffect(() => {
+        setAppliedFilters((prev) => ({
+            ...prev,
+            page: 1,
+            date_type: dateType,
+            bordereau_status: bordereauStatus,
+        }));
+    }, [dateType, bordereauStatus]);
 
     const filteredStatusOptions = React.useMemo(() => {
         const queuedIds = [3, 16, 17, 18];
@@ -283,14 +312,30 @@ export default function BordereauIndex() {
         }
 
         const mapped = (statusData || [])
-            .filter((s: any) => {
-                const id = Number(s.id ?? s.value ?? s.key ?? s.slug ?? NaN);
+            .filter((s) => {
+                const item = s as StatusItem;
+                const id = Number(
+                    item.id ?? item.value ?? item.key ?? item.slug ?? NaN,
+                );
                 return allowed.length === 0 ? true : allowed.includes(id);
             })
-            .map((s: any) => ({
-                value: s.value ?? s.key ?? s.slug ?? String(s.id ?? ""),
-                label: s.label ?? s.name ?? s.title ?? String(s),
-            }));
+            .map((s) => {
+                const item = s as StatusItem;
+                return {
+                    value: String(
+                        item.value ??
+                            item.key ??
+                            item.slug ??
+                            item.id ??
+                            "",
+                    ),
+                    label:
+                        item.label ??
+                        item.name ??
+                        item.title ??
+                        String(item),
+                };
+            });
 
         return [{ value: "", label: "-Select Invoice Status-" }].concat(mapped);
     }, [statusData, bordereauStatus]);
@@ -316,10 +361,13 @@ export default function BordereauIndex() {
         queryKey: ["departments-options"],
         queryFn: async () => {
             const departments = await fetchDepartmentList();
-            return (departments || []).map((d: any) => ({
-                value: Number(d.id),
-                label: String(d.department ?? d.name ?? ""),
-            }));
+            return (departments || []).map((d) => {
+                const item = d as SimpleOptionItem;
+                return {
+                    value: Number(item.id),
+                    label: String(item.department ?? item.name ?? ""),
+                };
+            });
         },
     });
 
@@ -327,10 +375,13 @@ export default function BordereauIndex() {
         queryKey: ["bordereau-types-options"],
         queryFn: async () => {
             const types = await fetchBordereauTypeList();
-            return (types || []).map((t: any) => ({
-                value: Number(t.id),
-                label: String(t.bordereau_type ?? t.name ?? ""),
-            }));
+            return (types || []).map((t) => {
+                const item = t as SimpleOptionItem;
+                return {
+                    value: Number(item.id),
+                    label: String(item.bordereau_type ?? item.name ?? ""),
+                };
+            });
         },
     });
 
@@ -369,8 +420,20 @@ export default function BordereauIndex() {
                 const list = await fetchOutcomeList();
                 if (!mounted) return;
                 const opts = (list || [])
-                    .filter((o: any) => typeof o.id === "number")
-                    .map((o: any) => ({ value: o.id, label: o.outcome_code ?? o.description ?? String(o.id) }));
+                    .filter((o) => {
+                        const item = o as SimpleOptionItem;
+                        return typeof item.id === "number";
+                    })
+                    .map((o) => {
+                        const item = o as SimpleOptionItem;
+                        return {
+                            value: item.id as number,
+                            label:
+                                item.outcome_code ??
+                                item.description ??
+                                String(item.id),
+                        };
+                    });
                 setCloseOutcomeOptions(opts);
             } catch (err) {
                 console.warn("Failed to load close outcome options", err);
@@ -419,7 +482,7 @@ export default function BordereauIndex() {
                 try {
                     resetClose({ outcome: 16, reason: "", notes: "" });
                 } catch (err) {
-                    // ignore
+                    console.log(err);
                 }
                 setGlobalModalOpen((prev) => ({
                     ...prev,
@@ -436,65 +499,7 @@ export default function BordereauIndex() {
             <PageBreadcrumb pageTitle="Activity Detail" />
             <div className="w-full">
                 <div className="grid grid-cols-12 gap-4 md:gap-6">
-                    <div className="col-span-12 space-y-6 xl:col-span-9">
-                        <div className="rounded-2xl border border-gray-200 bg-white px-5 py-5 dark:border-gray-800 dark:bg-white/3 sm:px-6 mb-6">
-                            <div className="grid grid-cols-4 gap-3">
-                                {[
-                                    { key: "Overdue", label: "Overdue", value: bordereauSummary?.overdueCount },
-                                    {
-                                        key: "MaxPayment",
-                                        label: "Max Payment Day Tomorrow",
-                                        value: bordereauSummary?.deadlineTomorrowCount,
-                                    },
-                                    {
-                                        key: "TargetDay",
-                                        label: "Target Day Tomorrow",
-                                        value: bordereauSummary?.targetdateCount,
-                                    },
-                                    {
-                                        key: "OverdueMaxPaymentTargetWorkload",
-                                        label: "Overdue / MaxPayment / TargetWorkload",
-                                        value:
-                                            (bordereauSummary?.overdueCount ?? 0) +
-                                            (bordereauSummary?.deadlineTomorrowCount ?? 0) +
-                                            (bordereauSummary?.targetdateCount ?? 0),
-                                    },
-                                    { key: "Queued", label: "Queued", value: bordereauSummary?.queuedCount },
-                                    {
-                                        key: "In Progress",
-                                        label: "In Progress",
-                                        value: bordereauSummary?.inProgressCount,
-                                    },
-                                    { key: "Query", label: "Query", value: bordereauSummary?.queryCount },
-                                    {
-                                        key: "QueuedWorkload",
-                                        label: "Queued Workload",
-                                        value: (bordereauSummary?.queuedCount ?? 0) + (bordereauSummary?.inProgressCount ?? 0) + (bordereauSummary?.queryCount ?? 0),
-                                    },
-                                ].map((s) => (
-                                    <div
-                                        key={s.key}
-                                        className="mb-4 rounded-2xl border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-white/3 "
-                                    >
-                                        <div className="flex items-end justify-between ">
-                                            <div>
-                                                <span className="text-sm text-gray-500 dark:text-gray-400">
-                                                    {s.label}
-                                                </span>
-                                                <h4 className="font-bold text-gray-800 text-lg dark:text-white/90">
-                                                    {s.value ?? 0}
-                                                </h4>
-                                            </div>
-                                            <Badge color="light">
-                                                <ArrowRight />
-                                            </Badge>
-                                        </div>
-                                    </div>
-                                ))}
-                            </div>
-                        </div>
-                    </div>
-                    <div className="col-span-12 space-y-6 xl:col-span-3">
+                    <div className="col-span-12 space-y-6">
                         <div className="rounded-2xl border border-gray-200 bg-white px-5 py-5 dark:border-gray-800 dark:bg-white/3 sm:px-6 mb-6">
                             <h1 className="text-xl font-bold mb-5">
                                 Add Activity / Workload
@@ -504,7 +509,9 @@ export default function BordereauIndex() {
                                     className="mb-5 w-full"
                                     size="lg"
                                     variant="outline"
-                                    onClick={() => setIsCsvModalOpen(true)}
+                                    onClick={() => {
+                                        setIsCsvModalOpen(true);
+                                    }}
                                 >
                                     Upload Bordereau (CSV)
                                 </Button>
@@ -514,9 +521,9 @@ export default function BordereauIndex() {
                                     className="mb-5 w-full"
                                     size="lg"
                                     variant="primary"
-                                    onClick={() =>
-                                        navigate("/bordereau-detail/create")
-                                    }
+                                    onClick={() => {
+                                        navigate("/bordereau-detail/create");
+                                    }}
                                 >
                                     Add Activity
                                 </Button>
@@ -526,285 +533,342 @@ export default function BordereauIndex() {
                 </div>
             </div>
             <div className="w-full">
-                {/* Invoice Table Section */}
                 <div className="rounded-2xl border border-gray-200 bg-white px-5 pb-5 pt-5 dark:border-gray-800 dark:bg-white/3 sm:px-6 sm:pt-6">
-                    <div className="flex flex-col gap-5 mb-6 sm:flex-row sm:justify-between">
+                    <div className="mb-6">
                         <div className="w-full">
                             <h3 className="text-lg font-semibold text-gray-800 dark:text-white/90">
-                                List of Bordereau
+                                List of Activities
                             </h3>
-                            {/* Filter + Summary Row */}
                             <h3 className="text-md text-gray-800 dark:text-white/90 mt-2">
-                                Select Filters, then click on "Filter" to create
-                                list
+                                Select filters, then click on "Filter" to update
+                                the table. These filters apply on top of the Date
+                                Type and Activity Status radio buttons.
                             </h3>
-                            <div className="grid grid-cols-12 gap-4 md:gap-6 my-3">
-                                <div className="col-span-12 space-y-6 xl:col-span-9">
-                                    <div className="grid grid-cols-12 gap-4 md:gap-6 my-3">
-                                        <div className="col-span-12 space-y-6 xl:col-span-4">
-                                            <Label htmlFor="filter-status">
-                                                Invoice Status
-                                            </Label>
-                                            <Select
-                                                options={filteredStatusOptions}
-                                                value={invoiceStatus}
-                                                onChange={(val: any) => {
-                                                    setInvoiceStatus(String(val));
-                                                    setFilters((f) => ({
-                                                        ...f,
-                                                        invoice_status: String(val),
-                                                    }));
-                                                }}
-                                                placeholder="-Select Invoice Status-"
-                                            />
-                                        </div>
-                                        <div className="col-span-12 space-y-6 xl:col-span-4">
-                                            <Label htmlFor="filter-supplier">
-                                                Supplier
-                                            </Label>
-                                            <Select
-                                                options={
-                                                    [
+                            <div className="grid grid-cols-1 gap-4 xl:grid-cols-3 xl:items-stretch">
+                                <div className="xl:col-span-2 h-full">
+                                    <FilterFieldCard
+                                        label="Filters"
+                                        description="Select the activity fields to narrow the table, then apply or reset your selection."
+                                        className="h-full w-full"
+                                    >
+                                        <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
+                                            <div className="space-y-2">
+                                                <Label htmlFor="filter-status">
+                                                    Activity Status
+                                                </Label>
+                                                <Select
+                                                    options={filteredStatusOptions}
+                                                    value={invoiceStatus}
+                                                    onChange={(val: unknown) => {
+                                                        setInvoiceStatus(
+                                                            String(val),
+                                                        );
+                                                        setFilters((f) => ({
+                                                            ...f,
+                                                            invoice_status:
+                                                                String(val),
+                                                        }));
+                                                    }}
+                                                    placeholder="-Select Activity Status-"
+                                                />
+                                            </div>
+                                            <div className="space-y-2">
+                                                <Label htmlFor="filter-supplier">
+                                                    Supplier
+                                                </Label>
+                                                <Select
+                                                    options={[
                                                         {
                                                             value: "",
                                                             label: "-Select Supplier-",
                                                         },
                                                     ].concat(
                                                         (supplierData || []).map(
-                                                            (s: any) => ({
-                                                                value: s.value ?? s.id ?? String(s.id ?? ""),
-                                                                label: s.label ?? s.name ?? String(s),
-                                                            }),
+                                                            (s) => {
+                                                                const item =
+                                                                    s as SimpleOptionItem;
+                                                                return {
+                                                                    value: String(
+                                                                        item.value ??
+                                                                            item.id ??
+                                                                            "",
+                                                                    ),
+                                                                    label:
+                                                                        item.label ??
+                                                                        item.name ??
+                                                                        String(
+                                                                            item,
+                                                                        ),
+                                                                };
+                                                            },
                                                         ),
-                                                    )
-                                                }
-                                                value={filters.supplier_id}
-                                                onChange={(val: any) =>
-                                                    setFilters((f) => ({
-                                                        ...f,
-                                                        supplier_id: String(val),
-                                                    }))
-                                                }
-                                                placeholder="-Select Supplier-"
-                                            />
-                                        </div>
-                                        <div className="col-span-12 space-y-6 xl:col-span-4">
-                                            <Label htmlFor="bpc">
-                                                Bordereau Processing Clerk
-                                            </Label>
-                                            <Select
-                                                options={
-                                                    [
+                                                    )}
+                                                    value={filters.supplier_id}
+                                                    onChange={(val: unknown) =>
+                                                        setFilters((f) => ({
+                                                            ...f,
+                                                            supplier_id:
+                                                                String(val),
+                                                        }))
+                                                    }
+                                                    placeholder="-Select Supplier-"
+                                                />
+                                            </div>
+                                            <div className="space-y-2">
+                                                <Label htmlFor="bpc">
+                                                    Bordereau Processing Clerk
+                                                </Label>
+                                                <Select
+                                                    options={[
                                                         {
                                                             value: "",
                                                             label: "-Select BPC-",
                                                         },
                                                     ].concat(
-                                                        (bpcData || []).map((b: any) => ({
-                                                            value: String(b.value ?? b.id ?? ""),
-                                                            label: String(b.label ?? b.name ?? b),
-                                                        })),
-                                                    )
-                                                }
-                                                value={filters.bpc_id}
-                                                onChange={(val: any) =>
-                                                    setFilters((f) => ({
-                                                        ...f,
-                                                        bpc_id: String(val),
-                                                    }))
-                                                }
-                                                placeholder="-Select BPC-"
-                                            />
-                                        </div>
-                                        <div className="col-span-12 space-y-6 xl:col-span-4">
-                                            <div>
+                                                        (bpcData || []).map(
+                                                            (b) => {
+                                                                const item =
+                                                                    b as SimpleOptionItem;
+                                                                return {
+                                                                    value:
+                                                                        String(
+                                                                            item.value ??
+                                                                                item.id ??
+                                                                                "",
+                                                                        ),
+                                                                    label:
+                                                                        String(
+                                                                            item.label ??
+                                                                                item.name ??
+                                                                                item,
+                                                                        ),
+                                                                };
+                                                            },
+                                                        ),
+                                                    )}
+                                                    value={filters.bpc_id}
+                                                    onChange={(val: unknown) =>
+                                                        setFilters((f) => ({
+                                                            ...f,
+                                                            bpc_id: String(val),
+                                                        }))
+                                                    }
+                                                    placeholder="-Select BPC-"
+                                                />
+                                            </div>
+                                            <div className="space-y-2">
                                                 <Label>Date From</Label>
                                                 <DatePicker
                                                     id="filter-date-from"
                                                     placement="top"
                                                     placeholder="Date from"
-                                                    defaultDate={filters.date_from || undefined}
-                                                    onChange={(_sd: any, dateStr: string) =>
+                                                    defaultDate={
+                                                        filters.date_from ||
+                                                        undefined
+                                                    }
+                                                    onChange={(
+                                                        _sd: unknown,
+                                                        dateStr: string,
+                                                    ) =>
                                                         setFilters((f) => ({
                                                             ...f,
-                                                            date_from: dateStr ?? "",
+                                                            date_from:
+                                                                dateStr ?? "",
                                                         }))
                                                     }
                                                 />
                                             </div>
-                                        </div>
-                                        <div className="col-span-12 space-y-6 xl:col-span-4">
-                                            <div>
+                                            <div className="space-y-2">
                                                 <Label>Date To</Label>
                                                 <DatePicker
                                                     id="filter-date-to"
                                                     placement="top"
                                                     placeholder="Date to"
-                                                    defaultDate={filters.date_to || undefined}
-                                                    onChange={(_sd: any, dateStr: string) =>
+                                                    defaultDate={
+                                                        filters.date_to ||
+                                                        undefined
+                                                    }
+                                                    onChange={(
+                                                        _sd: unknown,
+                                                        dateStr: string,
+                                                    ) =>
                                                         setFilters((f) => ({
                                                             ...f,
-                                                            date_to: dateStr ?? "",
+                                                            date_to:
+                                                                dateStr ?? "",
                                                         }))
                                                     }
                                                 />
                                             </div>
                                         </div>
-                                    </div>
-                                </div>
-                                <div className="col-span-12 space-y-6 xl:col-span-3">
-                                    <div className="grid grid-cols-12 gap-4 md:gap-6 my-3">
-                                        <div className="col-span-12 space-y-6 xl:col-span-6">
-                                            <h3 className="text-md font-semibold mb-4">
-                                                Date Type
-                                            </h3>
-                                            <RadioGroup
-                                                value={dateType}
-                                                onValueChange={(v) =>
-                                                    setDateType(String(v))
-                                                }
-                                            >
-                                                <div className="flex items-center space-x-2">
-                                                    <RadioGroupItem
-                                                        value="created_at"
-                                                        id="initial-upload"
-                                                    />
-                                                    <Label
-                                                        htmlFor="initial-upload"
-                                                        className="mb-0"
-                                                    >
-                                                        Initial Upload
-                                                    </Label>
-                                                </div>
-                                                <div className="flex items-center space-x-2">
-                                                    <RadioGroupItem
-                                                        value="target-process-by"
-                                                        id="target-process-by"
-                                                    />
-                                                    <Label
-                                                        htmlFor="target-process-by"
-                                                        className="mb-0"
-                                                    >
-                                                        Target Process By
-                                                    </Label>
-                                                </div>
-                                                <div className="flex items-center space-x-2">
-                                                    <RadioGroupItem
-                                                        value="max-pay-overdue"
-                                                        id="overdue"
-                                                    />
-                                                    <Label
-                                                        htmlFor="overdue"
-                                                        className="mb-0"
-                                                    >
-                                                        Max Pay / Overdue
-                                                    </Label>
-                                                </div>
-                                            </RadioGroup>
-                                        </div>
-                                        <div className="col-span-12 space-y-6 xl:col-span-6">
-                                            <h3 className="text-md font-semibold mb-4">
-                                                Activity Status
-                                            </h3>
-                                            <RadioGroup
-                                                value={bordereauStatus}
-                                                onValueChange={(v) => {
-                                                    setBordereauStatus(String(v));
-                                                    setInvoiceStatus("");
+
+                                        <div className="mt-4 flex flex-wrap gap-3">
+                                            <Button
+                                                size="sm"
+                                                onClick={() => {
+                                                    const params: TAppliedFilters = {
+                                                        ...filters,
+                                                        page: 1,
+                                                        per_page:
+                                                            appliedFilters.per_page ??
+                                                            DEFAULT_PER_PAGE,
+                                                        include_comments: false,
+                                                        search: tableSearch.trim(),
+                                                        date_type: dateType,
+                                                        bordereau_status:
+                                                            bordereauStatus,
+                                                    };
+
+                                                    setAppliedFilters(params);
                                                 }}
                                             >
-                                                <div className="flex items-center space-x-2">
-                                                    <RadioGroupItem
-                                                        value="queued"
-                                                        id="queued"
-                                                    />
-                                                    <Label
-                                                        htmlFor="queued"
-                                                        className="mb-0"
-                                                    >
-                                                        Queued
-                                                    </Label>
-                                                </div>
-                                                <div className="flex items-center space-x-2">
-                                                    <RadioGroupItem
-                                                        value="in-progress"
-                                                        id="in-progress"
-                                                    />
-                                                    <Label
-                                                        htmlFor="in-progress"
-                                                        className="mb-0"
-                                                    >
-                                                        In Progress
-                                                    </Label>
-                                                </div>
-                                                <div className="flex items-center space-x-2">
-                                                    <RadioGroupItem
-                                                        value="processed"
-                                                        id="processed"
-                                                    />
-                                                    <Label
-                                                        htmlFor="processed"
-                                                        className="mb-0"
-                                                    >
-                                                        Processed
-                                                    </Label>
-                                                </div>
-                                            </RadioGroup>
+                                                Filter
+                                            </Button>
+                                            <Button
+                                                size="sm"
+                                                variant="outline"
+                                                onClick={() => {
+                                                    const empty: TFilterFormState = {
+                                                        invoice_status: "",
+                                                        supplier_id: "",
+                                                        bpc_id: "",
+                                                        date_from: "",
+                                                        date_to: "",
+                                                        search: "",
+                                                    };
+                                                    setFilters(empty);
+                                                    setTableSearch("");
+                                                    setInvoiceStatus("");
+                                                    setBordereauStatus("queued");
+                                                    setDateType("created_at");
+                                                    setAppliedFilters({
+                                                        ...empty,
+                                                        page: 1,
+                                                        per_page:
+                                                            appliedFilters.per_page ??
+                                                            DEFAULT_PER_PAGE,
+                                                        include_comments: false,
+                                                        date_type: "created_at",
+                                                        bordereau_status: "queued",
+                                                    });
+                                                }}
+                                            >
+                                                Reset
+                                            </Button>
                                         </div>
-                                    </div>
+                                    </FilterFieldCard>
                                 </div>
-                            </div>
-                                <div className="mt-4 flex gap-3">
-                                <Button
-                                    size="sm"
-                                    onClick={() => {
-                                        const params: TAppliedFilters = {
-                                            ...filters,
-                                            page: 1,
-                                            per_page: appliedFilters.per_page ?? DEFAULT_PER_PAGE,
-                                            include_comments: false,
-                                            search: tableSearch.trim(),
-                                        };
 
-                                        // If date filters provided, pass backend's `date_type` token
-                                        if (filters.date_from || filters.date_to) {
-                                            params.date_type = dateType;
-                                        } else {
-                                            delete params.date_type;
-                                        }
+                                <div className="xl:col-span-1 h-full">
+                                    <FilterFieldCard
+                                        label="Date Type / Activity Status"
+                                        description="These radio groups drive how the table is filtered and summarized."
+                                        className="h-full w-full"
+                                    >
+                                        <div className="grid grid-cols-1 gap-6">
+                                            <div>
+                                                <h3 className="text-md font-semibold mb-4">
+                                                    Date Type
+                                                </h3>
+                                                <RadioGroup
+                                                    value={dateType}
+                                                    onValueChange={(v) =>
+                                                        setDateType(String(v))
+                                                    }
+                                                >
+                                                    <div className="flex items-center space-x-2">
+                                                        <RadioGroupItem
+                                                            value="created_at"
+                                                            id="initial-upload"
+                                                        />
+                                                        <Label
+                                                            htmlFor="initial-upload"
+                                                            className="mb-0"
+                                                        >
+                                                            Initial Upload
+                                                        </Label>
+                                                    </div>
+                                                    <div className="flex items-center space-x-2">
+                                                        <RadioGroupItem
+                                                            value="target-process-by"
+                                                            id="target-process-by"
+                                                        />
+                                                        <Label
+                                                            htmlFor="target-process-by"
+                                                            className="mb-0"
+                                                        >
+                                                            Target Process By
+                                                        </Label>
+                                                    </div>
+                                                    <div className="flex items-center space-x-2">
+                                                        <RadioGroupItem
+                                                            value="max-pay-overdue"
+                                                            id="overdue"
+                                                        />
+                                                        <Label
+                                                            htmlFor="overdue"
+                                                            className="mb-0"
+                                                        >
+                                                            Max Pay / Overdue
+                                                        </Label>
+                                                    </div>
+                                                </RadioGroup>
+                                            </div>
 
-                                        setAppliedFilters(params);
-                                    }}
-                                >
-                                    Filter
-                                </Button>
-                                <Button
-                                    size="sm"
-                                    variant="outline"
-                                    onClick={() => {
-                                        const empty: TFilterFormState = {
-                                            invoice_status: "",
-                                            supplier_id: "",
-                                            bpc_id: "",
-                                            date_from: "",
-                                            date_to: "",
-                                            search: "",
-                                        };
-                                        setFilters(empty);
-                                        setTableSearch("");
-                                        setInvoiceStatus("");
-                                        setBordereauStatus("queued");
-                                        setDateType("created_at");
-                                        setAppliedFilters({
-                                            ...empty,
-                                            page: 1,
-                                            per_page: appliedFilters.per_page ?? DEFAULT_PER_PAGE,
-                                            include_comments: false,
-                                        });
-                                    }}
-                                >
-                                    Reset
-                                </Button>
+                                            <div>
+                                                <h3 className="text-md font-semibold mb-4">
+                                                    Activity Status
+                                                </h3>
+                                                <RadioGroup
+                                                    value={bordereauStatus}
+                                                    onValueChange={(v) => {
+                                                        setBordereauStatus(
+                                                            String(v),
+                                                        );
+                                                        setInvoiceStatus("");
+                                                    }}
+                                                >
+                                                    <div className="flex items-center space-x-2">
+                                                        <RadioGroupItem
+                                                            value="queued"
+                                                            id="queued"
+                                                        />
+                                                        <Label
+                                                            htmlFor="queued"
+                                                            className="mb-0"
+                                                        >
+                                                            Queued
+                                                        </Label>
+                                                    </div>
+                                                    <div className="flex items-center space-x-2">
+                                                        <RadioGroupItem
+                                                            value="in-progress"
+                                                            id="in-progress"
+                                                        />
+                                                        <Label
+                                                            htmlFor="in-progress"
+                                                            className="mb-0"
+                                                        >
+                                                            In Progress
+                                                        </Label>
+                                                    </div>
+                                                    <div className="flex items-center space-x-2">
+                                                        <RadioGroupItem
+                                                            value="processed"
+                                                            id="processed"
+                                                        />
+                                                        <Label
+                                                            htmlFor="processed"
+                                                            className="mb-0"
+                                                        >
+                                                            Processed
+                                                        </Label>
+                                                    </div>
+                                                </RadioGroup>
+                                            </div>
+                                        </div>
+                                    </FilterFieldCard>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -825,37 +889,79 @@ export default function BordereauIndex() {
                                             setTableSearch(value);
                                         }}
                                         pageCount={(() => {
-                                            const total = Number(bordereauData.total ?? 0);
-                                            const perPage = Number(appliedFilters.per_page ?? DEFAULT_PER_PAGE);
-                                            if (!Number.isFinite(total) || total <= 0) return 0;
-                                            if (!Number.isFinite(perPage) || perPage <= 0) return 0;
+                                            const total = Number(
+                                                bordereauData.total ?? 0,
+                                            );
+                                            const perPage = Number(
+                                                appliedFilters.per_page ??
+                                                    DEFAULT_PER_PAGE,
+                                            );
+                                            if (
+                                                !Number.isFinite(total) ||
+                                                total <= 0
+                                            )
+                                                return 0;
+                                            if (
+                                                !Number.isFinite(perPage) ||
+                                                perPage <= 0
+                                            )
+                                                return 0;
                                             return Math.ceil(total / perPage);
                                         })()}
                                         pagination={{
-                                            pageIndex: Math.max(0, Number(appliedFilters.page ?? 1) - 1),
-                                            pageSize: Number(appliedFilters.per_page ?? DEFAULT_PER_PAGE),
+                                            pageIndex: Math.max(
+                                                0,
+                                                Number(
+                                                    appliedFilters.page ?? 1,
+                                                ) - 1,
+                                            ),
+                                            pageSize: Number(
+                                                appliedFilters.per_page ??
+                                                    DEFAULT_PER_PAGE,
+                                            ),
                                         }}
-                                        onPaginationChange={(updater: Updater<PaginationState>) => {
+                                        onPaginationChange={(
+                                            updater: Updater<PaginationState>,
+                                        ) => {
                                             setAppliedFilters((prev) => {
-                                                const current: PaginationState = {
-                                                    pageIndex: Math.max(0, Number(prev.page ?? 1) - 1),
-                                                    pageSize: Number(prev.per_page ?? DEFAULT_PER_PAGE),
-                                                };
+                                                const current: PaginationState =
+                                                    {
+                                                        pageIndex: Math.max(
+                                                            0,
+                                                            Number(
+                                                                prev.page ?? 1,
+                                                            ) - 1,
+                                                        ),
+                                                        pageSize: Number(
+                                                            prev.per_page ??
+                                                                DEFAULT_PER_PAGE,
+                                                        ),
+                                                    };
 
                                                 const next: PaginationState =
-                                                    typeof updater === "function"
+                                                    typeof updater ===
+                                                    "function"
                                                         ? updater(current)
                                                         : updater;
 
                                                 const pageSizeChanged =
-                                                    Number(next.pageSize) !== Number(current.pageSize);
+                                                    Number(next.pageSize) !==
+                                                    Number(current.pageSize);
 
                                                 return {
                                                     ...prev,
                                                     page: pageSizeChanged
                                                         ? 1
-                                                        : Math.max(1, Number(next.pageIndex) + 1),
-                                                    per_page: Math.max(1, Number(next.pageSize)),
+                                                        : Math.max(
+                                                              1,
+                                                              Number(
+                                                                  next.pageIndex,
+                                                              ) + 1,
+                                                          ),
+                                                    per_page: Math.max(
+                                                        1,
+                                                        Number(next.pageSize),
+                                                    ),
                                                     include_comments: false,
                                                 };
                                             });
@@ -885,9 +991,10 @@ export default function BordereauIndex() {
                             Upload Bordereau CSV
                         </h3>
                         <p className="text-sm text-gray-600 mt-2">
-                            Upload a CSV containing a supplier bordereau. The file
-                            will be imported and individual Bordereau activities created.
-                            NOTE: Each upload can only contain Bordereau activities from a single supplier,
+                            Upload a CSV containing a supplier bordereau. The
+                            file will be imported and individual Bordereau
+                            activities created. NOTE: Each upload can only
+                            contain Bordereau activities from a single supplier,
                             with a single Work type and a single bordereau type
                         </p>
 
@@ -936,178 +1043,268 @@ export default function BordereauIndex() {
                                 }
                             })}
                         >
-                            <div className="grid grid-cols-1 gap-6 ">
-                                <Controller
-                                    name="bordereau_department_id"
-                                    control={csvControl}
-                                    render={({ field, fieldState }) => (
-                                        <Field data-invalid={fieldState.invalid}>
-                                            <Label htmlFor="bordereau_department_id">
-                                                Department
-                                            </Label>
-                                            <Combobox
-                                                value={field.value ?? ""}
-                                                options={departmentOptions || []}
-                                                placeholder="Select Department"
-                                                searchPlaceholder="Search department..."
-                                                onChange={(value) =>
-                                                    field.onChange(Number(value))
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                {/* Left column */}
+                                <div className="flex flex-col gap-6">
+                                    <Controller
+                                        name="bordereau_department_id"
+                                        control={csvControl}
+                                        render={({ field, fieldState }) => (
+                                            <Field
+                                                data-invalid={
+                                                    fieldState.invalid
                                                 }
-                                            />
-                                            {fieldState.error && (
-                                                <p className="mt-1 text-sm text-error-500">
-                                                    {fieldState.error.message}
-                                                </p>
-                                            )}
-                                        </Field>
-                                    )}
-                                />
-
-                                <Controller
-                                    name="supplier_id"
-                                    control={csvControl}
-                                    render={({ field, fieldState }) => (
-                                        <Field
-                                            data-invalid={fieldState.invalid}
-                                        >
-                                            <Label htmlFor="supplier_id">
-                                                Supplier
-                                            </Label>
-                                            <Combobox
-                                                value={field.value ?? ""}
-                                                options={supplierData || []}
-                                                placeholder="Select Supplier"
-                                                searchPlaceholder="Search supplier..."
-                                                onChange={(value) =>
-                                                    field.onChange(
-                                                        Number(value),
-                                                    )
+                                            >
+                                                <Label htmlFor="bordereau_department_id">
+                                                    Department
+                                                </Label>
+                                                <Combobox
+                                                    value={field.value ?? ""}
+                                                    options={
+                                                        departmentOptions || []
+                                                    }
+                                                    placeholder="Select Department"
+                                                    searchPlaceholder="Search department..."
+                                                    onChange={(value) =>
+                                                        field.onChange(
+                                                            Number(value),
+                                                        )
+                                                    }
+                                                />
+                                                {fieldState.error && (
+                                                    <p className="mt-1 text-sm text-error-500">
+                                                        {
+                                                            fieldState.error
+                                                                .message
+                                                        }
+                                                    </p>
+                                                )}
+                                            </Field>
+                                        )}
+                                    />
+                                    <Controller
+                                        name="supplier_id"
+                                        control={csvControl}
+                                        render={({ field, fieldState }) => (
+                                            <Field
+                                                data-invalid={
+                                                    fieldState.invalid
                                                 }
-                                            />
-                                            {fieldState.error && (
-                                                <p className="mt-1 text-sm text-error-500">
-                                                    {fieldState.error.message}
-                                                </p>
-                                            )}
-                                        </Field>
-                                    )}
-                                />
-
-                                <Controller
-                                    name="admiral_invoice_type"
-                                    control={csvControl}
-                                    render={({ field, fieldState }) => (
-                                        <Field
-                                            data-invalid={fieldState.invalid}
-                                        >
-                                            <Label htmlFor="admiral_invoice_type">
-                                                Admiral Invoice Type
-                                            </Label>
-                                            <Combobox
-                                                value={field.value ?? ""}
-                                                options={
-                                                    bordereauValidationData ||
-                                                    []
+                                            >
+                                                <Label htmlFor="supplier_id">
+                                                    Supplier
+                                                </Label>
+                                                <Combobox
+                                                    value={field.value ?? ""}
+                                                    options={supplierData || []}
+                                                    placeholder="Select Supplier"
+                                                    searchPlaceholder="Search supplier..."
+                                                    onChange={(value) =>
+                                                        field.onChange(
+                                                            Number(value),
+                                                        )
+                                                    }
+                                                />
+                                                {fieldState.error && (
+                                                    <p className="mt-1 text-sm text-error-500">
+                                                        {
+                                                            fieldState.error
+                                                                .message
+                                                        }
+                                                    </p>
+                                                )}
+                                            </Field>
+                                        )}
+                                    />
+                                    <Controller
+                                        name="admiral_invoice_type"
+                                        control={csvControl}
+                                        render={({ field, fieldState }) => (
+                                            <Field
+                                                data-invalid={
+                                                    fieldState.invalid
                                                 }
-                                                placeholder="Select Admiral Invoice Type"
-                                                searchPlaceholder="Search types..."
-                                                onChange={(value) =>
-                                                    field.onChange(
-                                                        Number(value),
-                                                    )
+                                            >
+                                                <Label htmlFor="admiral_invoice_type">
+                                                    Admiral Invoice Type
+                                                </Label>
+                                                <Combobox
+                                                    value={field.value ?? ""}
+                                                    options={
+                                                        bordereauValidationData ||
+                                                        []
+                                                    }
+                                                    placeholder="Select Admiral Invoice Type"
+                                                    searchPlaceholder="Search types..."
+                                                    onChange={(value) =>
+                                                        field.onChange(
+                                                            Number(value),
+                                                        )
+                                                    }
+                                                />
+                                                {fieldState.error && (
+                                                    <p className="mt-1 text-sm text-error-500">
+                                                        {
+                                                            fieldState.error
+                                                                .message
+                                                        }
+                                                    </p>
+                                                )}
+                                            </Field>
+                                        )}
+                                    />
+                                    <Controller
+                                        name="bordereau_type_id"
+                                        control={csvControl}
+                                        render={({ field, fieldState }) => (
+                                            <Field
+                                                data-invalid={
+                                                    fieldState.invalid
                                                 }
-                                            />
-                                            {fieldState.error && (
-                                                <p className="mt-1 text-sm text-error-500">
-                                                    {fieldState.error.message}
-                                                </p>
-                                            )}
-                                        </Field>
-                                    )}
-                                />
-
-                                <Controller
-                                    name="bordereau_type_id"
-                                    control={csvControl}
-                                    render={({ field, fieldState }) => (
-                                        <Field data-invalid={fieldState.invalid}>
-                                            <Label htmlFor="bordereau_type_id">
-                                                Bordereau Type
-                                            </Label>
-                                            <Combobox
-                                                value={field.value ?? ""}
-                                                options={bordereauTypeOptions || []}
-                                                placeholder="Select Bordereau Type"
-                                                searchPlaceholder="Search bordereau types..."
-                                                onChange={(value) =>
-                                                    field.onChange(Number(value))
+                                            >
+                                                <Label htmlFor="bordereau_type_id">
+                                                    Bordereau Type
+                                                </Label>
+                                                <Combobox
+                                                    value={field.value ?? ""}
+                                                    options={
+                                                        bordereauTypeOptions ||
+                                                        []
+                                                    }
+                                                    placeholder="Select Bordereau Type"
+                                                    searchPlaceholder="Search bordereau types..."
+                                                    onChange={(value) =>
+                                                        field.onChange(
+                                                            Number(value),
+                                                        )
+                                                    }
+                                                />
+                                                {fieldState.error && (
+                                                    <p className="mt-1 text-sm text-error-500">
+                                                        {
+                                                            fieldState.error
+                                                                .message
+                                                        }
+                                                    </p>
+                                                )}
+                                            </Field>
+                                        )}
+                                    />
+                                </div>
+                                {/* Right column */}
+                                <div className="flex flex-col gap-6">
+                                    <Controller
+                                        name="bordereau"
+                                        control={csvControl}
+                                        render={({ field, fieldState }) => (
+                                            <Field
+                                                data-invalid={
+                                                    fieldState.invalid
                                                 }
-                                            />
-                                            {fieldState.error && (
-                                                <p className="mt-1 text-sm text-error-500">
-                                                    {fieldState.error.message}
+                                            >
+                                                <Label htmlFor="bordereau">
+                                                    Bordereau Name
+                                                </Label>
+                                                <Input
+                                                    {...field}
+                                                    id="bordereau"
+                                                    placeholder="Enter Bordereau Name"
+                                                    value={field.value ?? ""}
+                                                />
+                                                {fieldState.error && (
+                                                    <p className="mt-1 text-sm text-error-500">
+                                                        {
+                                                            fieldState.error
+                                                                .message
+                                                        }
+                                                    </p>
+                                                )}
+                                            </Field>
+                                        )}
+                                    />
+                                    <Controller
+                                        name="override_import_date"
+                                        control={csvControl}
+                                        render={({ field, fieldState }) => (
+                                            <Field
+                                                data-invalid={
+                                                    fieldState.invalid
+                                                }
+                                            >
+                                                <Label htmlFor="override_import_date">
+                                                    Over-ride Import Date
+                                                </Label>
+                                                <DatePicker
+                                                    id="override_import_date"
+                                                    placeholder="YYYY-MM-DD HH:mm (optional)"
+                                                    defaultDate={
+                                                        field.value || undefined
+                                                    }
+                                                    showTimeSelect
+                                                    dateFormat="yyyy-MM-dd HH:mm"
+                                                    onChange={(
+                                                        _date,
+                                                        dateStr,
+                                                    ) =>
+                                                        field.onChange(dateStr)
+                                                    }
+                                                />
+                                                <p className="text-xs text-gray-500 mt-1">
+                                                    If filled, this will
+                                                    override the import date
+                                                    (created_at). Must be within
+                                                    ±7 days of now.
                                                 </p>
-                                            )}
-                                        </Field>
-                                    )}
-                                />
-
-                                <Controller
-                                    name="bordereau"
-                                    control={csvControl}
-                                    render={({ field, fieldState }) => (
-                                        <Field
-                                            data-invalid={fieldState.invalid}
-                                        >
-                                            <Label htmlFor="bordereau">
-                                                Bordereau Name
-                                            </Label>
-                                            <Input
-                                                {...field}
-                                                id="bordereau"
-                                                placeholder="Enter Bordereau Name"
-                                                value={field.value ?? ""}
-                                            />
-                                            {fieldState.error && (
-                                                <p className="mt-1 text-sm text-error-500">
-                                                    {fieldState.error.message}
-                                                </p>
-                                            )}
-                                        </Field>
-                                    )}
-                                />
-
-                                <Controller
-                                    name="document"
-                                    control={csvControl}
-                                    render={({ field, fieldState }) => (
-                                        <div>
-                                            <Label>Upload a file</Label>
-                                            <FileInput
-                                                key={csvFileInputKey}
-                                                onChange={(e) => {
-                                                    const file =
-                                                        e.target.files?.[0];
-                                                    if (file)
-                                                        field.onChange(file);
-                                                }}
-                                                className="mt-2"
-                                            />
-                                            {fieldState.error && (
-                                                <p className="mt-1 text-sm text-error-500">
-                                                    {fieldState.error.message}
-                                                </p>
-                                            )}
-                                        </div>
-                                    )}
-                                />
+                                                {fieldState.error && (
+                                                    <p className="mt-1 text-sm text-error-500">
+                                                        {
+                                                            fieldState.error
+                                                                .message
+                                                        }
+                                                    </p>
+                                                )}
+                                            </Field>
+                                        )}
+                                    />
+                                    <Controller
+                                        name="document"
+                                        control={csvControl}
+                                        render={({ field, fieldState }) => (
+                                            <div>
+                                                <Label>Upload a file</Label>
+                                                <FileInput
+                                                    key={csvFileInputKey}
+                                                    onChange={(e) => {
+                                                        const file =
+                                                            e.target.files?.[0];
+                                                        if (file)
+                                                            field.onChange(
+                                                                file,
+                                                            );
+                                                    }}
+                                                    className="mt-2"
+                                                />
+                                                {fieldState.error && (
+                                                    <p className="mt-1 text-sm text-error-500">
+                                                        {
+                                                            fieldState.error
+                                                                .message
+                                                        }
+                                                    </p>
+                                                )}
+                                            </div>
+                                        )}
+                                    />
+                                </div>
                             </div>
 
                             <div className="mt-6 flex justify-end gap-3">
                                 <div className="flex w-full items-center justify-between gap-3">
                                     <Button
                                         variant="outline"
-                                        onClick={handleDownloadSampleBordereauCsv}
+                                        onClick={
+                                            handleDownloadSampleBordereauCsv
+                                        }
                                         disabled={isUploading}
                                     >
                                         Download Sample CSV
@@ -1124,8 +1321,13 @@ export default function BordereauIndex() {
                                         >
                                             Cancel
                                         </Button>
-                                        <Button type="submit" disabled={isUploading}>
-                                            {isUploading ? "Uploading..." : "Upload"}
+                                        <Button
+                                            type="submit"
+                                            disabled={isUploading}
+                                        >
+                                            {isUploading
+                                                ? "Uploading..."
+                                                : "Upload"}
                                         </Button>
                                     </div>
                                 </div>
@@ -1289,15 +1491,27 @@ export default function BordereauIndex() {
                                         <Field>
                                             <Label>Reason</Label>
                                             <Select
-                                                options={
-                                                    [
-                                                        { value: "", label: "- Select Reason -" },
-                                                    ].concat(
-                                                        processReasonOptions.map((o) => ({ value: String(o.value), label: o.label })),
-                                                    )
+                                                options={[
+                                                    {
+                                                        value: "",
+                                                        label: "- Select Reason -",
+                                                    },
+                                                ].concat(
+                                                    processReasonOptions.map(
+                                                        (o) => ({
+                                                            value: String(
+                                                                o.value,
+                                                            ),
+                                                            label: o.label,
+                                                        }),
+                                                    ),
+                                                )}
+                                                value={String(
+                                                    field.value ?? "",
+                                                )}
+                                                onChange={(val: unknown) =>
+                                                    field.onChange(Number(val))
                                                 }
-                                                value={String(field.value ?? "")}
-                                                onChange={(val: any) => field.onChange(Number(val))}
                                                 placeholder="Select Reason"
                                             />
                                         </Field>
@@ -1451,15 +1665,27 @@ export default function BordereauIndex() {
                                         <Field>
                                             <Label>Outcome</Label>
                                             <Select
-                                                options={
-                                                    [
-                                                        { value: "", label: "- Select Outcome -" },
-                                                    ].concat(
-                                                        closeOutcomeOptions.map((o) => ({ value: String(o.value), label: o.label })),
-                                                    )
+                                                options={[
+                                                    {
+                                                        value: "",
+                                                        label: "- Select Outcome -",
+                                                    },
+                                                ].concat(
+                                                    closeOutcomeOptions.map(
+                                                        (o) => ({
+                                                            value: String(
+                                                                o.value,
+                                                            ),
+                                                            label: o.label,
+                                                        }),
+                                                    ),
+                                                )}
+                                                value={String(
+                                                    field.value ?? "",
+                                                )}
+                                                onChange={(val: unknown) =>
+                                                    field.onChange(Number(val))
                                                 }
-                                                value={String(field.value ?? "")}
-                                                onChange={(val: any) => field.onChange(Number(val))}
                                                 placeholder="Select Outcome"
                                             />
                                         </Field>
@@ -1476,15 +1702,27 @@ export default function BordereauIndex() {
                                         >
                                             <Label>Reason</Label>
                                             <Select
-                                                options={
-                                                    [
-                                                        { value: "", label: "- Select Reason -" },
-                                                    ].concat(
-                                                        closeReasonOptions.map((o) => ({ value: String(o.value), label: o.label })),
-                                                    )
+                                                options={[
+                                                    {
+                                                        value: "",
+                                                        label: "- Select Reason -",
+                                                    },
+                                                ].concat(
+                                                    closeReasonOptions.map(
+                                                        (o) => ({
+                                                            value: String(
+                                                                o.value,
+                                                            ),
+                                                            label: o.label,
+                                                        }),
+                                                    ),
+                                                )}
+                                                value={String(
+                                                    field.value ?? "",
+                                                )}
+                                                onChange={(val: unknown) =>
+                                                    field.onChange(Number(val))
                                                 }
-                                                value={String(field.value ?? "")}
-                                                onChange={(val: any) => field.onChange(Number(val))}
                                                 placeholder="Select Reason"
                                             />
                                             {fieldState.error && (
@@ -1551,7 +1789,9 @@ export default function BordereauIndex() {
                                                     try {
                                                         await changeBordereauOutcome(
                                                             bordereauSelected.id,
-                                                            Number(data.outcome),
+                                                            Number(
+                                                                data.outcome,
+                                                            ),
                                                         );
                                                     } catch (err) {
                                                         console.warn(
@@ -1561,11 +1801,17 @@ export default function BordereauIndex() {
                                                     }
                                                 }
 
-                                                await api.post(`/bordereau/close`, {
-                                                    bordereau_id: bordereauSelected.id,
-                                                    reason: data.reason ?? null,
-                                                    notes: data.notes ?? null,
-                                                });
+                                                await api.post(
+                                                    `/bordereau/close`,
+                                                    {
+                                                        bordereau_id:
+                                                            bordereauSelected.id,
+                                                        reason:
+                                                            data.reason ?? null,
+                                                        notes:
+                                                            data.notes ?? null,
+                                                    },
+                                                );
                                                 toast.success(
                                                     "Bordereau closed",
                                                 );

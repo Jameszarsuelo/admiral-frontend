@@ -13,7 +13,7 @@ import Can from "@/components/auth/Can";
 import { Modal } from "@/components/ui/modal";
 import SupplierDocumentsTable from "../SupplierDirectory/SupplierDocumentTable/SupplierDocumentsTable";
 import Radio from "@/components/form/input/Radio";
-import Label from "@/components/form/Label";
+import FilterFieldCard from "@/components/common/FilterFieldCard";
 import { downloadSupplierDocument } from "@/database/supplier_api";
 import { dateFormat } from "@/helper/dateFormat";
 import { coerceBlobType, makeObjectUrl } from "@/helper/blobFile";
@@ -66,12 +66,11 @@ export default function DMView() {
     }, [documents, showExpired]);
 
     const columns: ColumnDef<IDocumentSchema>[] = [
-        { accessorKey: "id", header: "ID" },
         { accessorKey: "name", header: "Document Name" },
         {
             accessorKey: "supplier",
             accessorFn: (row) => row.supplier?.name,
-            header: () => <div className="ml-4">Supplier</div>,
+            header: "Supplier",
             cell: ({ row }) => (
                 <div className="capitalize dark:text-white ml-4">
                     {row.getValue("supplier")}
@@ -82,7 +81,7 @@ export default function DMView() {
         {
             accessorKey: "document_type",
             accessorFn: (row) => row.document_type.type,
-            header: () => <div className="ml-4">Type</div>,
+            header: "Type",
             cell: ({ row }) => (
                 <div className="capitalize dark:text-white ml-4">
                     {row.getValue("document_type")}
@@ -241,7 +240,7 @@ export default function DMView() {
         <>
             <PageBreadcrumb pageTitle="Document Management" />
             <div className="w-full">
-                <div className="rounded-2xl border border-gray-200 bg-white px-5 pb-5 pt-5 dark:border-gray-800 dark:bg-white/[0.03] sm:px-6 sm:pt-6">
+                <div className="rounded-2xl border border-gray-200 bg-white px-5 pb-5 pt-5 dark:border-gray-800 dark:bg-white/3 sm:px-6 sm:pt-6">
                     <div className="flex flex-col gap-5 mb-6 sm:flex-row sm:justify-between">
                         <div className="w-full">
                             <h3 className="text-lg font-semibold text-gray-800 dark:text-white/90">
@@ -266,62 +265,57 @@ export default function DMView() {
                         </div>
                     </div>
 
-                    <div className="max-w-full overflow-x-auto custom-scrollbar">
-                        <div className="grid">
-                            <div className="flex flex-col items-center justify-center-safe gap-4 sm:flex-row sm:gap-10">
-                                <div className="flex items-center gap-8">
-                                    <Label
-                                        htmlFor="include_obsolete"
-                                        className="font-bold text-md mb-0"
-                                    >
-                                        Include Obsolete:
-                                    </Label>
-                                    <Radio
-                                        id="obsolete_no"
-                                        value="0"
-                                        checked={selectedSearch === "0"}
-                                        onChange={() => setSelectedSearch("0")}
-                                        label="No"
-                                        name="include_obsolete"
-                                    />
-
-                                    <Radio
-                                        id="obsolete_yes"
-                                        value="1"
-                                        checked={selectedSearch === "1"}
-                                        onChange={() => setSelectedSearch("1")}
-                                        label="Yes"
-                                        name="include_obsolete"
-                                    />
-                                </div>
-
-                                <div className="flex items-center gap-8">
-                                    <Label
-                                        htmlFor="show_expired"
-                                        className="font-bold text-md mb-0"
-                                    >
-                                        Show Expired:
-                                    </Label>
-                                    <Radio
-                                        id="expired_no"
-                                        value="0"
-                                        checked={showExpired === "0"}
-                                        onChange={() => setShowExpired("0")}
-                                        label="No"
-                                        name="show_expired"
-                                    />
-
-                                    <Radio
-                                        id="expired_yes"
-                                        value="1"
-                                        checked={showExpired === "1"}
-                                        onChange={() => setShowExpired("1")}
-                                        label="Yes"
-                                        name="show_expired"
-                                    />
-                                </div>
+                    <div className="mb-6 grid grid-cols-1 gap-4 lg:grid-cols-2 xl:max-w-4xl">
+                        <FilterFieldCard
+                            label="Include Obsolete"
+                            description="Choose whether obsolete documents should remain visible in the list."
+                        >
+                            <div className="flex flex-wrap gap-3">
+                                <Radio
+                                    id="obsolete_no"
+                                    value="0"
+                                    checked={selectedSearch === "0"}
+                                    onChange={() => setSelectedSearch("0")}
+                                    label="No"
+                                    name="include_obsolete"
+                                />
+                                <Radio
+                                    id="obsolete_yes"
+                                    value="1"
+                                    checked={selectedSearch === "1"}
+                                    onChange={() => setSelectedSearch("1")}
+                                    label="Yes"
+                                    name="include_obsolete"
+                                />
                             </div>
-                        </div>
+                        </FilterFieldCard>
+
+                        <FilterFieldCard
+                            label="Show Expired"
+                            description="Toggle whether expired documents should be included."
+                        >
+                            <div className="flex flex-wrap gap-3">
+                                <Radio
+                                    id="expired_no"
+                                    value="0"
+                                    checked={showExpired === "0"}
+                                    onChange={() => setShowExpired("0")}
+                                    label="No"
+                                    name="show_expired"
+                                />
+                                <Radio
+                                    id="expired_yes"
+                                    value="1"
+                                    checked={showExpired === "1"}
+                                    onChange={() => setShowExpired("1")}
+                                    label="Yes"
+                                    name="show_expired"
+                                />
+                            </div>
+                        </FilterFieldCard>
+                    </div>
+
+                    <div className="max-w-full overflow-x-auto custom-scrollbar">
                         <div className="min-w-[1000px] xl:min-w-full px-2">
                             {!isLoading && filteredDocuments ? (
                                 <DataTable columns={columns} data={filteredDocuments} />

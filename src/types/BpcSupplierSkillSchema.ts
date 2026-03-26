@@ -4,6 +4,8 @@ export const BpcSupplierSkillRowSchema = z.object({
     id: z.number().int(),
     name: z.string(),
     skill: z.number().int().min(0).max(100),
+    trained: z.coerce.boolean().optional(),
+    paused: z.coerce.boolean().optional(),
 });
 
 export type IBpcSupplierSkillRow = z.infer<typeof BpcSupplierSkillRowSchema>;
@@ -13,6 +15,8 @@ export const BpcSupplierSkillUpsertSchema = z.object({
         z.object({
             supplier_id: z.number().int(),
             skill: z.number().int().min(0).max(100),
+            trained: z.boolean().optional(),
+            paused: z.boolean().optional(),
         }),
     ),
 });

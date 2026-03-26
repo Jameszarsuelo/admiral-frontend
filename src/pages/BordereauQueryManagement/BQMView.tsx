@@ -8,6 +8,7 @@ import { PencilIcon } from "@/icons";
 import Select from "@/components/form/Select";
 import DatePicker from "@/components/form/date-picker";
 import Label from "@/components/form/Label";
+import FilterFieldCard from "@/components/common/FilterFieldCard";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
     changeBordereauOutcome,
@@ -27,6 +28,7 @@ import CommentSection from "@/components/bordereau/CommentSection";
 import { addBordereauComment } from "@/database/comment_api";
 import { useAuth } from "@/hooks/useAuth";
 import { fetchOutcomeList } from "@/database/outcome_api";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 
 export type BQMType = {
     id: number;
@@ -63,6 +65,7 @@ export default function BQMView () {
     const [resolveOutcomeValue, setResolveOutcomeValue] = useState<string>("");
     const [resolveCommentText, setResolveCommentText] = useState("");
     const [resolveSessionCommentsAdded, setResolveSessionCommentsAdded] = useState(false);
+    const [activityView, setActivityView] = useState<string>("all");
 
     const resolveCommentTextareaRef = useRef<HTMLTextAreaElement | null>(null);
 
@@ -272,6 +275,39 @@ export default function BQMView () {
         };
     });
 
+    const visibleQueryRows = useMemo(() => {
+        if (activityView === "all") {
+            return queryRows;
+        }
+
+        const wipStatuses = new Set(["Activity in Progress with BPC"]);
+        const queryWaitingStatuses = new Set([
+            "Activity Queued Sensitive",
+            "Activity Queued Staff",
+            "Activity Queued Fraud",
+        ]);
+        const queryNeedsActionStatuses = new Set([
+            "Query Redirect",
+            "Activity in Progress with Supplier",
+        ]);
+
+        return queryRows.filter((row) => {
+            if (activityView === "wip") {
+                return wipStatuses.has(row.status);
+            }
+
+            if (activityView === "query-waiting") {
+                return queryWaitingStatuses.has(row.status);
+            }
+
+            if (activityView === "query-needs-action") {
+                return queryNeedsActionStatuses.has(row.status);
+            }
+
+            return true;
+        });
+    }, [activityView, queryRows]);
+
     const activeCommentRow = commentBordereauId
         ? queryRows.find((r) => r.id === commentBordereauId) ?? null
         : null;
@@ -355,7 +391,7 @@ export default function BQMView () {
             cell: ({ row }) => {
                 return (
                     <div className="flex items-center gap-1">
-                        <Can permission="bordereau_detail.view">
+                        <Can permission="bordereau_query_management.view">
                             <Button
                                 size="xs"
                                 onClick={() =>
@@ -366,7 +402,7 @@ export default function BQMView () {
                             </Button>
                         </Can>
 
-                        <Can permission="modules.delete">
+                        <Can permission="bordereau_query_management.delete">
                             <Button
                                 size="xs"
                                 variant="warning"
@@ -380,7 +416,7 @@ export default function BQMView () {
                             </Button>
                         </Can>
 
-                        <Can permission="modules.delete">
+                        <Can permission="bordereau_query_management.delete">
                             <Button
                                 size="xs"
                                 variant="success"
@@ -396,7 +432,7 @@ export default function BQMView () {
                             </Button>
                         </Can>
 
-                        <Can permission="modules.delete">
+                        <Can permission="bordereau_query_management.delete">
                             <Button
                                 size="xs"
                                 variant="outline"
@@ -522,7 +558,7 @@ export default function BQMView () {
                                             Outstanding Queries
                                         </span>
                                         <h4 className="font-bold text-gray-800 text-title-sm dark:text-white/90">
-                                            {queryPayload?.total ?? queryRows.length}
+                                            {visibleQueryRows.length}
                                         </h4>
                                     </div>
                                 </div>
@@ -530,8 +566,8 @@ export default function BQMView () {
                         </div>
                 </div>
                 <div className="rounded-2xl border border-gray-200 bg-white px-5 pb-5 pt-5 dark:border-gray-800 dark:bg-white/3 sm:px-6 sm:pt-6">
-                    <div className="flex flex-col gap-5 mb-6 sm:flex-row sm:justify-between">
-                        <div className="w-full">
+                    <div className="mb-6">
+                        <div>
                             <h3 className="text-lg font-semibold text-gray-800 dark:text-white/90">
                                 Activity Query Management
                             </h3>
@@ -540,22 +576,51 @@ export default function BQMView () {
                                 details.
                             </p>
                         </div>
-                        <div className="flex shrink-0 items-center gap-2">
-                            {/* <Can permission="document_management.create">
-                                <Button
-                                    size="sm"
-                                    onClick={() => navigate(`/document-management/create`)}
-                                >
-                                    Add New Bordereau Query
-                                </Button>
-                            </Can> */}
-                        </div>
+                    </div>
+
+                    <div className="mb-6">
+                        <FilterFieldCard
+                            label="Activity View"
+                            description="Switch between all activities and the query subsets shown in the table."
+                            className="w-full"
+                        >
+                            <RadioGroup
+                                value={activityView}
+                                onValueChange={setActivityView}
+                                className="flex flex-wrap items-center gap-3"
+                            >
+                                <div className="flex items-center space-x-2 rounded-md border border-gray-200 bg-white px-3 py-2 dark:border-gray-700 dark:bg-gray-900">
+                                    <RadioGroupItem value="all" id="activity-view-all" />
+                                    <Label htmlFor="activity-view-all" className="mb-0">
+                                        All
+                                    </Label>
+                                </div>
+                                <div className="flex items-center space-x-2 rounded-md border border-gray-200 bg-white px-3 py-2 dark:border-gray-700 dark:bg-gray-900">
+                                    <RadioGroupItem value="wip" id="activity-view-wip" />
+                                    <Label htmlFor="activity-view-wip" className="mb-0">
+                                        WIP
+                                    </Label>
+                                </div>
+                                <div className="flex items-center space-x-2 rounded-md border border-gray-200 bg-white px-3 py-2 dark:border-gray-700 dark:bg-gray-900">
+                                    <RadioGroupItem value="query-waiting" id="activity-view-query-waiting" />
+                                    <Label htmlFor="activity-view-query-waiting" className="mb-0">
+                                        Query (Waiting for BPC)
+                                    </Label>
+                                </div>
+                                <div className="flex items-center space-x-2 rounded-md border border-gray-200 bg-white px-3 py-2 dark:border-gray-700 dark:bg-gray-900">
+                                    <RadioGroupItem value="query-needs-action" id="activity-view-query-needs-action" />
+                                    <Label htmlFor="activity-view-query-needs-action" className="mb-0">
+                                        Query (Needs Action)
+                                    </Label>
+                                </div>
+                            </RadioGroup>
+                        </FilterFieldCard>
                     </div>
 
                     <div className="max-w-full overflow-x-auto custom-scrollbar">
                         <div className="min-w-[1000px] xl:min-w-full px-2">
 
-                            <DataTable columns={columns} data={queryRows} />
+                            <DataTable columns={columns} data={visibleQueryRows} />
                             {/* {!isLoading && documents ? (
                                 <DataTable columns={columns} data={documents} />
                             ) : (

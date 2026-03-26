@@ -22,6 +22,20 @@ function clampSkill(value: number): number {
     return Math.min(100, Math.max(0, Math.trunc(value)));
 }
 
+type DraftRow = {
+    skill: string;
+    trained: boolean;
+    paused: boolean;
+};
+
+function defaultDraftRow(row?: IBpcSupplierSkillRow): DraftRow {
+    return {
+        skill: String(clampSkill(row?.skill ?? 0)),
+        trained: row?.trained === undefined ? true : Boolean(row.trained),
+        paused: row?.paused === undefined ? true : Boolean(row.paused),
+    };
+}
+
 export default function SupplierSkillsEditor({
     bpcId,
     title = "Supplier Skills (SBR)",
@@ -60,13 +74,13 @@ export default function SupplierSkillsEditor({
         refetch: refetchBpcs,
     } = useQuery<{ value: number; label: string }[]>({
         queryKey: ["bpc-options"],
-        queryFn: fetchBpcOptions,
+        queryFn: () => fetchBpcOptions(),
         staleTime: 1000 * 60 * 10,
         refetchOnWindowFocus: false,
         enabled: shouldShowBpcPicker,
     });
 
-    const [draft, setDraft] = useState<Record<number, string>>({});
+    const [draft, setDraft] = useState<Record<number, DraftRow>>({});
 
     const handleDraftChange = useCallback((supplierId: number, raw: string) => {
         const digitsOnly = raw.replace(/[^0-9]/g, "");
@@ -74,7 +88,10 @@ export default function SupplierSkillsEditor({
         if (digitsOnly === "") {
             setDraft((prev) => ({
                 ...prev,
-                [supplierId]: "",
+                [supplierId]: {
+                    ...(prev[supplierId] ?? defaultDraftRow()),
+                    skill: "",
+                },
             }));
             return;
         }
@@ -82,63 +99,200 @@ export default function SupplierSkillsEditor({
         const clamped = clampSkill(Number(digitsOnly));
         setDraft((prev) => ({
             ...prev,
-            [supplierId]: String(clamped),
+            [supplierId]: {
+                ...(prev[supplierId] ?? defaultDraftRow()),
+                skill: String(clamped),
+            },
         }));
     }, []);
 
     const handleDraftBlur = useCallback((supplierId: number) => {
         setDraft((prev) => {
-            const current = prev[supplierId];
+            const current = prev[supplierId] ?? defaultDraftRow();
 
-            if (current === undefined) {
-                return prev;
+            if (current.skill === "") {
+                return {
+                    ...prev,
+                    [supplierId]: { ...current, skill: "0" },
+                };
             }
 
-            if (current === "") {
-                return { ...prev, [supplierId]: "0" };
-            }
-
-            const normalized = String(clampSkill(Number(current)));
-            if (normalized === current) return prev;
-            return { ...prev, [supplierId]: normalized };
+            const normalized = String(clampSkill(Number(current.skill)));
+            if (normalized === current.skill) return prev;
+            return {
+                ...prev,
+                [supplierId]: { ...current, skill: normalized },
+            };
         });
     }, []);
 
     useEffect(() => {
         if (!data) return;
-        const next: Record<number, string> = {};
+        const next: Record<number, DraftRow> = {};
         for (const row of data) {
-            next[row.id] = String(clampSkill(row.skill ?? 0));
+            next[row.id] = defaultDraftRow(row);
         }
         setDraft(next);
     }, [data]);
 
-    const originalSkillMap = useMemo(() => {
-        const map: Record<number, number> = {};
+    const originalRowMap = useMemo(() => {
+        const map: Record<number, DraftRow> = {};
         for (const row of data || []) {
-            map[row.id] = clampSkill(row.skill ?? 0);
+            map[row.id] = defaultDraftRow(row);
         }
         return map;
     }, [data]);
 
-    type TSupplierSkillRow = IBpcSupplierSkillRow & { draftSkill: string };
+    type TSupplierSkillRow = IBpcSupplierSkillRow & {
+        draftSkill: string;
+        draftTrained: boolean;
+        draftPaused: boolean;
+    };
 
     const rows = useMemo((): TSupplierSkillRow[] => {
         return (data || []).map((r) => {
-            const draftSkill =
-                draft[r.id] ?? String(clampSkill(r.skill ?? 0));
-
-            const effectiveNumeric = clampSkill(
-                Number(draftSkill === "" ? 0 : draftSkill),
-            );
+            const current = draft[r.id] ?? defaultDraftRow(r);
+            const effectiveNumeric = current.trained
+                ? clampSkill(Number(current.skill === "" ? 0 : current.skill))
+                : 0;
 
             return {
                 ...r,
-                draftSkill,
+                draftSkill: current.trained ? current.skill : "0",
+                draftTrained: current.trained,
+                draftPaused: current.paused,
                 skill: effectiveNumeric,
             };
         });
     }, [data, draft]);
+
+    const allPaused = useMemo(() => {
+        const trainedRows = rows.filter((row) => row.draftTrained);
+        if (trainedRows.length === 0) {
+            return false;
+        }
+
+        return trainedRows.every((row) => row.draftPaused);
+    }, [rows]);
+
+    const updateDraftRow = useCallback(
+        (
+            supplierId: number,
+            updater: (current: DraftRow) => DraftRow,
+        ) => {
+            setDraft((prev) => {
+                const current = prev[supplierId] ?? defaultDraftRow();
+                return {
+                    ...prev,
+                    [supplierId]: updater(current),
+                };
+            });
+        },
+        [],
+    );
+
+    const exportCsv = useCallback(() => {
+        const csvEscape = (value: unknown) => {
+            const normalized =
+                value === null || value === undefined
+                    ? ""
+                    : typeof value === "string"
+                      ? value
+                      : typeof value === "number" || typeof value === "boolean"
+                        ? String(value)
+                        : JSON.stringify(value);
+
+            const needsQuotes = /[\n\r,"]/.test(normalized);
+            const escaped = normalized.replace(/"/g, '""');
+            return needsQuotes ? `"${escaped}"` : escaped;
+        };
+
+        const csvLines: string[] = [];
+        csvLines.push([
+            "Supplier",
+            "Trained",
+            "Paused",
+            "Skill Level",
+        ].map(csvEscape).join(","));
+
+        for (const row of rows) {
+            csvLines.push(
+                [
+                    row.name,
+                    row.draftTrained ? "Yes" : "No",
+                    row.draftPaused ? "Yes" : "No",
+                    String(row.skill),
+                ]
+                    .map(csvEscape)
+                    .join(","),
+            );
+        }
+
+        const csv = csvLines.join("\n");
+        const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement("a");
+        link.href = url;
+        const date = new Date().toISOString().slice(0, 10);
+        link.download = `bpc-supplier-skills-${bpcId ?? "me"}-${date}.csv`;
+        document.body.appendChild(link);
+        link.click();
+        link.remove();
+
+        window.setTimeout(() => {
+            try {
+                URL.revokeObjectURL(url);
+            } catch {
+                // ignore
+            }
+        }, 30_000);
+    }, [bpcId, rows]);
+
+    const persistMutation = useMutation({
+        mutationFn: (payload: {
+            skills: { supplier_id: number; skill: number; trained: boolean; paused: boolean }[];
+        }) => upsertBpcSupplierSkills(payload, bpcId),
+        onSuccess: async (res) => {
+            toast.success(res.message ?? "Supplier skills updated");
+            await refetch();
+        },
+        onError: (err: unknown) => {
+            console.error("SupplierSkills save error:", err);
+            toast.error("Failed to update supplier skills");
+        },
+    });
+
+    const buildPayloadRows = useCallback(
+        (supplierIds?: number[]) => {
+            const sourceRows = (data || []).filter((row) =>
+                supplierIds ? supplierIds.includes(row.id) : true,
+            );
+
+            return sourceRows
+                .map((row) => {
+                    const current = draft[row.id] ?? defaultDraftRow(row);
+                    const skill = current.trained
+                        ? clampSkill(Number(current.skill === "" ? 0 : current.skill))
+                        : 0;
+                    const next = {
+                        supplier_id: row.id,
+                        skill,
+                        trained: current.trained,
+                        paused: current.trained ? current.paused : false,
+                    };
+                    const original = originalRowMap[row.id] ?? defaultDraftRow(row);
+
+                    const changed =
+                        next.skill !== clampSkill(row.skill ?? 0) ||
+                        next.trained !== original.trained ||
+                        (next.trained ? next.paused : false) !== original.paused;
+
+                    return changed ? next : null;
+                })
+                .filter((row): row is NonNullable<typeof row> => row !== null);
+        },
+        [data, draft, originalRowMap],
+    );
 
     const columns: ColumnDef<TSupplierSkillRow>[] = useMemo(
         () => [
@@ -158,54 +312,89 @@ export default function SupplierSkillsEditor({
                 cell: ({ row }) => {
                     const supplierId = row.original.id;
                     const value = row.original.draftSkill;
+                    const trained = row.original.draftTrained;
 
                     return (
                         <div className="max-w-[180px]">
                             <Input
                                 type="text"
                                 value={value}
-                                onChange={(e) => handleDraftChange(supplierId, e.target.value)}
+                                onChange={(e) =>
+                                    handleDraftChange(supplierId, e.target.value)
+                                }
                                 onBlur={() => handleDraftBlur(supplierId)}
+                                disabled={!trained}
+                                className={!trained ? "bg-gray-100 text-gray-400" : ""}
                             />
                         </div>
                     );
                 },
             },
+            {
+                id: "trained",
+                header: "Trained",
+                enableSorting: false,
+                cell: ({ row }) => {
+                    const supplierId = row.original.id;
+                    const trained = row.original.draftTrained;
+
+                    return (
+                        <div className="flex justify-center">
+                            <Button
+                                size="xs"
+                                variant={trained ? "success" : "danger"}
+                                onClick={() => {
+                                    updateDraftRow(supplierId, (current) => ({
+                                        ...current,
+                                        trained: !current.trained,
+                                        paused: current.trained ? false : current.paused,
+                                        skill: current.trained ? "0" : current.skill || "0",
+                                    }));
+                                }}
+                            >
+                                {trained ? "Yes" : "No"}
+                            </Button>
+                        </div>
+                    );
+                },
+            },
+            {
+                id: "paused",
+                header: "Paused",
+                enableSorting: false,
+                cell: ({ row }) => {
+                    const supplierId = row.original.id;
+                    const trained = row.original.draftTrained;
+                    const paused = row.original.draftPaused;
+
+                    if (!trained) {
+                        return <div className="h-8" />;
+                    }
+
+                    return (
+                        <div className="flex justify-center">
+                            <Button
+                                size="xs"
+                                variant={paused ? "warning" : "info"}
+                                onClick={() => {
+                                    updateDraftRow(supplierId, (current) => ({
+                                        ...current,
+                                        paused: !current.paused,
+                                    }));
+                                }}
+                            >
+                                {paused ? "Unpause" : "Pause"}
+                            </Button>
+                        </div>
+                    );
+                },
+            },
         ],
-        [handleDraftBlur, handleDraftChange],
+        [handleDraftBlur, handleDraftChange, updateDraftRow],
     );
 
-    const mutation = useMutation({
-        mutationFn: (payload: { skills: { supplier_id: number; skill: number }[] }) =>
-            upsertBpcSupplierSkills(payload, bpcId),
-        onSuccess: async (res) => {
-            toast.success(res.message ?? "Supplier skills updated");
-            await refetch();
-        },
-        onError: (err: unknown) => {
-            console.error("SupplierSkills save error:", err);
-            toast.error("Failed to update supplier skills");
-        },
-    });
-
     const onSave = () => {
-        const changed = (data || [])
-            .map((r) => {
-                const rawDraft = draft[r.id];
-                const numericDraft =
-                    rawDraft === undefined || rawDraft === ""
-                        ? 0
-                        : Number(rawDraft);
-                const nextSkill = clampSkill(numericDraft);
-                const prevSkill = originalSkillMap[r.id] ?? 0;
-                return {
-                    supplier_id: r.id,
-                    nextSkill,
-                    prevSkill,
-                };
-            })
-            .filter((x) => x.nextSkill !== x.prevSkill)
-            .map((x) => ({ supplier_id: x.supplier_id, skill: x.nextSkill }));
+        const changed = buildPayloadRows();
 
         if (changed.length === 0) {
             toast.message("No changes to save");
@@ -214,7 +403,7 @@ export default function SupplierSkillsEditor({
 
         const payload = { skills: changed };
 
-        toast.promise(mutation.mutateAsync(payload), {
+        toast.promise(persistMutation.mutateAsync(payload), {
             loading: "Saving supplier skills...",
             success: "Saved",
             error: "Save failed",
@@ -327,6 +516,26 @@ export default function SupplierSkillsEditor({
                             {isFetching ? " (refreshing...)" : ""}
                         </p>
                         <div className="flex items-center gap-2">
+                            <Button
+                                variant="warning"
+                                onClick={() => {
+                                    const nextPaused = !allPaused;
+                                    setDraft((prev) => {
+                                        const next = { ...prev };
+                                        for (const row of rows) {
+                                            next[row.id] = {
+                                                ...(next[row.id] ?? defaultDraftRow(row)),
+                                                paused: nextPaused,
+                                            };
+                                        }
+                                        return next;
+                                    });
+                                }}
+                                size="sm"
+                                disabled={rows.length === 0}
+                            >
+                                {allPaused ? "Unpause All" : "Pause All"}
+                            </Button>
                             <Button variant="outline" onClick={() => refetch()} size="sm">
                                 Refresh
                             </Button>
@@ -335,7 +544,12 @@ export default function SupplierSkillsEditor({
 
                     <div className="max-w-full overflow-x-auto custom-scrollbar">
                         <div className="min-w-[800px] xl:min-w-full px-2">
-                            <DataTable columns={columns} data={rows} />
+                            <DataTable
+                                columns={columns}
+                                data={rows}
+                                onExportCsv={exportCsv}
+                                exportCsvDisabled={rows.length === 0}
+                            />
                         </div>
                     </div>
 
@@ -344,18 +558,18 @@ export default function SupplierSkillsEditor({
                             variant="outline"
                             onClick={() => {
                                 if (!data) return;
-                                const next: Record<number, string> = {};
+                                const next: Record<number, DraftRow> = {};
                                 for (const row of data) {
-                                    next[row.id] = String(clampSkill(row.skill ?? 0));
+                                    next[row.id] = defaultDraftRow(row);
                                 }
                                 setDraft(next);
                             }}
-                            disabled={mutation.isPending}
+                            disabled={persistMutation.isPending}
                         >
                             Reset
                         </Button>
-                        <Button onClick={onSave} disabled={mutation.isPending}>
-                            {mutation.isPending ? "Saving..." : "Save"}
+                        <Button onClick={onSave} disabled={persistMutation.isPending}>
+                            {persistMutation.isPending ? "Saving..." : "Save"}
                         </Button>
                     </div>
                 </div>

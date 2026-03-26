@@ -207,6 +207,7 @@ export const BordereauIndexSchema = BordereauBaseSchema.pick({
     closed_by: true,
     closed_date: true,
 }).extend({
+    completed_by: z.string().nullable().optional(),
     batch_total_rows: z.number().nullable().optional(),
     batch_outstanding_rows: z.number().nullable().optional(),
     comments: BordereauCommentBaseSchema.array().optional(),
@@ -220,3 +221,17 @@ export type IBordereauSchema = z.infer<typeof BordereauBaseSchema>;
 export type IBordereauForm = z.infer<typeof BordereauFormSchema>;
 export type IBordereauIndex = z.infer<typeof BordereauIndexSchema>;
 export type IBordereauComment = z.infer<typeof BordereauCommentBaseSchema>;
+
+export type TBordereauApiResponse =
+    | IBordereauIndex
+    | {
+          bordereau: IBordereauIndex;
+          validation_fields?: Record<string, unknown>;
+      }
+    | null;
+
+export type DeleteBordereauResponse = {
+    bordereau_id: number;
+    upload_batch_number: number | null;
+    deleted_count: number;
+};

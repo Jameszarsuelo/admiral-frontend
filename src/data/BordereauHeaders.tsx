@@ -8,14 +8,6 @@ import Can from "@/components/auth/Can";
 export const getBordeareauHeaders = (
 ): ColumnDef<IBordereauIndex>[] => [
     {
-        accessorKey: "id",
-        accessorFn: (row) => row.id,
-        header: "Platform ID",
-        cell: ({ row }) => (
-            <div className="capitalize">{row.getValue("id")}</div>
-        ),
-    },
-    {
         accessorKey: "supplier",
         accessorFn: (row) => row.supplier?.name,
         header: "Supplier Name",
@@ -53,6 +45,16 @@ export const getBordeareauHeaders = (
                     <User2 className="mr-1 inline-block" />
                     {label || "-"}
                 </Badge>
+            );
+        },
+    },
+    {
+        accessorKey: "completed_by",
+        header: "Completed By",
+        cell: ({ row }) => {
+            const value = row.getValue("completed_by") as string | null;
+            return (
+                <div className="capitalize">{value || "-"}</div>
             );
         },
     },

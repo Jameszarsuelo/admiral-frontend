@@ -72,7 +72,8 @@ export const getOutcomeHeaders = (
     // },
     {
         id: "actions",
-        header: () => <div>Actions</div>,
+        header: "Actions",
+        enableSorting: false,
         cell: ({ row }) => {
             const outcomeData = row.original;
 

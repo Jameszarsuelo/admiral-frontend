@@ -94,6 +94,7 @@ export const headcountColumns: ColumnDef<HeadcountRow>[] = [
     {
         id: "actions",
         header: () => <div>Actions</div>,
+        enableSorting: false,
         cell: () => (
             <Button size="sm" variant="outline" disabled>
                 Export Detail

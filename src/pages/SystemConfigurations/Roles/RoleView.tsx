@@ -62,6 +62,7 @@ export default function RoleView() {
         {
             id: "actions",
             header: "Actions",
+            enableSorting: false,
             cell: ({ row }) => {
                 const item = row.original as IRoleBase;
                 return (

@@ -155,6 +155,9 @@ const TaskQueuesView = lazy(
 );
 
 const OverviewIndex = lazy(() => import("@/pages/Overview/OverviewIndex"));
+const NavigationAuditLogsIndex = lazy(
+    () => import("@/pages/NavigationAuditLogs/NavigationAuditLogsIndex"),
+);
 
 const UploadExceptionsIndex = lazy(
     () => import("@/pages/UploadExceptions/UploadExceptionsIndex"),
@@ -296,6 +299,9 @@ export const modulePageMap: Record<string, ModuleComponents> = {
     },
     overview: {
         main: OverviewIndex,
+    },
+    navigation_audit_logs: {
+        main: NavigationAuditLogsIndex,
     },
 
     upload_exceptions: {

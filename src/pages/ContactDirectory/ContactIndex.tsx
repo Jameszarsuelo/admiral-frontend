@@ -6,6 +6,7 @@ import { DataTable } from "@/components/ui/DataTable";
 import Button from "@/components/ui/button/Button";
 import { Modal } from "@/components/ui/modal";
 import Spinner from "@/components/ui/spinner/Spinner";
+import FilterFieldCard from "@/components/common/FilterFieldCard";
 import { deleteContact, fetchContactList } from "@/database/contact_api";
 import { getContactHeaders } from "@/data/ContactHeaders";
 import Can from "@/components/auth/Can";
@@ -69,7 +70,7 @@ export default function ContactIndex() {
                 pageTitle="Contact Directory"
             />
             <div className="w-full">
-                <div className="rounded-2xl border border-gray-200 bg-white px-5 pb-5 pt-5 dark:border-gray-800 dark:bg-white/[0.03] sm:px-6 sm:pt-6">
+                <div className="rounded-2xl border border-gray-200 bg-white px-5 pb-5 pt-5 dark:border-gray-800 dark:bg-white/3 sm:px-6 sm:pt-6">
                     <div className="flex flex-col gap-5 mb-6 sm:flex-row sm:justify-between">
                         <div className="w-full">
                             <h3 className="text-lg font-semibold text-gray-800 dark:text-white/90">
@@ -93,9 +94,12 @@ export default function ContactIndex() {
                         </div>
                     </div>
 
-                    <div className="max-w-full overflow-x-auto custom-scrollbar">
-                        <div className="grid">
-                            <div className="flex justify-center-safe gap-8">
+                    <div className="mb-6 grid grid-cols-1 gap-4 sm:grid-cols-2 xl:max-w-3xl">
+                        <FilterFieldCard
+                            label="Contact Type"
+                            description="Filter the directory by the type of record you want to review."
+                        >
+                            <div className="flex flex-wrap gap-3">
                                 <Radio
                                     id="search_all"
                                     value="0"
@@ -104,7 +108,6 @@ export default function ContactIndex() {
                                     label="All"
                                     name="search_filter"
                                 />
-
                                 <Radio
                                     id="search_contact"
                                     value="1"
@@ -113,7 +116,6 @@ export default function ContactIndex() {
                                     label="Contact"
                                     name="search_filter"
                                 />
-
                                 <Radio
                                     id="search_supplier"
                                     value="2"
@@ -122,7 +124,6 @@ export default function ContactIndex() {
                                     label="Supplier"
                                     name="search_filter"
                                 />
-
                                 <Radio
                                     id="search_user"
                                     value="3"
@@ -131,9 +132,11 @@ export default function ContactIndex() {
                                     label="User"
                                     name="search_filter"
                                 />
-
                             </div>
-                        </div>
+                        </FilterFieldCard>
+                    </div>
+
+                    <div className="max-w-full overflow-x-auto custom-scrollbar">
                         <div className="min-w-[1000px] xl:min-w-full px-2">
                             {!isLoading && contactData ? (
                                 <DataTable

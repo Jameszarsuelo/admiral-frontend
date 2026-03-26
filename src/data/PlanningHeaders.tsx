@@ -14,7 +14,7 @@ export const getPlanningHeaders = (
     {
         accessorKey: "forecast_horizon",
         accessorFn: (row) => row?.forecast_horizon,
-        header: () => <div className="ml-4">Forecast Horizon</div>,
+        header: "Forecast Horizon",
         cell: ({ row }) => (
             <div className="capitalize dark:text-white ml-4">
                 {row.getValue("forecast_horizon")}
@@ -24,7 +24,7 @@ export const getPlanningHeaders = (
     {
         accessorKey: "start_time",
         accessorFn: (row) => row?.start_time,
-        header: () => <div className="ml-4">Start Time</div>,
+        header: "Start Time",
         cell: ({ row }) => (
             <div className="capitalize dark:text-white ml-4">
                 {row.getValue("start_time")}
@@ -34,7 +34,7 @@ export const getPlanningHeaders = (
     {
         accessorKey: "end_time",
         accessorFn: (row) => row?.end_time,
-        header: () => <div className="ml-4">End Time</div>,
+        header: "End Time",
         cell: ({ row }) => (
             <div className="capitalize dark:text-white ml-4">
                 {row.getValue("end_time")}
@@ -44,7 +44,7 @@ export const getPlanningHeaders = (
     {
         accessorKey: "work_saturday",
         accessorFn: (row) => row?.work_saturday ? "Yes" : "No",
-        header: () => <div className="ml-4">Work on Saturday</div>,
+        header: "Work on Saturday",
         cell: ({ row }) => (
             <div className="capitalize dark:text-white ml-4">
                 {row.getValue("work_saturday")}
@@ -54,7 +54,7 @@ export const getPlanningHeaders = (
     {
         accessorKey: "work_sunday",
         accessorFn: (row) => row?.work_sunday ? "Yes" : "No",
-        header: () => <div className="ml-4">Work on Sunday</div>,
+        header: "Work on Sunday",
         cell: ({ row }) => (
             <div className="capitalize dark:text-white ml-4">
                 {row.getValue("work_sunday")}
@@ -64,7 +64,7 @@ export const getPlanningHeaders = (
     {
         accessorKey: "active_hour",
         accessorFn: (row) => row?.active_hour,
-        header: () => <div className="ml-4">Processing Hours Per Day</div>,
+        header: "Processing Hours Per Day",
         cell: ({ row }) => (
             <div className="capitalize dark:text-white ml-4">
                 {row.getValue("active_hour")}
@@ -94,7 +94,8 @@ export const getPlanningHeaders = (
     },
     {
         id: "actions",
-        header: () => <div>Actions</div>,
+        header: "Actions",
+        enableSorting: false,
         cell: ({ row }) => {
             const planningData = row.original;
 

@@ -23,6 +23,21 @@ export async function fetchBpcSupplierSkills(bpcId?: number): Promise<IBpcSuppli
     }
 }
 
+export async function exportBpcSupplierSkillsCsv(bpcId?: number): Promise<Blob> {
+    try {
+        const response = await api.get(`/bpc/supplier-skills/export`, {
+            params: bpcId ? { bpc_id: bpcId } : undefined,
+            responseType: "blob",
+        });
+        return response.data;
+    } catch (error) {
+        if (error instanceof AxiosError && error.response?.data) {
+            throw error.response.data;
+        }
+        throw error;
+    }
+}
+
 export async function upsertMyBpcSupplierSkills(
     payload: IBpcSupplierSkillUpsert,
 ): Promise<{ message: string }> {
@@ -30,7 +45,14 @@ export async function upsertMyBpcSupplierSkills(
 }
 
 export async function upsertBpcSupplierSkills(
-    payload: { skills: { supplier_id: number; skill: number }[] },
+    payload: {
+        skills: {
+            supplier_id: number;
+            skill: number;
+            trained?: boolean;
+            paused?: boolean;
+        }[];
+    },
     bpcId?: number,
 ) {
     try {

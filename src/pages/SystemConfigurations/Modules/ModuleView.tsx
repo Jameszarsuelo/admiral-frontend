@@ -66,6 +66,7 @@ export default function ModuleView() {
         {
             id: "actions",
             header: "Actions",
+            enableSorting: false,
             cell: ({ row }) => {
                 const item = row.original as IModuleBase;
                 return (

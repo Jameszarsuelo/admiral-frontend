@@ -10,9 +10,12 @@ export interface OverviewQueuedRow {
     import_date: string;
     department: string;
     supplier: string;
-    work_type: string;
     bdx_type: string;
     bordereau_name: string;
+    activity_qty: number;
+    activity_outstanding: number;
+    activity_with_query: number;
+    activity_percent: number;
     bordereau_status_id?: number;
     bordereau_status: string;
     is_paused?: boolean;
@@ -23,6 +26,8 @@ export interface OverviewQueuedRow {
 export function getOverviewQueuedColumns(options: {
     onProcessNext: (bordereauId: number) => void;
     processNextPendingBordereauId?: number | null;
+    onProcessNow: (bordereauId: number) => void;
+    processNowPendingBordereauId?: number | null;
     onTogglePause: (bordereauId: number, nextPaused: boolean) => void;
     pausePendingBordereauId?: number | null;
     onExport: (bordereauId: number) => void;
@@ -41,6 +46,13 @@ export function getOverviewQueuedColumns(options: {
         ),
     },
     {
+        accessorKey: "upload_batch_number",
+        header: "Batch",
+        cell: ({ row }) => (
+            <div>{String(row.getValue("upload_batch_number") ?? "-")}</div>
+        ),
+    },
+    {
         accessorKey: "department",
         header: "Department",
         cell: ({ row }) => (
@@ -53,16 +65,11 @@ export function getOverviewQueuedColumns(options: {
         cell: ({ row }) => <div>{String(row.getValue("supplier") ?? "-")}</div>,
     },
     {
-        accessorKey: "work_type",
-        header: "Work Type",
-        cell: ({ row }) => (
-            <div>{String(row.getValue("work_type") ?? "-")}</div>
-        ),
-    },
-    {
         accessorKey: "bdx_type",
         header: "BDX Type",
-        cell: ({ row }) => <div>{String(row.getValue("bdx_type") ?? "-")}</div>,
+        cell: ({ row }) => (
+            <div>{String(row.getValue("bdx_type") ?? "-")}</div>
+        ),
     },
     {
         accessorKey: "bordereau_name",
@@ -70,6 +77,38 @@ export function getOverviewQueuedColumns(options: {
         cell: ({ row }) => (
             <div>{String(row.getValue("bordereau_name") ?? "-")}</div>
         ),
+    },
+    {
+        accessorKey: "activity_qty",
+        header: "Activity Qty",
+        cell: ({ row }) => (
+            <div>{String(row.getValue("activity_qty") ?? 0)}</div>
+        ),
+    },
+    {
+        accessorKey: "activity_outstanding",
+        header: "Activity Outstanding",
+        cell: ({ row }) => (
+            <div>{String(row.getValue("activity_outstanding") ?? 0)}</div>
+        ),
+    },
+    {
+        accessorKey: "activity_with_query",
+        header: "Activity with Query",
+        cell: ({ row }) => (
+            <div>{String(row.getValue("activity_with_query") ?? 0)}</div>
+        ),
+    },
+    {
+        accessorKey: "activity_percent",
+        header: "Activity %",
+        cell: ({ row }) => {
+            const value = Number(row.getValue("activity_percent") ?? 0);
+
+            return (
+                <div>{Number.isFinite(value) ? `${value.toFixed(1)}%` : "-"}</div>
+            );
+        },
     },
     {
         accessorKey: "bordereau_status",
@@ -90,6 +129,8 @@ export function getOverviewQueuedColumns(options: {
             const deletePending = options.deletePendingBordereauId === bordereauId;
             const abortPending = options.abortPendingBordereauId === bordereauId;
             const exportPending = options.exportPendingBordereauId === bordereauId;
+            const processNowPending =
+                options.processNowPendingBordereauId === bordereauId;
 
             return (
                 <div className="flex gap-1">
@@ -104,6 +145,7 @@ export function getOverviewQueuedColumns(options: {
                                 uploadBatchNumber != null
                                     ? `/overview/queue-batch/${uploadBatchNumber}`
                                     : `/bordereau-detail/view/${bordereauId}`;
+
                             window.open(
                                 targetUrl,
                                 "_blank",
@@ -163,6 +205,14 @@ export function getOverviewQueuedColumns(options: {
                         }
                     >
                         {row.original.is_paused ? "Unpause" : "Pause"}
+                    </Button>
+                    <Button
+                        variant="warning"
+                        size="xs"
+                        onClick={() => options.onProcessNow(bordereauId)}
+                        disabled={row.original.is_completed || processNowPending}
+                    >
+                        {processNowPending ? "Processing..." : "Process Now"}
                     </Button>
                 </div>
             );

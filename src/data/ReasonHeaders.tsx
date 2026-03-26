@@ -45,7 +45,8 @@ export const getReasonHeaders = (
         },
         {
             id: "actions",
-            header: () => <div>Actions</div>,
+            header: "Actions",
+            enableSorting: false,
             cell: ({ row }) => {
                 const reasonData = row.original;
 

@@ -368,7 +368,8 @@ function getTableColumns(opts: TableColsOpts) {
         { accessorKey: "code", header: "Code" },
         {
             id: "actions",
-            header: "",
+            header: "Actions",
+            enableSorting: false,
             cell: (info) => {
                 const idx = info.row.index;
                 return (

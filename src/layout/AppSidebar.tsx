@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import { Link, useLocation } from "react-router";
+import { Link, useLocation, useNavigate } from "react-router";
 import logo from "../../public/images/auth/admiral-logo.png";
 
 import {
@@ -18,6 +18,7 @@ import {
     ClipboardDocumentIcon,
     Cog8ToothIcon,
     ComputerDesktopIcon,
+    ClockIcon,
     EnvelopeIcon,
     ExclamationTriangleIcon,
     ListBulletIcon,
@@ -56,11 +57,14 @@ const iconMap: Record<string, React.ReactNode> = {
     bordereau_processing_queue: <QuestionMarkCircleIcon />,
     bpc_supplier_skills: <QuestionMarkCircleIcon />,
     workplace: <ComputerDesktopIcon />,
+    overview: <ListBulletIcon />,
+    navigation_audit_logs: <ClockIcon />,
 };
 
 const AppSidebar: React.FC = () => {
     const { isExpanded, isMobileOpen, isHovered, setIsHovered } = useSidebar();
     const location = useLocation();
+    const navigate = useNavigate();
     const { modules, loading } = usePermissions();
 
     const [openSubmenu, setOpenSubmenu] = useState<{
@@ -72,11 +76,109 @@ const AppSidebar: React.FC = () => {
     );
     const subMenuRefs = useRef<Record<string, HTMLDivElement | null>>({});
 
-    // const isActive = (path: string) => location.pathname === path;
+    // Treat a route as active if the current pathname matches it exactly
+    // or is a nested path under it (e.g. "/bordereau-detail/view/123" should
+    // keep the "/bordereau-detail" menu item highlighted).
+    // Special cases:
+    // - The dashboard root path "/" should only be active on the exact
+    //   homepage, not for every route.
+    // - "Activity Query Management" currently has a path alias mismatch
+    //   between frontend routes and backend module config, so we treat
+    //   "/activity-query-management" and "/bordereau-query-management"
+    //   as equivalent for active-state purposes.
     const isActive = useCallback(
-        (path: string) => location.pathname === path,
+        (path: string) => {
+            if (!path) return false;
+
+            const current = location.pathname.replace(/\/+$/, "") || "/";
+            const target = path.replace(/\/+$/, "") || "/";
+
+            // Root/dashboard: only active on exact match
+            if (target === "/") {
+                return current === "/";
+            }
+
+            const isDirectMatch =
+                current === target || current.startsWith(`${target}/`);
+            if (isDirectMatch) return true;
+
+            // Handle known path aliases
+            const aliasMap: Record<string, string[]> = {
+                "/activity-query-management": ["/bordereau-query-management"],
+                "/bordereau-query-management": ["/activity-query-management"],
+                "/navigation-audit-logs": [
+                    "/system-configurations/navigation-audit-logs",
+                ],
+                "/system-configurations/navigation-audit-logs": [
+                    "/navigation-audit-logs",
+                ],
+            };
+
+            const aliases = aliasMap[target];
+            if (!aliases) return false;
+
+            return aliases.some(
+                (alias) => current === alias || current.startsWith(`${alias}/`),
+            );
+        },
         [location.pathname],
     );
+
+    const handleNavigationClick = useCallback(
+        (
+            event: React.MouseEvent<HTMLAnchorElement>,
+            _page: string,
+            uri: string,
+        ) => {
+            event.preventDefault();
+
+            navigate(uri);
+        },
+        [navigate],
+    );
+
+    const currentPath = location.pathname.replace(/\/+$/, "") || "/";
+
+    const isNavItemActive = (nav: NavItem): boolean => {
+        const path = nav.path ?? "";
+        if (isActive(path)) return true;
+
+        switch (nav.name) {
+            case "Overview":
+                return currentPath.startsWith("/overview");
+            case "Activity Query Management":
+                return (
+                    currentPath.startsWith("/activity-query-management") ||
+                    currentPath.startsWith("/bordereau-query-management")
+                );
+            default:
+                return false;
+        }
+    };
+
+    const isSubItemActive = (subItem: {
+        name: string;
+        path: string;
+    }): boolean => {
+        if (isActive(subItem.path)) return true;
+
+        switch (subItem.name) {
+            case "Work Types":
+                return (
+                    currentPath.startsWith("/work-types") ||
+                    currentPath.startsWith("/system-configurations/work-types")
+                );
+            case "Navigation Audit Logs":
+                return (
+                    currentPath.startsWith("/navigation-audit-logs") ||
+                    currentPath.startsWith(
+                        "/system-configurations/navigation-audit-logs",
+                    )
+                );
+            default:
+                return false;
+        }
+    };
 
     const mainModules = modules.filter((m) => m.parent === null);
     const subModules = modules.filter((m) => m.parent !== null);
@@ -109,10 +211,11 @@ const AppSidebar: React.FC = () => {
             i.name === "Supplier Directory" ||
             i.name === "Exceptions" ||
             i.name === "Upload Exceptions" ||
-            i.name === "BPC Supplier Skills" || 
+            i.name === "BPC Supplier Skills" ||
             i.name === "Reports" ||
             i.name === "Document Management" ||
-            i.name === "Activity Query Management"
+            i.name === "Activity Query Management" ||
+            i.name === "Navigation Audit Logs",
     );
 
     const configItems = dynamicNavItems.filter(
@@ -121,7 +224,7 @@ const AppSidebar: React.FC = () => {
     );
     // const othersItems = dynamicNavItems.filter(
     //     (i) =>
-            
+
     // );
 
     useEffect(() => {
@@ -210,15 +313,22 @@ const AppSidebar: React.FC = () => {
                         nav.path && (
                             <Link
                                 to={nav.path}
+                                onClick={(event) =>
+                                    handleNavigationClick(
+                                        event,
+                                        nav.name,
+                                        nav.path!,
+                                    )
+                                }
                                 className={`menu-item group ${
-                                    isActive(nav.path)
+                                    isNavItemActive(nav)
                                         ? "menu-item-active"
                                         : "menu-item-inactive"
                                 }`}
                             >
                                 <span
                                     className={`menu-item-icon-size ${
-                                        isActive(nav.path)
+                                        isNavItemActive(nav)
                                             ? "menu-item-icon-active"
                                             : "menu-item-icon-inactive"
                                     }`}
@@ -259,8 +369,15 @@ const AppSidebar: React.FC = () => {
                                         <li key={subItem.name}>
                                             <Link
                                                 to={subItem.path}
+                                                onClick={(event) =>
+                                                    handleNavigationClick(
+                                                        event,
+                                                        subItem.name,
+                                                        subItem.path,
+                                                    )
+                                                }
                                                 className={`menu-dropdown-item ${
-                                                    isActive(subItem.path)
+                                                    isSubItemActive(subItem)
                                                         ? "menu-dropdown-item-active"
                                                         : "menu-dropdown-item-inactive"
                                                 }`}
@@ -314,8 +431,8 @@ const AppSidebar: React.FC = () => {
             isExpanded || isMobileOpen
                 ? "w-[290px]"
                 : isHovered
-                ? "w-[290px]"
-                : "w-[90px]"
+                  ? "w-[290px]"
+                  : "w-[90px]"
         }
         ${isMobileOpen ? "translate-x-0" : "-translate-x-full"}
         lg:translate-x-0`}
@@ -329,7 +446,12 @@ const AppSidebar: React.FC = () => {
                         : "justify-start"
                 }`}
             >
-                <Link to="/">
+                <Link
+                    to="/"
+                    onClick={(event) =>
+                        handleNavigationClick(event, "Dashboard", "/")
+                    }
+                >
                     {isExpanded || isHovered || isMobileOpen ? (
                         <>
                             <div className="dark:hidden flex items-center gap-3">

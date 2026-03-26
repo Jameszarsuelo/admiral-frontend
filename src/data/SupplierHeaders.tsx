@@ -11,19 +11,9 @@ export const getSupplierHeaders = (
     handleContactModal: (id: number) => void
 ): ColumnDef<ISupplierSchema>[] => [
     {
-        accessorKey: "id",
-        accessorFn: (row) => row.id,
-        header: () => <div className="ml-4">ID</div>,
-        cell: ({ row }) => (
-            <div className="capitalize dark:text-white ml-4">
-                {row.getValue("id")}
-            </div>
-        ),
-    },
-    {
         accessorKey: "organisation",
         accessorFn: (row) => row.name,
-        header: () => <div className="ml-4">Supplier</div>,
+        header: "Supplier",
         cell: ({ row }) => (
             <div className="capitalize dark:text-white ml-4">
                 {row.getValue("organisation")}
@@ -34,7 +24,7 @@ export const getSupplierHeaders = (
         accessorKey: "primary_contact_name",
         accessorFn: (row) =>
             row.contact?.firstname + " " + row.contact?.lastname,
-        header: () => <div className="ml-4">Primary Contact Name</div>,
+        header: "Primary Contact Name",
         cell: ({ row }) => (
             <div className="capitalize dark:text-white ml-4">
                 {row.getValue("primary_contact_name")}
@@ -44,7 +34,7 @@ export const getSupplierHeaders = (
     {
         accessorKey: "primary_contact_email",
         accessorFn: (row) => row.contact?.email,
-        header: () => <div className="ml-4">Primary Contact Email</div>,
+        header: "Primary Contact Email",
         cell: ({ row }) => (
             <div className=" dark:text-white ml-4">
                 {row.getValue("primary_contact_email")}
@@ -54,7 +44,7 @@ export const getSupplierHeaders = (
     {
         accessorKey: "primary_contact_number",
         accessorFn: (row) => row.contact?.mobile,
-        header: () => <div className="ml-4">Primary Contact Number</div>,
+        header: "Primary Contact Number",
         cell: ({ row }) => (
             <div className="capitalize dark:text-white ml-4">
                 {row.getValue("primary_contact_number")}

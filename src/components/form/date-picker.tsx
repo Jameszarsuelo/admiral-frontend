@@ -11,6 +11,8 @@ type PropsType = {
     mode?: "single" | "multiple" | "range" | "time";
     onChange?: Hook | Hook[];
     defaultDate?: DateOption;
+    showTimeSelect?: boolean;
+    dateFormat?: string;
     label?: string;
     placeholder?: string;
     // Choose where the calendar appears relative to the input
@@ -23,6 +25,8 @@ export default function DatePicker({
     onChange,
     label,
     defaultDate,
+    showTimeSelect,
+    dateFormat,
     placeholder,
     placement = "bottom",
 }: PropsType) {
@@ -36,7 +40,8 @@ export default function DatePicker({
             // (above | below | auto); using above when placement is top
             position: placement === "top" ? "above" : "auto",
             monthSelectorType: "static",
-            dateFormat: "Y-m-d",
+            enableTime: Boolean(showTimeSelect),
+            dateFormat: dateFormat || (showTimeSelect ? "Y-m-d H:i" : "Y-m-d"),
             defaultDate,
             onChange,
         });
@@ -46,7 +51,7 @@ export default function DatePicker({
                 flatPickr.destroy();
             }
         };
-    }, [mode, onChange, id, defaultDate, placement]);
+    }, [mode, onChange, id, defaultDate, placement, showTimeSelect, dateFormat]);
 
     return (
         <div>

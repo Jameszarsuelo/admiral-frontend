@@ -35,7 +35,7 @@ const RadioSm: React.FC<RadioProps> = ({
         />
         {/* Styled Radio Circle */}
         <span
-          className={`mr-2 flex h-4 w-4 items-center justify-center rounded-full border ${
+          className={`mr-2 flex h-4 w-4 items-center justify-center rounded-full border-[1.25px] ${
             checked
               ? "border-brand-500 bg-brand-500"
               : "bg-transparent border-gray-300 dark:border-gray-700"
@@ -43,9 +43,7 @@ const RadioSm: React.FC<RadioProps> = ({
         >
           {/* Inner Dot */}
           <span
-            className={`h-1.5 w-1.5 rounded-full ${
-              checked ? "bg-white" : "bg-white dark:bg-[#1e2636]"
-            }`}
+            className={`h-1.5 w-1.5 rounded-full bg-white ${checked ? "block" : "hidden"}`}
           ></span>
         </span>
       </span>

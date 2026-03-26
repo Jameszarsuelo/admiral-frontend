@@ -2,7 +2,9 @@ import { useEffect, useState, useRef } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { fetchBpcTimerToday } from "@/database/bpc_api";
 import { echo } from "@/lib/echo";
+import { IBPCStatus } from "@/types/BPCStatusSchema";
 import { TimerSegmentToday } from "@/types/TimerSegment";
+import { getBpcTimerStatusColumn } from "@/data/bpcStatusUtils";
 
 // type TimerRow = {
 //     id: number;
@@ -16,6 +18,7 @@ import { TimerSegmentToday } from "@/types/TimerSegment";
 export default function useBpcTimer(
     bpcId?: number | null,
     selectedStatusId?: string | number | null,
+    statusList?: IBPCStatus[] | null,
 ) {
     const { data: timerData, refetch } = useQuery({
         queryKey: ["bpc-timer", bpcId],
@@ -82,24 +85,8 @@ export default function useBpcTimer(
           Number(daily.total_lunch_seconds || 0)
         : 0;
 
-    const statusCol = (id: number | null | undefined) => {
-        switch (id) {
-            case 2:
-                return "total_ready_seconds";
-            case 3:
-                return "total_processing_seconds";
-            case 4:
-                return "total_wrapup_seconds";
-            case 5:
-                return "total_break_seconds";
-            case 6:
-                return "total_training_seconds";
-            case 7:
-                return "total_lunch_seconds";
-            default:
-                return null;
-        }
-    };
+    const statusCol = (id: number | null | undefined) =>
+        getBpcTimerStatusColumn(id, statusList);
 
     // track previous selected status to allow UI-only resets on specific transitions
     const lastSelectedRef = useRef<number | null>(null);

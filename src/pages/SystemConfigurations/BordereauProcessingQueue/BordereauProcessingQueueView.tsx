@@ -80,6 +80,7 @@ export default function BordereauProcessingQueueView() {
         {
             id: "actions",
             header: "Actions",
+            enableSorting: false,
             cell: ({ row }) => {
                 const item = row.original as IBordereauProcessingQueueBase;
                 return (

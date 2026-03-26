@@ -313,9 +313,10 @@ export default function OutstandingQueriesIndex() {
                         <Can permission="bordereau_detail.view">
                             <Button
                                 size="xs"
-                                onClick={() =>
-                                    navigate(`/bordereau-detail/view/${row.original.id}`)
-                                }
+                                onClick={() => {
+                                    const targetUrl = `/bordereau-detail/view/${row.original.id}`;
+                                    navigate(targetUrl);
+                                }}
                             >
                                 View
                             </Button>
