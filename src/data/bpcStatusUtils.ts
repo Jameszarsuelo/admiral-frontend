@@ -11,27 +11,21 @@ export function getBpcSelectableStatusOptions(
     currentStatusId: string | number | null | undefined,
 ) {
     const currentId = Number(currentStatusId);
-    const selectableStatusIds = new Set(
-        statuses
-            .filter(
-                (status) =>
-                    typeof status.id === "number" &&
-                    isUnavailableStatus(status) &&
-                    status.id !== 3 &&
-                    status.id !== 4,
-            )
-            .map((status) => Number(status.id)),
-    );
-    const includeStatus2 = selectableStatusIds.has(currentId);
+    const disableReady = [2, 3, 4].includes(currentId);
 
     return statuses
         .filter((status) => {
             if (typeof status.id !== "number") return false;
-            if (selectableStatusIds.has(status.id)) return true;
-            if (status.id === 2 && includeStatus2) return true;
-            return false;
+
+            if (status.id === 2) return true;
+
+            return isUnavailableStatus(status) && status.id !== 3 && status.id !== 4;
         })
-        .map((status) => ({ value: String(status.id), label: status.status }));
+        .map((status) => ({
+            value: String(status.id),
+            label: status.status,
+            disabled: status.id === 2 ? disableReady : false,
+        }));
 }
 
 export function getBpcStatusColorHex(status?: StatusLike | null) {

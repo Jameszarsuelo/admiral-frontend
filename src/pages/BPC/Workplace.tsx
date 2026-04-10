@@ -30,6 +30,9 @@ import Button from "@/components/ui/button/Button";
 import BordereauDetailsViewBPC from "../BordereauDetail/BordereauDetailsViewBPC";
 import CommentSection from "@/components/bordereau/CommentSection";
 
+const READY_VISIBLE_STATUS_IDS = new Set([2, 3, 4, 5, 6, 7, 8, 9, 10, 11]);
+const READY_DISABLED_STATUS_IDS = new Set([2, 3, 4]);
+
 export default function Workplace() {
     const { user, logout } = useAuth();
 
@@ -51,13 +54,34 @@ export default function Workplace() {
     const [selectedStatusId, setSelectedStatusId] = useState<string>("");
     const [isUpdatingStatus, setIsUpdatingStatus] = useState(false);
 
+    const currentStatusIdNumber = Number(selectedStatusId);
+
     const statusOptions = useMemo(
-        () =>
-            getBpcSelectableStatusOptions(
+        () => {
+            const baseOptions = getBpcSelectableStatusOptions(
                 (bpcStatusData || []) as IBPCStatus[],
                 selectedStatusId,
-            ),
-        [bpcStatusData, selectedStatusId],
+            ).filter((option) => option.value !== "2");
+
+            if (!READY_VISIBLE_STATUS_IDS.has(currentStatusIdNumber)) {
+                return baseOptions;
+            }
+
+            const readyStatus = (bpcStatusData || [])
+                .filter((status) => status.id === 2)
+                .map((status) => ({
+                    value: String(status.id),
+                    label: status.status,
+                    disabled: READY_DISABLED_STATUS_IDS.has(currentStatusIdNumber),
+                }));
+
+            return [...readyStatus, ...baseOptions];
+        },
+        [
+            bpcStatusData,
+            currentStatusIdNumber,
+            selectedStatusId,
+        ],
     );
 
     const status2Label = useMemo(() => {
@@ -337,10 +361,9 @@ export default function Workplace() {
     const isRefetchingBordereau =
         useIsFetching({ queryKey: ["current-bordereau", bpcUser?.id] }) > 0;
 
-    const { currentFmt, totalFmt } = useBpcTimer(
+    const { currentFmt, availableFmt, unavailableFmt, totalFmt } = useBpcTimer(
         bpcUser?.id,
         selectedStatusId,
-        (bpcStatusData || []) as IBPCStatus[],
     );
 
     // fetch outcomes for dropdown
@@ -569,25 +592,25 @@ export default function Workplace() {
                 <div className="col-span-12 xl:col-span-6 flex flex-col h-full">
                     <div className="grid grid-cols-1 gap-4 sm:grid-cols-1 md:gap-6 flex-1">
                         <div className="rounded-2xl overflow-hidden shadow-md h-full flex flex-col">
-                            <div className="text-gray-900 dark:text-white px-6 py-6 sm:px-8 sm:py-8">
-                                <div className="flex items-start justify-between gap-4">
-                                    <div className="flex items-start gap-4">
-                                        <div className="w-14 h-14 rounded-lg bg-black/20 flex items-center justify-center">
-                                            <User2Icon className="w-7 h-7 text-white" />
+                            <div className="text-gray-900 dark:text-white px-5 py-5 sm:px-8 sm:py-8">
+                                <div className="flex flex-col gap-5 sm:flex-row sm:items-start sm:justify-between sm:gap-4">
+                                    <div className="flex items-start gap-4 min-w-0">
+                                        <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-lg bg-black/20 flex items-center justify-center shrink-0">
+                                            <User2Icon className="w-6 h-6 sm:w-7 sm:h-7 text-white" />
                                         </div>
-                                        <div>
+                                        <div className="min-w-0">
                                             <div className="text-sm opacity-90 dark:text-white">
                                                 Bordereau Payment Clerk
                                                 Information
                                             </div>
-                                            <div className="mt-1 text-4xl font-extrabold tracking-tight dark:text-white">
+                                            <div className="mt-1 text-2xl sm:text-3xl xl:text-4xl font-extrabold tracking-tight dark:text-white wrap-break-word">
                                                 {user?.firstname}{" "}
                                                 {user?.lastname}
                                             </div>
                                         </div>
                                     </div>
 
-                                    <div className="text-right">
+                                    <div className="w-full text-left sm:w-auto sm:text-right">
                                         <div className="text-xs opacity-90 dark:text-white">
                                             Email Address
                                         </div>
@@ -628,7 +651,7 @@ export default function Workplace() {
 
                 {/* Add h-full and flex-col to both side columns for equal height */}
                 <div className="col-span-12 xl:col-span-3 flex flex-col h-full">
-                    <div className="sticky top-20 space-y-4 flex-1 flex flex-col">
+                    <div className="space-y-4 flex-1 flex flex-col xl:sticky xl:top-20">
                         <div className="rounded-2xl border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-white/3 sm:p-6 flex-1 flex flex-col">
                             <h3 className="text-lg font-semibold text-gray-800 dark:text-white/90">
                                 Time in Current status
@@ -637,50 +660,83 @@ export default function Workplace() {
                                 Overview of your current bordereau status.
                             </p>
 
-                            <div className="mt-6 flex justify-center flex-1 items-center">
-                                <div className="flex items-center gap-3">
-                                    <div className="flex flex-col items-center">
-                                        <span className="text-4xl font-bold text-gray-800 dark:text-white">
-                                            {currentFmt.hh}
+                            <div className="mt-6 flex flex-col gap-5 flex-1 justify-center">
+                                <div className="flex justify-center">
+                                    <div className="flex items-center gap-3">
+                                        <div className="flex flex-col items-center">
+                                            <span className="text-4xl font-bold text-gray-800 dark:text-white">
+                                                {currentFmt.hh}
+                                            </span>
+                                            <span className="text-xs text-gray-500 dark:text-gray-400">
+                                                Hours
+                                            </span>
+                                        </div>
+                                        <span className="mx-2 text-2xl font-semibold text-gray-600 dark:text-gray-300">
+                                            :
                                         </span>
-                                        <span className="text-xs text-gray-500 dark:text-gray-400">
-                                            Hours
+                                        <div className="flex flex-col items-center">
+                                            <span className="text-4xl font-bold text-gray-800 dark:text-white">
+                                                {currentFmt.mm}
+                                            </span>
+                                            <span className="text-xs text-gray-500 dark:text-gray-400">
+                                                Minutes
+                                            </span>
+                                        </div>
+                                        <span className="mx-2 text-2xl font-semibold text-gray-600 dark:text-gray-300">
+                                            :
                                         </span>
-                                    </div>
-                                    <span className="mx-2 text-2xl font-semibold text-gray-600 dark:text-gray-300">
-                                        :
-                                    </span>
-                                    <div className="flex flex-col items-center">
-                                        <span className="text-4xl font-bold text-gray-800 dark:text-white">
-                                            {currentFmt.mm}
-                                        </span>
-                                        <span className="text-xs text-gray-500 dark:text-gray-400">
-                                            Minutes
-                                        </span>
-                                    </div>
-                                    <span className="mx-2 text-2xl font-semibold text-gray-600 dark:text-gray-300">
-                                        :
-                                    </span>
-                                    <div className="flex flex-col items-center">
-                                        <span className="text-4xl font-bold text-gray-800 dark:text-white">
-                                            {currentFmt.ss}
-                                        </span>
-                                        <span className="text-xs text-gray-500 dark:text-gray-400">
-                                            Seconds
-                                        </span>
+                                        <div className="flex flex-col items-center">
+                                            <span className="text-4xl font-bold text-gray-800 dark:text-white">
+                                                {currentFmt.ss}
+                                            </span>
+                                            <span className="text-xs text-gray-500 dark:text-gray-400">
+                                                Seconds
+                                            </span>
+                                        </div>
                                     </div>
                                 </div>
-                            </div>
-                            <div className="mt-5 text-center text-sm text-gray-600 dark:text-gray-300">
-                                Total today: {totalFmt.hh}:{totalFmt.mm}:
-                                {totalFmt.ss}
+
+                                <div className="text-center text-sm text-gray-600 dark:text-gray-300">
+                                    Non-cumulative time in this status
+                                </div>
+
+                                <div className="grid grid-cols-1 gap-3 sm:grid-cols-3 sm:items-stretch">
+                                    <div className="flex w-full min-w-0 flex-col items-center justify-center rounded-xl border border-emerald-200 bg-emerald-50 px-3 py-3 text-center dark:border-emerald-900/60 dark:bg-emerald-950/20 sm:px-4">
+                                        <div className="text-[11px] sm:text-xs font-medium text-emerald-800 dark:text-emerald-200 whitespace-nowrap leading-none">
+                                            Available
+                                        </div>
+                                        <div className="mt-1 text-xs sm:text-sm font-medium text-emerald-950 dark:text-emerald-100 whitespace-nowrap leading-none tabular-nums">
+                                            {availableFmt.hh}:{availableFmt.mm}:
+                                            {availableFmt.ss}
+                                        </div>
+                                    </div>
+
+                                    <div className="flex w-full min-w-0 flex-col items-center justify-center rounded-xl border border-rose-200 bg-rose-50 px-3 py-3 text-center dark:border-rose-900/60 dark:bg-rose-950/20 sm:px-4">
+                                        <div className="text-[11px] sm:text-xs font-medium text-rose-800 dark:text-rose-200 whitespace-nowrap leading-none">
+                                            Unavailable
+                                        </div>
+                                        <div className="mt-1 text-xs sm:text-sm font-medium text-rose-950 dark:text-rose-100 whitespace-nowrap leading-none tabular-nums">
+                                            {unavailableFmt.hh}:{unavailableFmt.mm}:
+                                            {unavailableFmt.ss}
+                                        </div>
+                                    </div>
+
+                                    <div className="flex w-full min-w-0 flex-col items-center justify-center rounded-xl border border-gray-200 bg-gray-50 px-3 py-3 text-center dark:border-gray-800 dark:bg-gray-900/40 sm:px-4">
+                                        <div className="text-[11px] sm:text-xs font-medium text-gray-700 dark:text-gray-300 whitespace-nowrap leading-none">
+                                            Total
+                                        </div>
+                                        <div className="mt-1 text-xs sm:text-sm font-medium text-gray-950 dark:text-white whitespace-nowrap leading-none tabular-nums">
+                                            {totalFmt.hh}:{totalFmt.mm}:{totalFmt.ss}
+                                        </div>
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     </div>
                 </div>
 
                 <div className="col-span-12 xl:col-span-3 flex flex-col h-full">
-                    <div className="sticky top-20 space-y-4 flex-1 flex flex-col">
+                    <div className="space-y-4 flex-1 flex flex-col xl:sticky xl:top-20">
                         <div className="rounded-2xl border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-white/3 sm:p-6 flex-1 flex flex-col">
                             <h3 className="text-lg font-semibold text-gray-800 dark:text-white/90">
                                 Current Status
@@ -690,7 +746,7 @@ export default function Workplace() {
                             </p>
 
                             <div className="mt-6">
-                                <div className="flex items-center gap-3">
+                                <div className="flex flex-wrap items-center gap-3">
                                     <span
                                         className={`inline-block w-3 h-3 rounded-full ${
                                             selectedStatus && selectedStatus.wfm
@@ -714,12 +770,12 @@ export default function Workplace() {
                                 </div>
                             </div>
 
-                            <div className="flex items-center gap-2 mt-4">
+                            <div className="flex flex-col gap-2 mt-4 sm:flex-row sm:items-center">
                                 <div
                                     className={
                                         isUpdatingStatus
-                                            ? "w-48 opacity-60 pointer-events-none"
-                                            : "w-48"
+                                            ? "w-full sm:w-48 opacity-60 pointer-events-none"
+                                            : "w-full sm:w-48"
                                     }
                                 >
                                     <Select
@@ -1267,23 +1323,6 @@ export default function Workplace() {
                                         disabled={isLoggingOut}
                                         onClick={async () => {
                                             setIsLoggingOut(true);
-                                            // keep the modal open briefly while spinner shows
-                                            try {
-                                                if (bpcUser?.id) {
-                                                    await changeStatusMutation.mutateAsync(
-                                                        {
-                                                            bpcId: bpcUser.id,
-                                                            statusId: 1,
-                                                        },
-                                                    );
-                                                }
-                                            } catch (err) {
-                                                console.error(
-                                                    "Failed to set status to 1",
-                                                    err,
-                                                );
-                                            }
-
                                             try {
                                                 await logout();
                                             } catch (err) {

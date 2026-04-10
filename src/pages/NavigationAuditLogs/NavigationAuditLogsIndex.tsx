@@ -1,6 +1,7 @@
 import PageBreadcrumb from "@/components/common/PageBreadCrumb";
 import FilterFieldCard from "@/components/common/FilterFieldCard";
 import Select from "@/components/form/Select";
+import DatePicker from "@/components/form/date-picker";
 import { DataTable } from "@/components/ui/DataTable";
 import { useQuery } from "@tanstack/react-query";
 import { useEffect, useMemo, useState } from "react";
@@ -14,7 +15,7 @@ import {
 } from "@/data/NavigationAuditLogsHeaders";
 
 export default function NavigationAuditLogsIndex() {
-    const DEFAULT_PER_PAGE = 10;
+    const DEFAULT_PER_PAGE = 100;
     const [pagination, setPagination] = useState<{ page: number; per_page: number }>(
         {
             page: 1,
@@ -26,6 +27,9 @@ export default function NavigationAuditLogsIndex() {
     const [searchApplied, setSearchApplied] = useState<string>("");
     const [allowedFilter, setAllowedFilter] = useState<string>("all");
     const [roleFilter, setRoleFilter] = useState<string>("all");
+    const [userFilter, setUserFilter] = useState<string>("all");
+    const [dateFrom, setDateFrom] = useState<string>("");
+    const [dateTo, setDateTo] = useState<string>("");
 
     useEffect(() => {
         const handle = window.setTimeout(() => {
@@ -38,7 +42,7 @@ export default function NavigationAuditLogsIndex() {
 
     useEffect(() => {
         setPagination((prev) => ({ ...prev, page: 1 }));
-    }, [allowedFilter, roleFilter]);
+    }, [allowedFilter, roleFilter, userFilter, dateFrom, dateTo]);
 
     const { data } = useQuery({
         queryKey: [
@@ -56,6 +60,9 @@ export default function NavigationAuditLogsIndex() {
                 search: searchApplied,
                 allowed: allowedFilter,
                 role: roleFilter,
+                user: userFilter,
+                date_from: dateFrom,
+                date_to: dateTo,
             }),
         refetchInterval: 10_000,
         refetchIntervalInBackground: true,
@@ -77,6 +84,17 @@ export default function NavigationAuditLogsIndex() {
             })),
         ],
         [data?.role_options],
+    );
+
+    const userOptions = useMemo(
+        () => [
+            { value: "all", label: "All users" },
+            ...(data?.user_options ?? []).map((value) => ({
+                value,
+                label: value,
+            })),
+        ],
+        [data?.user_options],
     );
 
     const pageCount = (() => {
@@ -105,7 +123,7 @@ export default function NavigationAuditLogsIndex() {
                     </div>
                 </div>
 
-                <div className="mb-6 grid gap-4 lg:grid-cols-2 xl:grid-cols-3">
+                <div className="mb-6 grid grid-cols-1 gap-4 md:grid-cols-4">
                     <FilterFieldCard
                         label="Allowed"
                         description="Filter by successful or blocked navigation."
@@ -131,6 +149,42 @@ export default function NavigationAuditLogsIndex() {
                             placeholder="Role"
                             options={roleOptions}
                         />
+                    </FilterFieldCard>
+                    <FilterFieldCard
+                        label="User"
+                        description="Filter audit entries by user."
+                    >
+                        <Select
+                            value={userFilter}
+                            onChange={setUserFilter}
+                            placeholder="User"
+                            options={userOptions}
+                        />
+                    </FilterFieldCard>
+                    <FilterFieldCard
+                        label="Date Range"
+                        description="Filter audit entries by created date."
+                    >
+                        <div className="grid grid-cols-1 gap-3">
+                            <DatePicker
+                                id="navigation-audit-log-date-from"
+                                placement="top"
+                                placeholder="Date from"
+                                defaultDate={dateFrom || undefined}
+                                onChange={(_selectedDates, dateStr) => {
+                                    setDateFrom(dateStr ?? "");
+                                }}
+                            />
+                            <DatePicker
+                                id="navigation-audit-log-date-to"
+                                placement="top"
+                                placeholder="Date to"
+                                defaultDate={dateTo || undefined}
+                                onChange={(_selectedDates, dateStr) => {
+                                    setDateTo(dateStr ?? "");
+                                }}
+                            />
+                        </div>
                     </FilterFieldCard>
                 </div>
 

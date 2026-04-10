@@ -14,7 +14,7 @@ export default function OverviewBatchActivitiesIndex() {
     const params = useParams();
     const uploadBatchNumber = Number(params.uploadBatchNumber);
 
-    const DEFAULT_PER_PAGE = 10;
+    const DEFAULT_PER_PAGE = 100;
     const [pagination, setPagination] = useState<{ page: number; per_page: number }>(
         {
             page: 1,

@@ -2,9 +2,7 @@ import { useEffect, useState, useRef } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { fetchBpcTimerToday } from "@/database/bpc_api";
 import { echo } from "@/lib/echo";
-import { IBPCStatus } from "@/types/BPCStatusSchema";
 import { TimerSegmentToday } from "@/types/TimerSegment";
-import { getBpcTimerStatusColumn } from "@/data/bpcStatusUtils";
 
 // type TimerRow = {
 //     id: number;
@@ -18,7 +16,6 @@ import { getBpcTimerStatusColumn } from "@/data/bpcStatusUtils";
 export default function useBpcTimer(
     bpcId?: number | null,
     selectedStatusId?: string | number | null,
-    statusList?: IBPCStatus[] | null,
 ) {
     const { data: timerData, refetch } = useQuery({
         queryKey: ["bpc-timer", bpcId],
@@ -76,6 +73,18 @@ export default function useBpcTimer(
 
     const daily = (timerData as TimerSegmentToday)?.daily ?? null;
 
+    const availableTodaySeconds = daily
+        ? Number(daily.total_ready_seconds || 0) +
+          Number(daily.total_processing_seconds || 0) +
+          Number(daily.total_wrapup_seconds || 0)
+        : 0;
+
+    const unavailableTodaySeconds = daily
+        ? Number(daily.total_break_seconds || 0) +
+          Number(daily.total_training_seconds || 0) +
+          Number(daily.total_lunch_seconds || 0)
+        : 0;
+
     const totalDailySeconds = daily
         ? Number(daily.total_ready_seconds || 0) +
           Number(daily.total_processing_seconds || 0) +
@@ -85,50 +94,16 @@ export default function useBpcTimer(
           Number(daily.total_lunch_seconds || 0)
         : 0;
 
-    const statusCol = (id: number | null | undefined) =>
-        getBpcTimerStatusColumn(id, statusList);
+    const openStatusId = Number(openSegment?.status_id ?? Number.NaN);
+    const openIsAvailable = [2, 3, 4].includes(openStatusId);
+    const openIsRelevant = Boolean(openSegment);
 
-    // track previous selected status to allow UI-only resets on specific transitions
-    const lastSelectedRef = useRef<number | null>(null);
-    const curSelectedId = Number(selectedStatusId ?? NaN);
-    const shouldResetPrevOnTransition =
-        lastSelectedRef.current === 7 && curSelectedId === 2;
-
-    const prevSecondsForSelectedStatus = (() => {
-        const id = curSelectedId;
-        if (Number.isNaN(id) || !daily) return 0;
-
-        // If we're transitioning from lunch (7) to ready/active (2), reset
-        // the accumulated previous-seconds for the selected status in the UI.
-        if (shouldResetPrevOnTransition) return 0;
-
-        // When selected status is one of 2/3/4, aggregate ready + processing + wrapup
-        if (id === 2 || id === 3 || id === 4) {
-            return (
-                Number(daily.total_ready_seconds || 0) +
-                Number(daily.total_processing_seconds || 0) +
-                Number(daily.total_wrapup_seconds || 0)
-            );
-        }
-
-        const col = statusCol(id);
-        if (!col) return 0;
-        return Number(daily[col] || 0);
-    })();
-
-    // update last selected id after render so we can detect transitions
-    useEffect(() => {
-        if (!Number.isNaN(curSelectedId)) lastSelectedRef.current = curSelectedId;
-    }, [curSelectedId]);
-
-    // Determine whether to add the currently-open segment duration.
-    const openIsRelevantForSelected =
-        openSegment &&
-        (Number(selectedStatusId) === 2 || Number(selectedStatusId) === 3 || Number(selectedStatusId) === 4)
-            ? [2, 3, 4].includes(Number(openSegment.status_id))
-            : openSegment && Number(openSegment.status_id) === Number(selectedStatusId);
-
-    const currentStatusSeconds = prevSecondsForSelectedStatus + (openIsRelevantForSelected ? openDurationSeconds : 0);
+    const currentStatusSeconds = openIsRelevant ? openDurationSeconds : 0;
+    const availableStatusSeconds =
+        availableTodaySeconds + (openIsAvailable ? openDurationSeconds : 0);
+    const unavailableStatusSeconds =
+        unavailableTodaySeconds +
+        (openSegment && !openIsAvailable ? openDurationSeconds : 0);
 
     const totalTodaySeconds = totalDailySeconds + openDurationSeconds;
 
@@ -148,10 +123,13 @@ export default function useBpcTimer(
         refetchTimer: refetch,
         openSegment,
         openDurationSeconds,
-        prevSecondsForSelectedStatus,
         currentStatusSeconds,
+        availableStatusSeconds,
+        unavailableStatusSeconds,
         totalTodaySeconds,
         currentFmt: fmt(currentStatusSeconds),
+        availableFmt: fmt(availableStatusSeconds),
+        unavailableFmt: fmt(unavailableStatusSeconds),
         totalFmt: fmt(totalTodaySeconds),
     };
 }

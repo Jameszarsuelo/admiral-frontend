@@ -21,6 +21,7 @@ export interface NavigationAuditLogsResponse {
     page?: number;
     per_page?: number;
     role_options: string[];
+    user_options: string[];
 }
 
 export type FetchNavigationAuditLogsParams = {
@@ -29,6 +30,9 @@ export type FetchNavigationAuditLogsParams = {
     search?: string;
     allowed?: string;
     role?: string;
+    user?: string;
+    date_from?: string;
+    date_to?: string;
 };
 
 export async function fetchNavigationAuditLogs(

@@ -10,6 +10,8 @@ export interface HeadcountRow {
     time_in_current_status: string;
     time_in_ready: string;
     time_in_paused: string;
+    logged_in_duration_today: string;
+    logged_out_duration_today: string;
     current_bordereau: string;
     activities_processed: number;
     bdx_aht: string;
@@ -73,6 +75,20 @@ export const headcountColumns: ColumnDef<HeadcountRow>[] = [
         accessorKey: "time_in_paused",
         header: "Time in Paused",
         cell: ({ row }) => <div>{String(row.getValue("time_in_paused") ?? "-")}</div>,
+    },
+    {
+        accessorKey: "logged_in_duration_today",
+        header: "Logged In Today",
+        cell: ({ row }) => (
+            <div>{String(row.getValue("logged_in_duration_today") ?? "-")}</div>
+        ),
+    },
+    {
+        accessorKey: "logged_out_duration_today",
+        header: "Logged Out Today",
+        cell: ({ row }) => (
+            <div>{String(row.getValue("logged_out_duration_today") ?? "-")}</div>
+        ),
     },
     {
         accessorKey: "current_bordereau",

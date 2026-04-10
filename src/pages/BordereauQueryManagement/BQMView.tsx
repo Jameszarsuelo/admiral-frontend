@@ -32,6 +32,7 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 
 export type BQMType = {
     id: number;
+    status_id: number;
     supplier_name: string;
     bordereau: string;
     claim_number: string;
@@ -264,6 +265,7 @@ export default function BQMView () {
 
         return {
             id: b.id ?? 0,
+            status_id: Number(b.bordereau_status?.id ?? 0),
             supplier_name: supplierName,
             bordereau: String(b.bordereau ?? ""),
             claim_number: String(b.claim_number ?? ""),
@@ -280,28 +282,21 @@ export default function BQMView () {
             return queryRows;
         }
 
-        const wipStatuses = new Set(["Activity in Progress with BPC"]);
-        const queryWaitingStatuses = new Set([
-            "Activity Queued Sensitive",
-            "Activity Queued Staff",
-            "Activity Queued Fraud",
-        ]);
-        const queryNeedsActionStatuses = new Set([
-            "Query Redirect",
-            "Activity in Progress with Supplier",
-        ]);
+        const wipStatuses = new Set([5]);
+        const queryWaitingStatuses = new Set([16, 17, 18]);
+        const queryNeedsActionStatuses = new Set([6, 15]);
 
         return queryRows.filter((row) => {
             if (activityView === "wip") {
-                return wipStatuses.has(row.status);
+                return wipStatuses.has(row.status_id);
             }
 
             if (activityView === "query-waiting") {
-                return queryWaitingStatuses.has(row.status);
+                return queryWaitingStatuses.has(row.status_id);
             }
 
             if (activityView === "query-needs-action") {
-                return queryNeedsActionStatuses.has(row.status);
+                return queryNeedsActionStatuses.has(row.status_id);
             }
 
             return true;

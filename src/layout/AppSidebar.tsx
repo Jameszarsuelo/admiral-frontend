@@ -203,7 +203,7 @@ const AppSidebar: React.FC = () => {
     const mainItems = dynamicNavItems.filter(
         (i) =>
             i.name === "Workplace" ||
-            i.name === "Overview" ||
+            i.name === "Bordereau Detail" ||
             i.name === "Dashboard" ||
             i.name === "Contact Directory" ||
             i.name === "Activity Detail" ||

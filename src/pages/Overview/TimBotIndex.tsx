@@ -43,6 +43,7 @@ export default function TimBotIndex() {
 
         const monthColumns: ColumnDef<TimBotRow>[] = (data?.months ?? []).map((m) => ({
             id: `month_${m.key}`,
+            accessorFn: (row) => row.months?.[m.key] ?? "",
             header: m.label,
             cell: ({ row }) => {
                 const value = row.original.months?.[m.key] ?? "";

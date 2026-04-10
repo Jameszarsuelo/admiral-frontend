@@ -36,7 +36,7 @@ export default function OverviewIndex() {
         setDepartmentId,
     } = useOverviewDepartmentFilter();
 
-    const DEFAULT_PER_PAGE = 10;
+    const DEFAULT_PER_PAGE = 100;
     const [queuePagination, setQueuePagination] = useState<{
         page: number;
         per_page: number;

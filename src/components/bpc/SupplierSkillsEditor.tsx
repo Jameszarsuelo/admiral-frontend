@@ -12,6 +12,7 @@ import type { ColumnDef } from "@tanstack/react-table";
 
 import {
     fetchBpcSupplierSkills,
+    exportBpcSupplierSkillsCsv,
     upsertBpcSupplierSkills,
 } from "@/database/bpc_supplier_skills_api";
 import type { IBpcSupplierSkillRow } from "@/types/BpcSupplierSkillSchema";
@@ -192,61 +193,31 @@ export default function SupplierSkillsEditor({
     );
 
     const exportCsv = useCallback(() => {
-        const csvEscape = (value: unknown) => {
-            const normalized =
-                value === null || value === undefined
-                    ? ""
-                    : typeof value === "string"
-                      ? value
-                      : typeof value === "number" || typeof value === "boolean"
-                        ? String(value)
-                        : JSON.stringify(value);
-
-            const needsQuotes = /[\n\r,"]/.test(normalized);
-            const escaped = normalized.replace(/"/g, '""');
-            return needsQuotes ? `"${escaped}"` : escaped;
-        };
-
-        const csvLines: string[] = [];
-        csvLines.push([
-            "Supplier",
-            "Trained",
-            "Paused",
-            "Skill Level",
-        ].map(csvEscape).join(","));
-
-        for (const row of rows) {
-            csvLines.push(
-                [
-                    row.name,
-                    row.draftTrained ? "Yes" : "No",
-                    row.draftPaused ? "Yes" : "No",
-                    String(row.skill),
-                ]
-                    .map(csvEscape)
-                    .join(","),
-            );
-        }
-
-        const csv = csvLines.join("\n");
-        const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
-        const url = URL.createObjectURL(blob);
-        const link = document.createElement("a");
-        link.href = url;
-        const date = new Date().toISOString().slice(0, 10);
-        link.download = `bpc-supplier-skills-${bpcId ?? "me"}-${date}.csv`;
-        document.body.appendChild(link);
-        link.click();
-        link.remove();
-
-        window.setTimeout(() => {
+        void (async () => {
             try {
-                URL.revokeObjectURL(url);
-            } catch {
-                // ignore
+                const blob = await exportBpcSupplierSkillsCsv(bpcId);
+                const url = URL.createObjectURL(blob);
+                const link = document.createElement("a");
+                link.href = url;
+                const date = new Date().toISOString().slice(0, 10);
+                link.download = `bpc-supplier-skills-${bpcId ?? "me"}-${date}.csv`;
+                document.body.appendChild(link);
+                link.click();
+                link.remove();
+
+                window.setTimeout(() => {
+                    try {
+                        URL.revokeObjectURL(url);
+                    } catch {
+                        // ignore
+                    }
+                }, 30_000);
+            } catch (error) {
+                console.error("SupplierSkills export error:", error);
+                toast.error("Failed to export supplier skills");
             }
-        }, 30_000);
-    }, [bpcId, rows]);
+        })();
+    }, [bpcId]);
 
     const persistMutation = useMutation({
         mutationFn: (payload: {

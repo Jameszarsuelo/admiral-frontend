@@ -163,7 +163,7 @@ export default function BordereauIndex() {
         search: "",
     });
 
-    const DEFAULT_PER_PAGE = 10;
+    const DEFAULT_PER_PAGE = 100;
     const [appliedFilters, setAppliedFilters] = useState<TAppliedFilters>(
         () => ({
             ...filters,
@@ -292,12 +292,15 @@ export default function BordereauIndex() {
     }, [dateType, bordereauStatus]);
 
     const filteredStatusOptions = React.useMemo(() => {
-        const queuedIds = [3, 16, 17, 18];
+        const queuedIds = [1, 3, 16, 17, 18];
         const inProgressIds = [5, 6, 7, 8, 15];
         const processedIds = [4, 9, 10, 11, 12, 13, 14];
 
         let allowed: number[] = [];
         switch (bordereauStatus) {
+            case "all":
+                allowed = [];
+                break;
             case "queued":
                 allowed = queuedIds;
                 break;
@@ -830,6 +833,18 @@ export default function BordereauIndex() {
                                                 >
                                                     <div className="flex items-center space-x-2">
                                                         <RadioGroupItem
+                                                            value="all"
+                                                            id="all"
+                                                        />
+                                                        <Label
+                                                            htmlFor="all"
+                                                            className="mb-0"
+                                                        >
+                                                            All
+                                                        </Label>
+                                                    </div>
+                                                    <div className="flex items-center space-x-2">
+                                                        <RadioGroupItem
                                                             value="queued"
                                                             id="queued"
                                                         />
@@ -837,7 +852,7 @@ export default function BordereauIndex() {
                                                             htmlFor="queued"
                                                             className="mb-0"
                                                         >
-                                                            Queued
+                                                            Queued / Uploaded
                                                         </Label>
                                                     </div>
                                                     <div className="flex items-center space-x-2">
@@ -884,6 +899,7 @@ export default function BordereauIndex() {
                                         data={bordereauData.data}
                                         manualPagination
                                         manualFiltering
+                                        pageSizeOptions={[10, 25, 50, 100, 250, 500]}
                                         globalFilter={tableSearch}
                                         onGlobalFilterChange={(value) => {
                                             setTableSearch(value);
@@ -1241,7 +1257,7 @@ export default function BordereauIndex() {
                                                         field.value || undefined
                                                     }
                                                     showTimeSelect
-                                                    dateFormat="yyyy-MM-dd HH:mm"
+                                                    dateFormat="Y-m-d H:i"
                                                     onChange={(
                                                         _date,
                                                         dateStr,

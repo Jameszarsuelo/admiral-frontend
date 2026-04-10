@@ -53,6 +53,8 @@ interface DataTableProps<TData, TValue> {
     globalFilter?: string;
     /** Optional controlled global filter handler (search box). */
     onGlobalFilterChange?: (value: string) => void;
+    /** Page size options shown in the rows selector. */
+    pageSizeOptions?: number[];
 }
 
 export function DataTable<TData, TValue>({
@@ -68,6 +70,7 @@ export function DataTable<TData, TValue>({
     manualFiltering,
     globalFilter: globalFilterProp,
     onGlobalFilterChange: onGlobalFilterChangeProp,
+    pageSizeOptions = [10, 25, 50, 100],
 }: DataTableProps<TData, TValue>) {
     const [sorting, setSorting] = React.useState<SortingState>([]);
     const [columnFilters, setColumnFilters] =
@@ -78,7 +81,7 @@ export function DataTable<TData, TValue>({
     const [globalFilter, setGlobalFilter] = React.useState("");
     const [pagination, setPagination] = React.useState<PaginationState>({
         pageIndex: 0,
-        pageSize: 10,
+        pageSize: 100,
     });
 
     const paginationState = paginationProp ?? pagination;
@@ -206,7 +209,7 @@ export function DataTable<TData, TValue>({
                                 table.setPageSize(Number(e.target.value))
                             }
                         >
-                            {[10, 25, 50, 100].map((size) => (
+                            {pageSizeOptions.map((size) => (
                                 <option key={size} value={size}>
                                     {size}
                                 </option>

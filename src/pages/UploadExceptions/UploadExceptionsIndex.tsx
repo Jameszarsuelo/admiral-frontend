@@ -18,7 +18,7 @@ export default function UploadExceptionsIndex() {
     const navigate = useNavigate();
     const queryClient = useQueryClient();
 
-    const DEFAULT_PER_PAGE = 10;
+    const DEFAULT_PER_PAGE = 100;
     const [pagination, setPagination] = useState<{ page: number; per_page: number }>(
         {
             page: 1,

@@ -71,9 +71,9 @@ export default function SignInForm() {
             </div> */}
             <div className="flex flex-col justify-center flex-1 w-full max-w-md mx-auto">
                 <div>
-                    <div className="mb-20 text-center flex flex-col items-center">
-                        <img src={logo} alt="Alloc8 Logo" className="w-24 h-24 mb-4" />
-                        <h1 className="text-6xl mb-2 font-bold text-gray-900 dark:text-white">
+                    <div className="mb-10 text-center flex flex-col items-center">
+                        <img src={logo} alt="Alloc8 Logo" className="w-24 h-24 mb-2" />
+                        <h1 className="text-5xl font-bold text-gray-900 dark:text-white">
                             Alloc8
                         </h1>
                     </div>
@@ -323,6 +323,41 @@ export default function SignInForm() {
                             </div>
                         </form>
 
+                        {!twoFaChallengeId && (
+                            <div className="mt-6 space-y-4">
+                                <div className="relative">
+                                    <div className="absolute inset-0 flex items-center">
+                                        <div className="w-full border-t border-gray-200 dark:border-gray-800" />
+                                    </div>
+                                    <div className="relative flex justify-center text-xs uppercase tracking-wide">
+                                        <span className="bg-white px-3 text-gray-400 dark:bg-gray-900 dark:text-gray-500">
+                                            Or continue with
+                                        </span>
+                                    </div>
+                                </div>
+
+                                <Button
+                                    type="button"
+                                    variant="outline"
+                                    size="sm"
+                                    className="w-full"
+                                    // TODO: wire up to Microsoft Entra ID (OIDC) redirect
+                                >
+                                    <span className="mr-2 inline-flex items-center justify-center rounded-sm bg-white p-0.5 dark:bg-gray-900">
+                                        <span className="grid grid-cols-2 gap-0.5">
+                                            <span className="h-2 w-2 rounded-[1px] bg-[#F35325]" />
+                                            <span className="h-2 w-2 rounded-[1px] bg-[#81BC06]" />
+                                            <span className="h-2 w-2 rounded-[1px] bg-[#05A6F0]" />
+                                            <span className="h-2 w-2 rounded-[1px] bg-[#FFBA08]" />
+                                        </span>
+                                    </span>
+                                    <span className="text-sm font-medium text-gray-700 dark:text-gray-200">
+                                        Sign in with Microsoft 365
+                                    </span>
+                                </Button>
+                            </div>
+                        )}
+
                         {/* <div className="mt-5">
                             <p className="text-sm font-normal text-center text-gray-700 dark:text-gray-400 sm:text-start">
                                 Don&apos;t have an account? {""}
@@ -337,7 +372,7 @@ export default function SignInForm() {
 
                         <div className="mt-5">
                             <p className="text-sm font-normal text-center text-gray-700 dark:text-gray-400 sm:text-start">
-                                Version: 2.0.0
+                                Version: 2.1.0
                             </p>
                         </div>
                     </div>
