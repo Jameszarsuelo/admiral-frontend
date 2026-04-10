@@ -1,4 +1,4 @@
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { fetchBpcTimerToday } from "@/database/bpc_api";
 import { echo } from "@/lib/echo";
@@ -17,6 +17,9 @@ export default function useBpcTimer(
     bpcId?: number | null,
     selectedStatusId?: string | number | null,
 ) {
+    // Mark selectedStatusId as intentionally used to satisfy noUnusedParameters
+    void selectedStatusId;
+
     const { data: timerData, refetch } = useQuery({
         queryKey: ["bpc-timer", bpcId],
         queryFn: async () => {
