@@ -53,6 +53,7 @@ const FLAG_FIELDS: Array<{ key: keyof IWorkTypeForm; label: string }> = [
     { key: "rejection_reasons", label: "Rejection Reasons" },
     { key: "additional_information", label: "Additional Information" },
     { key: "make_and_model", label: "Make and Model" },
+    { key: "car_class_charged", label: "Car Class Charged" },
     { key: "postcode", label: "Postcode" },
     { key: "date", label: "Date" },
     { key: "cat", label: "Cat" },

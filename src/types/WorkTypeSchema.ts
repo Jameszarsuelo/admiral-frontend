@@ -46,6 +46,7 @@ export const WorkTypeSchema = z.object({
     rejection_reasons: z.coerce.boolean().optional(),
     additional_information: z.coerce.boolean().optional(),
     make_and_model: z.coerce.boolean().optional(),
+    car_class_charged: z.coerce.boolean().optional(),
     postcode: z.coerce.boolean().optional(),
     date: z.coerce.boolean().optional(),
     cat: z.coerce.boolean().optional(),

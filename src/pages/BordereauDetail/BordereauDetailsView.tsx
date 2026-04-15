@@ -363,6 +363,15 @@ export default function BordereauDetailsView(
 
                             <div>
                                 <p className="mb-2 text-xs leading-normal text-gray-500 dark:text-gray-400">
+                                    Car Class Charged
+                                </p>
+								<p className="text-base font-bold text-gray-800 dark:text-white/90">
+                                    {display(bordExtra["car_class_charged"])}
+                                </p>
+                            </div>
+
+                            <div>
+                                <p className="mb-2 text-xs leading-normal text-gray-500 dark:text-gray-400">
                                     Postcode
                                 </p>
 								<p className="text-base font-bold text-gray-800 dark:text-white/90">

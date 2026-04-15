@@ -85,6 +85,7 @@ export default function BordereauForm() {
             rejection_reasons: "",
             additional_information: "",
             make_and_model: "",
+            car_class_charged: "",
             postcode: "",
             date: "",
             cat: "",
@@ -205,6 +206,8 @@ export default function BordereauForm() {
             additional_information:
                 (existingBordereau as any).additional_information ?? "",
             make_and_model: (existingBordereau as any).make_and_model ?? "",
+            car_class_charged:
+                (existingBordereau as any).car_class_charged ?? "",
             postcode: (existingBordereau as any).postcode ?? "",
             date: asDate((existingBordereau as any).date),
             cat: (existingBordereau as any).cat ?? "",
@@ -1495,6 +1498,36 @@ export default function BordereauForm() {
                                                     {...field}
                                                     id="make_and_model"
                                                     placeholder="Enter Make and Model"
+                                                    value={field.value ?? ""}
+                                                />
+                                                {fieldState.error && (
+                                                    <p className="mt-1 text-sm text-error-500">
+                                                        {
+                                                            fieldState.error
+                                                                .message
+                                                        }
+                                                    </p>
+                                                )}
+                                            </Field>
+                                        )}
+                                    />
+
+                                    <Controller
+                                        name="car_class_charged"
+                                        control={control}
+                                        render={({ field, fieldState }) => (
+                                            <Field
+                                                data-invalid={
+                                                    fieldState.invalid
+                                                }
+                                            >
+                                                <Label htmlFor="car_class_charged">
+                                                    Car Class Charged
+                                                </Label>
+                                                <Input
+                                                    {...field}
+                                                    id="car_class_charged"
+                                                    placeholder="Enter Car Class Charged"
                                                     value={field.value ?? ""}
                                                 />
                                                 {fieldState.error && (

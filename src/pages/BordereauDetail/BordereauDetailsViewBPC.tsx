@@ -78,6 +78,7 @@ export default function BordereauDetailsViewBPC({
                                     ["rejection_reasons", "Rejection Reasons"],
                                     ["additional_information", "Additional Information"],
                                     ["make_and_model", "Make and Model"],
+                                    ["car_class_charged", "Car Class Charged"],
                                     ["postcode", "Postcode"],
                                     ["date", "Date"],
                                     ["cat", "Cat"],

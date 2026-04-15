@@ -14,6 +14,7 @@ export const BordereauValidationBaseSchema = z.object({
     legal: z.boolean().optional(),
     investigation: z.boolean().optional(),
     recovery: z.boolean().optional(),
+    car_class_charged: z.boolean().optional(),
 });
 
 export const BordereauCommentBaseSchema = z.object({
@@ -80,6 +81,7 @@ export const BordereauBaseSchema = z.object({
     rejection_reasons: z.string().nullable(),
     additional_information: z.string().nullable(),
     make_and_model: z.string().nullable(),
+    car_class_charged: z.string().nullable(),
     postcode: z.string().nullable(),
     date: z.string().nullable(), // ISO date
     cat: z.string().nullable(),
@@ -151,6 +153,7 @@ export const BordereauFormSchema = BordereauBaseSchema.pick({
     rejection_reasons: true,
     additional_information: true,
     make_and_model: true,
+    car_class_charged: true,
     postcode: true,
     date: true,
     cat: true,
